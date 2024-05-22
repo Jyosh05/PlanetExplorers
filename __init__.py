@@ -103,6 +103,12 @@ print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
 
+# Global rate limit applied to all routes
+@app.before_request
+@limiter.limit("5 per minute")  # Example rate limit: 5 requests per minute
+def global_rate_limit():
+    pass  # This function executes before every request and enforces the rate limit
+
 @app.route('/')
 def home():
     return render_template("home.html") # need to create template
