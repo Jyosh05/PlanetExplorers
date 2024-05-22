@@ -1,17 +1,29 @@
 from flask import Flask, render_template,request, jsonify
 from flask_mysqldb import MySQL
+import mysql.connector
 #Configuration is a file containing sensitive information
 from Configuration import DB_Config,secret_key
 
 app = Flask(__name__)
 #Changed the format in which information is not hard coded
 app.config['SECRET_KEY'] = secret_key
-app.config['MYSQL_DB_HOST'] = DB_Config['host']
-app.config['MYSQL_DB_USER'] = DB_Config['user']
-app.config['MYSQL_DB_PASSWORD'] = DB_Config['password']
-app.config['MYSQL_DB'] = DB_Config['database']
+# app.config['MYSQL_DB_HOST'] = DB_Config['host']
+# app.config['MYSQL_DB_USER'] = DB_Config['user']
+# app.config['MYSQL_DB_PASSWORD'] = DB_Config['password']
+# app.config['MYSQL_DB'] = DB_Config['database']
+# app.config['MYSQL_PORT'] = DB_Config['port']
 
-mysql = MySQL(app)
+mydb = mysql.connector.connect(
+    host=DB_Config['host'],
+    user=DB_Config['user'],
+    password=DB_Config['password'],
+    port=DB_Config['port'],
+    database=DB_Config['database']
+)
+
+mycursor = mydb.cursor(buffered=True)
+
+# mysql = MySQL(app)
 #Aloysius Portion
 def input_validation():
     pass
@@ -29,34 +41,58 @@ def delete_info():
     pass
 
 #Function to create table if table does not exist
-def create_table():
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        query = """
-        CREATE TABLE IF NOT EXISTS users(
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(255) NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            email VARCHAR(255) NOT NULL,
-            age INT NOT NULL
-            address VARCHAR(255),
-            role ENUM('student','teacher','admin') NOT NULL
-        )
-        """
-        cursor.execute(query)
-        conn.commit()
-        cursor.close()
-        conn.close()
-        print("Table created")
+# def create_table():
+#     try:
+#         with app.app_context():
+#             conn = mysql.connect()
+#             cursor = conn.cursor()
+#             query = """
+#             CREATE TABLE IF NOT EXISTS users(
+#                 id INT AUTO_INCREMENT PRIMARY KEY,
+#                 username VARCHAR(255) NOT NULL,
+#                 password VARCHAR(255) NOT NULL,
+#                 email VARCHAR(255) NOT NULL,
+#                 age INT NOT NULL
+#                 address VARCHAR(255),
+#                 role ENUM('student','teacher','admin') NOT NULL
+#             )
+#             """
+#             cursor.execute(query)
+#             conn.commit()
+#             cursor.close()
+#             conn.close()
+#             print("Table created")
+#
+#     except Exception as e:
+#         print(f"Error occurred: {str(e)}")
 
-    except Exception as e:
-        print(f"Error occurred: {str(e)}")
+tableCheck = ['users']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'users'")
+    tableExist = mycursor.fetchone()
+
+
+    if not tableExist:
+        mycursor.execute("""
+                    CREATE TABLE IF NOT EXISTS users(
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        username VARCHAR(255) NOT NULL,
+                        password VARCHAR(255) NOT NULL,
+                        email VARCHAR(255) NOT NULL,
+                        age INT NOT NULL,
+                        address VARCHAR(255),
+                        role ENUM('student','teacher','admin') NOT NULL
+                    )
+                    """)
+        print(f"Table 'users' Created")
 
 
 
 
+mycursor.execute('SELECT * FROM users')
+print(f"Using table 'users' ")
 
+users = mycursor.fetchall()
 
 @app.route('/')
 def home():
@@ -65,5 +101,4 @@ def home():
 
 if __name__ == '__main__':
     #calling create table function
-    create_table()
     app.run()

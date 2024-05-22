@@ -1,8 +1,9 @@
 DB_Config = {
     'host':'localhost',
-    'user':'myuser',
-    'password':'mypassword',
-    'database':'my_database'
+    'user':'root',
+    'password':'JYOSHNA2006!',
+    'database':'planetexplorers',
+    'port': 3306
 }
 
-secret_key = "input secret key"
+secret_key = "my_super_secret_key"
