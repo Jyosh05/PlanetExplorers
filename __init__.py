@@ -111,3 +111,12 @@ def profile():
 if __name__ == '__main__':
     #calling create table function
     app.run()
+
+
+@app.route('/blogs')
+def blog():
+    app.logger.info('Info level log')
+    app.logger.warning('Warning level log')
+    return f"Welcome to the Blog"
+ 
+app.run(host='localhost', debug=True)
