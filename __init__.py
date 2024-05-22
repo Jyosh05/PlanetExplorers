@@ -1,5 +1,5 @@
 from flask import Flask, render_template,request, jsonify
-from flaskext.mysql import MySQL
+from flask_mysqldb import MySQL
 #Configuration is a file containing sensitive information
 from Configuration import DB_Config,secret_key
 
