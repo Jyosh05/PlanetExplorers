@@ -98,6 +98,14 @@ users = mycursor.fetchall()
 def home():
     return render_template("home.html") # need to create template
 
+@app.route('/store')
+def store():
+    return render_template("store.html")
+
+@app.route('/profile')
+def profile():
+    #need to add in authentication to ensure user is logged in before they can access profile page
+    return render_template("profile.html")
 
 if __name__ == '__main__':
     #calling create table function
