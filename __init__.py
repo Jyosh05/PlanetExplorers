@@ -3,6 +3,7 @@ from flask_mysqldb import MySQL
 import mysql.connector
 #Configuration is a file containing sensitive information
 from Configuration import DB_Config,secret_key
+import logging
 
 app = Flask(__name__)
 #Changed the format in which information is not hard coded
