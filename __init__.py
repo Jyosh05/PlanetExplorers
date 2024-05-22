@@ -1,6 +1,8 @@
 from flask import Flask, render_template,request, jsonify
 from flask_mysqldb import MySQL
 import mysql.connector
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 #Configuration is a file containing sensitive information
 from Configuration import DB_Config,secret_key
 import logging
@@ -23,6 +25,12 @@ mydb = mysql.connector.connect(
 )
 
 mycursor = mydb.cursor(buffered=True)
+
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["100 per day", "10 per hour"]
+)
 
 # mysql = MySQL(app)
 #Aloysius Portion
