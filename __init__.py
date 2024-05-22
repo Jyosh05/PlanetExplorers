@@ -1,8 +1,15 @@
 from flask import Flask, render_template,request, jsonify
 from flaskext.mysql import MySQL
+#Configuration is a file containing sensitive information
+from Configuration import DB_Config,secret_key
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'my_super_secret_key'
+#Changed the format in which information is not hard coded
+app.config['SECRET_KEY'] = secret_key
+app.config['MYSQL_DB_HOST'] = DB_Config['host']
+app.config['MYSQL_DB_USER'] = DB_Config['user']
+app.config['MYSQL_DB_PASSWORD'] = DB_Config['password']
+app.config['MYSQL_DB'] = DB_Config['database']
 
 mysql = MySQL(app)
 #Aloysius Portion
@@ -21,6 +28,7 @@ def add_info():
 def delete_info():
     pass
 
+#Function to create table if table does not exist
 def create_table():
     try:
         conn = mysql.connect()
@@ -56,4 +64,6 @@ def home():
 
 
 if __name__ == '__main__':
+    #calling create table function
+    create_table()
     app.run()
