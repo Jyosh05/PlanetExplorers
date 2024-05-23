@@ -85,6 +85,11 @@ def profile():
 def login():
     return render_template("login.html")
 
+@app.route('/forget_password')
+def forget_password():
+    return render_template("forget_password.html")
+
+
 if __name__ == '__main__':
     #calling create table function
     app.run()
