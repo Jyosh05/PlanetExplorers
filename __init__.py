@@ -113,6 +113,11 @@ def profile():
     #need to add in authentication to ensure user is logged in before they can access profile page
     return render_template("profile.html")
 
+#need to make a functional login page
+@app.route('/login')
+def login():
+    return render_template("login.html")
+
 if __name__ == '__main__':
     #calling create table function
     app.run()
