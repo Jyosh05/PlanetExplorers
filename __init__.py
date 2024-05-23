@@ -1,8 +1,9 @@
 from flask import Flask, render_template,request, jsonify
 import mysql.connector
 #Configuration is a file containing sensitive information
-from Configuration import DB_Config,secret_key
+from Configuration import DB_Config,secret_key, admin_config
 import re
+import bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
@@ -83,6 +84,28 @@ print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
 
+def create_admin_user():
+    try:
+        check_admin_query = "SELECT * FROM users WHERE role = 'admin'"
+        mycursor.execute(check_admin_query)
+        existing_admin = mycursor.fetchone()
+
+        if existing_admin:
+            print("Admin already exists")
+        else:
+            plain_password = admin_config['password']
+            hashed_password = bcrypt.hashpw(plain_password.encode('utf-8'), bcrypt.gensalt())
+
+            insert_admin_query = "INSERT INTO users (username, password, email, age, address, role) VALUES (%s, %s, %s, %s, %s, %s)"
+            admin_user = (admin_config['username'], hashed_password, admin_config['email'], admin_config['age'], admin_config['address'], admin_config['role'])
+
+            mycursor.execute(insert_admin_query, admin_user)
+            mydb.commit()
+            print("Admin user created successfully")
+    except mysql.connector.Error as err:
+        print(f"Error while inserting admin user: {err}")
+
+
 
 @app.route('/')
 def home():
@@ -117,6 +140,8 @@ def forget_password():
 
 if __name__ == '__main__':
     #calling create table function
+    # Call the function when the application starts
+    create_admin_user()
     app.run()
 
 
