@@ -39,13 +39,16 @@ def input_validation(input_string):
 
 
 
-def update_info():
+def update_info(input_string):
     pass
 
 def add_info():
     pass
 
 def delete_info():
+    pass
+
+def get_info():
     pass
 
 
