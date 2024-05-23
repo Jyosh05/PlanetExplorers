@@ -75,6 +75,8 @@ def delete_info():
 #     except Exception as e:
 #         print(f"Error occurred: {str(e)}")
 
+print('hello world')
+
 tableCheck = ['users']
 for a in tableCheck:
     mycursor.execute(f"SHOW TABLES LIKE 'users'")
