@@ -1,12 +1,20 @@
 from flask import Flask, render_template,request, jsonify
 import mysql.connector
 #Configuration is a file containing sensitive information
-from Configuration import DB_Config,secret_key, admin_config
+from Configuration import DB_Config,secret_key, admin_config, pepper
 import re
 import bcrypt
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["10 per minute", "5 per second"],  # Default rate limits
+    storage_uri="memory://"  # Default in-memory storage
+)
 
 mydb = mysql.connector.connect(
     host=DB_Config['host'],
@@ -17,8 +25,6 @@ mydb = mysql.connector.connect(
 )
 
 mycursor = mydb.cursor(buffered=True)
-
-
 
 #Aloysius Portion
 def input_validation(input_string):
@@ -76,9 +82,6 @@ for a in tableCheck:
                     """)
         print(f"Table 'users' Created")
 
-
-
-
 mycursor.execute('SELECT * FROM users')
 print(f"Using table 'users' ")
 
@@ -94,7 +97,12 @@ def create_admin_user():
             print("Admin already exists")
         else:
             plain_password = admin_config['password']
-            hashed_password = bcrypt.hashpw(plain_password.encode('utf-8'), bcrypt.gensalt())
+            # Generate a unique salt using bcrypt
+            salt = bcrypt.gensalt()
+            # Add pepper to the password
+            peppered_password = plain_password.encode('utf-8') + pepper.encode('utf-8')
+            # Hash the password using bcrypt with the unique salt
+            hashed_password = bcrypt.hashpw(peppered_password, salt)
 
             insert_admin_query = "INSERT INTO users (username, password, email, age, address, role) VALUES (%s, %s, %s, %s, %s, %s)"
             admin_user = (admin_config['username'], hashed_password, admin_config['email'], admin_config['age'], admin_config['address'], admin_config['role'])
@@ -108,20 +116,24 @@ def create_admin_user():
 
 
 @app.route('/')
+@limiter.limit("10 per minute")
 def home():
     return render_template("home.html") # need to create template
 
 @app.route('/store')
+@limiter.limit("10 per minute")
 def store():
     return render_template("store.html")
 
 @app.route('/profile')
+@limiter.limit("10 per minute")
 def profile():
     #need to add in authentication to ensure user is logged in before they can access profile page
     return render_template("profile.html")
 
 #need to make a functional login page
 @app.route('/login', methods=["GET","POST"])
+@limiter.limit("5 per minute")
 def login():
     if request.method == "POST":
         try:

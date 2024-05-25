@@ -1,12 +1,14 @@
+
 DB_Config = {
     'host':'localhost',
     'user':'root',
-    'password':'JYOSHNA2006!',
+    'password':'mysql',
     'database':'planetexplorers',
     'port': 3306
 }
 
 secret_key = "my_super_secret_key"
+pepper = "your_super_secret_pepper"
 
 admin_config = {
     'username':'John',
