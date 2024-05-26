@@ -4,7 +4,8 @@ import mysql.connector
 from Configuration import DB_Config,secret_key, admin_config
 import re
 import bcrypt
-
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 #IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY
 #CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
@@ -14,6 +15,12 @@ import bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 mydb = mysql.connector.connect(
     host=DB_Config['host'],
@@ -157,20 +164,24 @@ def create_admin_user():
 
 
 @app.route('/')
+@limiter.limit("5 per minute")
 def home():
     return render_template("home.html") # need to create template
 
 @app.route('/store')
+@limiter.limit("5 per minute")
 def store():
     return render_template("store.html")
 
 @app.route('/profile')
+@limiter.limit("5 per minute")
 def profile():
     #need to add in authentication to ensure user is logged in before they can access profile page
     return render_template("profile.html")
 
 #need to make a functional login page
 @app.route('/login', methods=["GET","POST"])
+@limiter.limit("5 per minute")
 def login():
     if request.method == "POST":
         try:
