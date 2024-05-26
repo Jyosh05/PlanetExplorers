@@ -5,6 +5,13 @@ from Configuration import DB_Config,secret_key, admin_config
 import re
 import bcrypt
 
+
+#IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY
+#CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
+#ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
+#delete_info(),get_info()
+
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
 
@@ -38,13 +45,55 @@ def input_validation(input_string):
         raise ValueError("Invalid input: Harmful input detected")
     return True
 
+def age_validation(age):
+    if not isinstance(age, int) or age<=0:
+        raise ValueError("Invalid input: Age must be a positive integer")
+    return True
+
 
 
 def update_info(input_string):
     pass
 
-def add_info():
-    pass
+
+#READ THIS FIRST!!!!!
+#add_info with role default as "student", if need to change role, cannot use this function
+def add_info(username, password, email, age, address):
+    try:
+        #checking the inputs from the add_info function
+        input_validation(username)
+        input_validation(password)
+        input_validation(email)
+        age_validation(age)
+        input_validation(address)
+        #checking if the user is in the db or not
+        mycursor.execute(
+            "SELECT * FROM users WHERE username = %s OR email = %s",(username,email)
+        )
+        existing_user = mycursor.fetchone()
+        if existing_user:
+            print("error: Username or Email already exists")
+        #standardized role of "student for new user"
+        role = 'student'
+        #parameterized query
+        query = """
+            INSERT INTO users (username, password, email, age, address, role)
+            VALUES (%s,%s,%s,%s,%s)
+        """
+        #tuple to make sure the input cannot be changed
+        values = (username, password, email, age, address, role)
+        #executing the parameterized query and the tuple as the inputs
+        mycursor.execute(query, values)
+        mydb.commit()
+        print("User added successfully")
+    #exception if the sql connector has an error
+    except mysql.connector.Error as err:
+        print(f"error: {str(err)}")
+    #input validation error, means there is malicious code
+    except ValueError as e:
+        print(f"error:{str(e)}")
+
+
 
 def delete_info():
     pass
