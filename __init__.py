@@ -7,8 +7,9 @@ import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-#IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY
-#CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
+#!!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
+
+#!!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
 #ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
 #delete_info(),get_info()
 
@@ -196,6 +197,10 @@ def login():
 @app.route('/forget_password')
 def forget_password():
     return render_template("forget_password.html")
+
+@app.route('/register')
+def register():
+    return render_template("register.html")
 
 
 if __name__ == '__main__':
