@@ -157,7 +157,7 @@ def get_info():
     pass
 
 
-# Role-based access control 
+# Role-based access control
 def role_required(role):
     def wrapper(func):
         @wraps(func)
