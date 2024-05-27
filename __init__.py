@@ -339,6 +339,38 @@ def learnerHome():
     return 'Welcome Student'
 
 
+
+@app.route('/storeAdmin')
+@role_required('admin')
+def admin_products():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM products")
+    products = cur.fetchall()
+    cur.close()
+    return render_template('adminStore.html', products=products)
+
+@app.route('/storeAddproduct', methods=['POST'])
+@role_required('admin')
+def addProduct():
+    return "Product added successfully"
+
+@app.route('/storeDeleteproduct', methods=['POST'])
+@role_required('admin')
+def deleteProduct():
+    return "Product deleted successfully"
+
+@app.route('/storeUpdateproduct', methods=['POST'])
+@role_required('admin')
+def updateProduct():
+    return "Product updated successfully"
+
+@app.route('/storeGetproduct', methods=['GET'])
+@role_required('admin')
+def getProduct():
+    return "Product Shown?"
+
+
+
 if __name__ == '__main__':
     #calling create table function
     # Call the function when the application starts

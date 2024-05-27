@@ -27,3 +27,4 @@ email_config = {
     'mail_username' : 'jyoshwlitha@gmail.com',
     'mail_password' : 'iizr xcth iqld aoep'
 }
+
