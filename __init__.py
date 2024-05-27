@@ -1,4 +1,4 @@
-from flask import Flask, render_template,request, jsonify, redirect,url_for
+from flask import Flask, render_template,request, jsonify, redirect,url_for, session, abort
 import mysql.connector
 #Configuration is a file containing sensitive information
 from Configuration import DB_Config,secret_key, admin_config
@@ -6,6 +6,7 @@ import re
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from functools import wraps
 
 #!!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
@@ -156,7 +157,16 @@ def get_info():
     pass
 
 
-
+# Role-based access control 
+def role_required(role):
+    def wrapper(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            if 'user' not in session or session['user']['role'] != role: # if user is not logged in or the user's role doesnt match the requirements
+                return abort(403)  # Indicates that the server understands the request but refuses to authorize it.
+            return func(*args, **kwargs)
+        return decorated_function
+    return wrapper
 
 
 tableCheck = ['users']
@@ -272,7 +282,20 @@ def register():
         return redirect(url_for('home'))
     return render_template('register.html')
 
+@app.route('/adminHome')
+@role_required('admin')
+def adminHome():
+    return 'Welcome Admin'
 
+@app.route('/teacherHome')
+@role_required('teacher')
+def teacherHome():
+    return 'Welcome Teacher'
+
+@app.route('/learnerHome')
+@role_required('student')
+def learnerHome():
+    return 'Welcome Student'
 
 
 if __name__ == '__main__':
