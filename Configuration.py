@@ -1,7 +1,7 @@
 DB_Config = {
     'host':'localhost',
     'user':'root',
-    'password':"YESYESYESYES",
+    'password':"JYOSHNA2006!",
     'database':'planetexplorers',
     'port': 3306
 }
@@ -9,10 +9,12 @@ DB_Config = {
 secret_key = "my_super_secret_key"
 
 admin_config = {
-    'username':'John',
+    'username':'JohnAdmin',
     'password':'security_officer1234',
     'email':'jyoshwlitha@gmail.com',
+    'name': 'John',
     'age':22,
     'address':'Ang Mo Kio Ave 1 Blk 123',
+    'phone':'81234567',
     'role':'admin'
 }

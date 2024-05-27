@@ -176,6 +176,7 @@ for a in tableCheck:
                         age INT NOT NULL,
                         address VARCHAR(255),
                         phone INT NOT NULL,
+                        profilePic VARCHAR(600) NULL,
                         role ENUM('student','teacher','admin') NOT NULL
                     )
                     """)
@@ -201,8 +202,8 @@ def create_admin_user():
             plain_password = admin_config['password']
             hashed_password = bcrypt.hashpw(plain_password.encode('utf-8'), bcrypt.gensalt())
 
-            insert_admin_query = "INSERT INTO users (username, password, email, age, address, role) VALUES (%s, %s, %s, %s, %s, %s)"
-            admin_user = (admin_config['username'], hashed_password, admin_config['email'], admin_config['age'], admin_config['address'], admin_config['role'])
+            insert_admin_query = "INSERT INTO users (username, password, email, name, age, address, phone, role) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            admin_user = (admin_config['username'], hashed_password, admin_config['email'], admin_config['name'], admin_config['age'], admin_config['address'],admin_config['phone'], admin_config['role'])
 
             mycursor.execute(insert_admin_query, admin_user)
             mydb.commit()
