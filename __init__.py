@@ -1,4 +1,4 @@
-from flask import Flask, render_template,request, jsonify
+from flask import Flask, render_template,request, jsonify, redirect,url_for
 import mysql.connector
 #Configuration is a file containing sensitive information
 from Configuration import DB_Config,secret_key, admin_config
@@ -58,42 +58,68 @@ def age_validation(age):
         raise ValueError("Invalid input: Age must be a positive integer")
     return True
 
+def validate_phone_number(phone_number):
+    pattern = r"^\+(?:[0-9] ?){6,14}[0-9]$"
+    if re.match(pattern, phone_number) == False:
+        raise ValueError("Invalid input: Phone number does not match the requirements")
+    return True
+
 
 
 def update_info(input_string):
     pass
 
 
+def check_existing_credentials(username=None,email=None):
+    try:
+        if username:
+            mycursor.execute("SELECT * FROM users WHERE username = %s",(username,))
+            existing_user = mycursor.fetchone()
+            if existing_user:
+                return True
+        if email:
+            mycursor.execute(f"SELECT * FROM users WHERE email = %s",(email,))
+            existing_email = mycursor.fetchone()
+            if existing_email:
+                return True
+    except mysql.connector.Error as err:
+        print(f"Error: {str(err)}")
+#NEED ENCRYPTION OF THE PASSWORD
 #READ THIS FIRST!!!!!
 #add_info with role default as "student", if need to change role, cannot use this function
-def add_info(username, password, email, age, address):
+def add_info(username, password, email, name, age, address, phone):
     try:
-        #checking the inputs from the add_info function
+        # Checking the inputs from the add_info function
         input_validation(username)
         input_validation(password)
         input_validation(email)
-        age_validation(age)
+        input_validation(name)  # This line checks the input validation for name
+        age_validation(int(age))
         input_validation(address)
-        #checking if the user is in the db or not
-        mycursor.execute(
-            "SELECT * FROM users WHERE username = %s OR email = %s",(username,email)
-        )
-        existing_user = mycursor.fetchone()
-        if existing_user:
-            print("error: Username or Email already exists")
-        #standardized role of "student for new user"
+        validate_phone_number(phone)
+        # Checking if the user is in the db or not
+        if check_existing_credentials(username, email):
+            print("Username or email already in use")
+        # Standardized role of "student" for new user
         role = 'student'
-        #parameterized query
+        # Parameterized query
         query = """
-            INSERT INTO users (username, password, email, age, address, role)
-            VALUES (%s,%s,%s,%s,%s)
+            INSERT INTO users (username, password, email, name ,age, address, phone, role)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
         """
-        #tuple to make sure the input cannot be changed
-        values = (username, password, email, age, address, role)
-        #executing the parameterized query and the tuple as the inputs
+        # Tuple to make sure the input cannot be changed
+        values = (username, password, email, name, age, address, phone, role)
+        # Executing the parameterized query and the tuple as the inputs
         mycursor.execute(query, values)
         mydb.commit()
         print("User added successfully")
+    # Exception if the SQL connector has an error
+    except mysql.connector.Error as err:
+        print(f"error: {str(err)}")
+    # Input validation error, means there is malicious code
+    except ValueError as e:
+        print(f"error: {str(e)}")
+
     #exception if the sql connector has an error
     except mysql.connector.Error as err:
         print(f"error: {str(err)}")
@@ -102,9 +128,29 @@ def add_info(username, password, email, age, address):
         print(f"error:{str(e)}")
 
 
+#NEED DECRYPTION OF THE PASSWORD
+def delete_info(username, password):
+    try:
+        input_validation(username)
+        input_validation(password)
+        query = "SELECT password FROM users WHERE username = %s"
+        mycursor.execute(query,(username,))
+        user = mycursor.fetchone()
+        if not user:
+            print("User not found")
+        stored_password = user[0]
 
-def delete_info():
-    pass
+        if password == stored_password:
+            delete_query = "DELETE FROM users WHERE username = %s"
+            mycursor.execute(query,(username,))
+            mydb.commit()
+            print("User deleted successfully")
+        else:
+            print("Error, incorrect password")
+    except mysql.connector.Error as err:
+        print(f"Error: {str(err)}")
+    except ValueError as e:
+        print(f"Error: {str(e)}")
 
 def get_info():
     pass
@@ -126,8 +172,10 @@ for a in tableCheck:
                         username VARCHAR(255) NOT NULL,
                         password VARCHAR(255) NOT NULL,
                         email VARCHAR(255) NOT NULL,
+                        name VARCHAR(255) NOT NULL,
                         age INT NOT NULL,
                         address VARCHAR(255),
+                        phone INT NOT NULL,
                         role ENUM('student','teacher','admin') NOT NULL
                     )
                     """)
@@ -198,16 +246,39 @@ def login():
 def forget_password():
     return render_template("forget_password.html")
 
-@app.route('/register')
+@app.route('/register', methods=["GET","POST"])
 def register():
-    return render_template("register.html")
+    if request.method == "POST":
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email')
+        if check_existing_credentials(username,email):
+            print("Username or email already in use")
+
+        name = request.form.get('name')
+        age = request.form.get('age')
+        address = request.form.get('address')
+        phone = request.form.get('phone')
+        print("Received form data:")
+        print(f"Username: {username}")
+        print(f"Password: {password}")
+        print(f"Email: {email}")
+        print(f"Name: {name}")
+        print(f"Age: {age}")
+        print(f"Address: {address}")
+        print(f"Phone: {phone}")
+        add_info(username,password,email,name,age,address,phone)
+        return redirect(url_for('home'))
+    return render_template('register.html')
+
+
 
 
 if __name__ == '__main__':
     #calling create table function
     # Call the function when the application starts
     create_admin_user()
-    app.run()
+    app.run(debug=True)
 
 
 # @app.route('/blogs')
