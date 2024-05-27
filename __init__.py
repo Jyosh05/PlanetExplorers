@@ -338,8 +338,7 @@ def teacherHome():
 def learnerHome():
     return 'Welcome Student'
 
-
-
+'''
 @app.route('/storeAdmin')
 @role_required('admin')
 def admin_products():
@@ -352,23 +351,54 @@ def admin_products():
 @app.route('/storeAddproduct', methods=['POST'])
 @role_required('admin')
 def addProduct():
-    return "Product added successfully"
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        price = request.form['price']
+        quantity = request.form['quantity']
+        # Insert product into database
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO products (name, description, price, quantity) VALUES (%s, %s, %s, %s)", (name, description, price, quantity))
+        mysql.connection.commit()
+        cur.close()
+        return redirect(url_for('storeAdmin'))
 
 @app.route('/storeDeleteproduct', methods=['POST'])
 @role_required('admin')
 def deleteProduct():
-    return "Product deleted successfully"
+    # Delete product from database
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
+    mysql.connection.commit()
+    cur.close()
+    return redirect(url_for('storeAdmin'))
 
 @app.route('/storeUpdateproduct', methods=['POST'])
 @role_required('admin')
 def updateProduct():
-    return "Product updated successfully"
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        price = request.form['price']
+        quantity = request.form['quantity']
+        # Update product in database
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE products SET name = %s, description = %s, price = %s, quantity = %s WHERE id = %s", (name, description, price, quantity, product_id))
+        mysql.connection.commit()
+        cur.close()
+        return redirect(url_for('storeAdmin'))
 
 @app.route('/storeGetproduct', methods=['GET'])
 @role_required('admin')
 def getProduct():
-    return "Product Shown?"
+    # Fetch all products from the database
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM products")
+    products = cur.fetchall()
+    cur.close()
+    return render_template('storeAdmin', products=products)
 
+'''
 
 
 if __name__ == '__main__':
