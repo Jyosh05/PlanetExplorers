@@ -1,7 +1,7 @@
 from flask import Flask, render_template,request, jsonify, redirect,url_for, session, abort
 import mysql.connector
 #Configuration is a file containing sensitive information
-from Configuration import DB_Config,secret_key, admin_config, email_config
+from Configuration import DB_Config,secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, GOOGLE_VERIFY_URL
 import re
 import bcrypt
 from flask_limiter import Limiter
@@ -9,6 +9,7 @@ from flask_limiter.util import get_remote_address
 from functools import wraps
 from flask_mail import Message, Mail
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+import requests
 
 #!!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
@@ -195,7 +196,15 @@ def send_reset_link_email(email, subject, template): # template is the html cont
     msg = Message(subject, recipients=[email], html=template, sender='no-reply')
     mail.send(msg)
 
-
+#function to verify recaptcha
+def verify_response(response):
+    payload = {
+        'secret': RECAPTCHA_SECRET_KEY,
+        'response': response
+    }
+    response = requests.post(GOOGLE_VERIFY_URL, data=payload)
+    data = response.json()
+    return data['success']
 
 # Role-based access control
 def role_required(role):
