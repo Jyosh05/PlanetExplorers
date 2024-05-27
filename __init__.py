@@ -191,11 +191,9 @@ def confirm_token(token, expiration=300):
         return False
     return email
 
-def send_reset_link_email(email, subject, template):
-    msg = Message(subject, recipients=[email], html=template, sender=app.config['MAIL_USERNAME'])
+def send_reset_link_email(email, subject, template): # template is the html content of the email
+    msg = Message(subject, recipients=[email], html=template, sender='no-reply')
     mail.send(msg)
-
-
 
 
 
