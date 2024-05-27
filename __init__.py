@@ -278,7 +278,8 @@ def store():
 @app.route('/profile')
 @limiter.limit("5 per minute")
 def profile():
-    #need to add in authentication to ensure user is logged in before they can access profile page
+    if 'user' not in session:
+        return redirect(url_for('login'))
     return render_template("profile.html")
 
 #need to make a functional login page
