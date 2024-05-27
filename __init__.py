@@ -1,12 +1,14 @@
 from flask import Flask, render_template,request, jsonify, redirect,url_for, session, abort
 import mysql.connector
 #Configuration is a file containing sensitive information
-from Configuration import DB_Config,secret_key, admin_config
+from Configuration import DB_Config,secret_key, admin_config, email_config
 import re
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from functools import wraps
+from flask_mail import Message, Mail
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 
 #!!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
@@ -17,6 +19,17 @@ from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
+
+
+# mail config
+app.config['MAIL_SERVER'] = email_config['mail_server']
+app.config['MAIL_PORT'] = email_config['mail_port']
+app.config['MAIL_USE_TLS'] = email_config['mail_use_tls']
+app.config['MAIL_USE_SSL'] = email_config['mail_use_ssl']
+app.config['MAIL_USERNAME'] = email_config['mail_username']
+app.config['MAIL_PASSWORD'] = email_config['mail_password']
+
+mail = Mail(app)
 
 limiter = Limiter(
     get_remote_address,
@@ -155,6 +168,35 @@ def delete_info(username, password):
 
 def get_info():
     pass
+
+#token generation and validation functions
+
+#generate token using user email
+def generate_confirm_token(email):
+    # URLSafeTimedSerializer is a class in itsdangerous designed to create and verify timed, URL safe tokens
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY']) # The serializer requires a secret key
+    # to ensure the tokens are securely generated and can be validated later.
+    return serializer.dumps(email, salt=app.config['SECRET_KEY']) # dumps method serializes the email address into a token
+# the salt parameter adds an additional layer of security
+# Using the secret key as the salt ensures that the token cannot be tampered with or replicated without the secret key.
+
+def confirm_token(token, expiration=300):
+    #a URLSafeTimedSerializer object is created using the same secret key.
+    # This ensures that the token can be verified against the same key and salt used to create it.
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        # The loads method deserializes the token to retrieve the original email address.
+        email = serializer.loads(token, salt=app.config['SECRET_KEY'], max_age=expiration) # The salt parameter ensures that the token was generated with the correct secret key.
+    except SignatureExpired: # if token is expired or invalid, it returns false
+        return False
+    return email
+
+def send_reset_link_email(email, subject, template):
+    msg = Message(subject, recipients=[email], html=template, sender=app.config['MAIL_USERNAME'])
+    mail.send(msg)
+
+
+
 
 
 # Role-based access control
