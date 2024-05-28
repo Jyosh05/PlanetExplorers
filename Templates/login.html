@@ -5,13 +5,17 @@
     <title>Login</title>
 </head>
 <body>
+    {% include 'navbar.html' %}
     <form method="POST" action="login">
         <label for="userid">User ID</label>
         <input type="text" name="userid" id="userid">
+        <br>
         <label for="password">Password</label>
         <input type="password" name="password" id="password">
+        <br>
         <a href="{{ url_for('forget_password') }}">Forget Password?</a>
         <button type="submit">Login</button>
     </form>
+    <a href="{{ url_for('register') }}">Register Account</a>
 </body>
 </html>
