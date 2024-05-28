@@ -20,16 +20,20 @@ import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['REMEMBER_COOKIE_SECURE'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 
-
-# mail config
-app.config['MAIL_SERVER'] = email_config['mail_server']
-app.config['MAIL_PORT'] = email_config['mail_port']
-app.config['MAIL_USE_TLS'] = email_config['mail_use_tls']
-app.config['MAIL_USE_SSL'] = email_config['mail_use_ssl']
-app.config['MAIL_USERNAME'] = email_config['mail_username']
-app.config['MAIL_PASSWORD'] = email_config['mail_password']
-
+# Mail configuration
+app.config.update(
+    MAIL_SERVER=email_config['mail_server'],
+    MAIL_PORT=email_config['mail_port'],
+    MAIL_USE_TLS=email_config['mail_use_tls'],
+    MAIL_USE_SSL=email_config['mail_use_ssl'],
+    MAIL_USERNAME=email_config['mail_username'],
+    MAIL_PASSWORD=email_config['mail_password']
+)
 mail = Mail(app)
 
 limiter = Limiter(
