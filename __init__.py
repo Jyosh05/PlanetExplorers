@@ -11,12 +11,14 @@ from functools import wraps
 from flask_mail import Message, Mail
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import requests
+import psycopg2
+import datetime
 
-# !!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
+#!!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
-# !!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
-# ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
-# delete_info(),get_info()
+#!!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
+#ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
+#delete_info(),get_info()
 
 
 app = Flask(__name__)
@@ -55,7 +57,6 @@ mydb = mysql.connector.connect(
 )
 
 mycursor = mydb.cursor(buffered=True)
-
 
 def regenerate_session():
     session.modified = True
@@ -270,6 +271,22 @@ print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
 
+def log_this(event, user_id = "unknown"):
+    # We do a select max to get the last log_id in the table
+    # the fetchone returns the field in a tuple format
+    mycursor.execute("SELECT MAX(log_id) FROM audit_logs")
+    actual_id = mycursor.fetchone()
+    print(actual_id[0])
+    if actual_id == None:
+        actual_id = 0
+    next_id = actual_id[0] + 1
+    # ts1 = timestamp()
+    sql = "INSERT INTO audit_logs (log_id, event, timestamp, user_id) VALUES (%s,%s,%s,%s)"
+    val = (next_id, event, datetime.datetime.now(), user_id)
+    mycursor.execute(sql, val)
+
+    mydb.commit()
+
 
 def create_admin_user():
     try:
@@ -342,13 +359,17 @@ def login():
             if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                 session['user'] = {'username': user[1], 'role': user[9]}
                 regenerate_session()
+                log_this("login successful", user)
+                #return render_template("profile.html")
                 role = user[9]
                 print(f"Logged in user role: {role}")
                 return redirect(url_for(role_redirects.get(role, 'home')))
             else:
+                log_this("Invalid username or password")
                 print("Invalid username or password")
         except ValueError as e:
             print(f"Error: {e}")
+            log_this("Runtime error during login")
     return render_template("login.html")
 
 
@@ -452,16 +473,21 @@ def update_product():
 
 '''
 
+@app.route('/blogs')
+def blogs():
+    mycursor.execute("SELECT * FROM audit_logs")
+    data = mycursor.fetchall()
+    print(data)
+    return render_template("audit_logs.html", data = data)
+
+
+
+
 if __name__ == '__main__':
     # calling create table function
     # Call the function when the application starts
     create_admin_user()
     app.run(debug=True)
 
-# @app.route('/blogs')
-# def blog():
-#     app.logger.info('Info level log')
-#     app.logger.warning('Warning level log')
-#     return f"Welcome to the Blog"
-#
-# app.run(host='localhost', debug=True)
+
+
