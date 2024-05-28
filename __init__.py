@@ -1,7 +1,8 @@
-from flask import Flask, render_template,request, jsonify, redirect,url_for, session, abort
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
 import mysql.connector
-#Configuration is a file containing sensitive information
-from Configuration import DB_Config,secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, GOOGLE_VERIFY_URL
+# Configuration is a file containing sensitive information
+from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, \
+    GOOGLE_VERIFY_URL
 import re
 import bcrypt
 from flask_limiter import Limiter
@@ -11,11 +12,11 @@ from flask_mail import Message, Mail
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import requests
 
-#!!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
+# !!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
-#!!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
-#ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
-#delete_info(),get_info()
+# !!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
+# ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
+# delete_info(),get_info()
 
 
 app = Flask(__name__)
@@ -55,12 +56,14 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor(buffered=True)
 
+
 def regenerate_session():
     session.modified = True
 
-#Aloysius Portion
+
+# Aloysius Portion
 def input_validation(input_string):
-    #INJECTION, JAVASCRIPT AND PYTHON MALICIOUS CODE USING REGEX
+    # INJECTION, JAVASCRIPT AND PYTHON MALICIOUS CODE USING REGEX
     sql_injection_patterns = [
         r"\b(SELECT|INSERT|DELETE|UPDATE|DROP|ALTER|CREATE|TRUNCATE|EXEC|UNION|--|;)\b",
         r"\b(OR|AND)\b\s*?[^\s]*?="
@@ -76,10 +79,12 @@ def input_validation(input_string):
         raise ValueError("Invalid input: Harmful input detected")
     return True
 
+
 def age_validation(age):
-    if not isinstance(age, int) or age<=0:
+    if not isinstance(age, int) or age <= 0:
         raise ValueError("Invalid input: Age must be a positive integer")
     return True
+
 
 def validate_phone_number(phone_number):
     pattern = r"^\+(?:[0-9] ?){6,14}[0-9]$"
@@ -87,26 +92,30 @@ def validate_phone_number(phone_number):
         raise ValueError("Invalid input: Phone number does not match the requirements")
     return True
 
+
 def update_info(input_string):
     pass
 
-def check_existing_credentials(username=None,email=None):
+
+def check_existing_credentials(username=None, email=None):
     try:
         if username:
-            mycursor.execute("SELECT * FROM users WHERE username = %s",(username,))
+            mycursor.execute("SELECT * FROM users WHERE username = %s", (username,))
             existing_user = mycursor.fetchone()
             if existing_user:
                 return True
         if email:
-            mycursor.execute(f"SELECT * FROM users WHERE email = %s",(email,))
+            mycursor.execute(f"SELECT * FROM users WHERE email = %s", (email,))
             existing_email = mycursor.fetchone()
             if existing_email:
                 return True
     except mysql.connector.Error as err:
         print(f"Error: {str(err)}")
-#NEED ENCRYPTION OF THE PASSWORD
-#READ THIS FIRST!!!!!
-#add_info with role default as "student", if need to change role, cannot use this function
+
+
+# NEED ENCRYPTION OF THE PASSWORD
+# READ THIS FIRST!!!!!
+# add_info with role default as "student", if you need to change role, cannot use this function
 def add_info(username, password, email, name, age, address, phone):
     try:
         # Checking the inputs from the add_info function
@@ -142,13 +151,14 @@ def add_info(username, password, email, name, age, address, phone):
     except ValueError as e:
         print(f"error: {str(e)}")
 
-#NEED DECRYPTION OF THE PASSWORD
+
+# NEED DECRYPTION OF THE PASSWORD
 def delete_info(username, password):
     try:
         input_validation(username)
         input_validation(password)
         query = "SELECT password FROM users WHERE username = %s"
-        mycursor.execute(query,(username,))
+        mycursor.execute(query, (username,))
         user = mycursor.fetchone()
         if not user:
             print("User not found")
@@ -167,36 +177,44 @@ def delete_info(username, password):
     except ValueError as e:
         print(f"Error: {str(e)}")
 
+
 def get_info():
     pass
 
-#token generation and validation functions
 
-#generate token using user email
+# token generation and validation functions
+
+# generate token using user email
 def generate_confirm_token(email):
     # URLSafeTimedSerializer is a class in itsdangerous designed to create and verify timed, URL safe tokens
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY']) # The serializer requires a secret key
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])  # The serializer requires a secret key
     # to ensure the tokens are securely generated and can be validated later.
-    return serializer.dumps(email, salt=app.config['SECRET_KEY']) # dumps method serializes the email address into a token
+    return serializer.dumps(email,
+                            salt=app.config['SECRET_KEY'])  # dumps method serializes the email address into a token
+
+
 # the salt parameter adds an additional layer of security
 # Using the secret key as the salt ensures that the token cannot be tampered with or replicated without the secret key.
 
 def confirm_token(token, expiration=300):
-    #a URLSafeTimedSerializer object is created using the same secret key.
+    # a URLSafeTimedSerializer object is created using the same secret key.
     # This ensures that the token can be verified against the same key and salt used to create it.
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     try:
         # The loads method deserializes the token to retrieve the original email address.
-        email = serializer.loads(token, salt=app.config['SECRET_KEY'], max_age=expiration) # The salt parameter ensures that the token was generated with the correct secret key.
-    except SignatureExpired: # if token is expired or invalid, it returns false
+        email = serializer.loads(token, salt=app.config['SECRET_KEY'],
+                                 max_age=expiration)  # The salt parameter ensures that the token was generated with the correct secret key.
+    except SignatureExpired:  # if token is expired or invalid, it returns false
         return False
     return email
 
-def send_reset_link_email(email, subject, template): # template is the html content of the email
+
+def send_reset_link_email(email, subject, template):  # template is the html content of the email
     msg = Message(subject, recipients=[email], html=template, sender='no-reply')
     mail.send(msg)
 
-#function to verify recaptcha
+
+# function to verify recaptcha
 def verify_response(response):
     payload = {
         'secret': RECAPTCHA_SECRET_KEY,
@@ -206,15 +224,19 @@ def verify_response(response):
     data = response.json()
     return data['success']
 
+
 # Role-based access control
 def role_required(role):
     def wrapper(func):
         @wraps(func)
         def decorated_function(*args, **kwargs):
-            if 'user' not in session or session['user']['role'] != role: # if user is not logged in or the user's role doesnt match the requirements
+            if 'user' not in session or session['user'][
+                'role'] != role:  # if user is not logged in or the user's role doesn't match the requirements
                 return abort(403)  # Indicates that the server understands the request but refuses to authorize it.
             return func(*args, **kwargs)
+
         return decorated_function
+
     return wrapper
 
 
@@ -222,7 +244,6 @@ tableCheck = ['users']
 for a in tableCheck:
     mycursor.execute(f"SHOW TABLES LIKE 'users'")
     tableExist = mycursor.fetchone()
-
 
     if not tableExist:
         mycursor.execute("""
@@ -241,13 +262,11 @@ for a in tableCheck:
                     """)
         print(f"Table 'users' Created")
 
-
-
-
 mycursor.execute('SELECT * FROM users')
 print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
+
 
 def create_admin_user():
     try:
@@ -262,13 +281,16 @@ def create_admin_user():
             hashed_password = bcrypt.hashpw(plain_password.encode('utf-8'), bcrypt.gensalt())
 
             insert_admin_query = "INSERT INTO users (username, password, email, name, age, address, phone, role) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            admin_user = (admin_config['username'], hashed_password, admin_config['email'], admin_config['name'], admin_config['age'], admin_config['address'],admin_config['phone'], admin_config['role'])
+            admin_user = (
+            admin_config['username'], hashed_password, admin_config['email'], admin_config['name'], admin_config['age'],
+            admin_config['address'], admin_config['phone'], admin_config['role'])
 
             mycursor.execute(insert_admin_query, admin_user)
             mydb.commit()
             print("Admin user created successfully")
     except mysql.connector.Error as err:
         print(f"Error while inserting admin user: {err}")
+
 
 @app.before_request
 def before_request():
@@ -277,15 +299,18 @@ def before_request():
     else:
         session.clear()
 
+
 @app.route('/')
 @limiter.limit("5 per minute")
 def home():
-    return render_template("home.html") # need to create template
+    return render_template("home.html")  # need to create template
+
 
 @app.route('/store')
 @limiter.limit("5 per minute")
 def store():
     return render_template("store.html")
+
 
 @app.route('/profile')
 @limiter.limit("5 per minute")
@@ -294,14 +319,17 @@ def profile():
         return redirect(url_for('login'))
     return render_template("profile.html")
 
-#need to make a functional login page
-@app.route('/login', methods=["GET","POST"])
+
+# need to make a functional login page
+@app.route('/login', methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def login():
     if request.method == "POST":
         try:
             username = request.form.get("username")
             password = request.form.get("password")
+            if not username or not password:
+                raise ValueError("username and password are required")
             input_validation(username)
             input_validation(password)
 
@@ -311,24 +339,26 @@ def login():
             if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                 session['user'] = {'username': user[1], 'role': user[8]}
                 regenerate_session()
-                return redirect(url_for('profile'))
+                return render_template("profile.html")
             else:
                 print("Invalid username or password")
         except ValueError as e:
             print(f"Error: {e}")
     return render_template("login.html")
 
+
 @app.route('/forget_password')
 def forget_password():
     return render_template("forget_password.html")
 
-@app.route('/register', methods=["GET","POST"])
+
+@app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
         email = request.form.get('email')
-        if check_existing_credentials(username,email):
+        if check_existing_credentials(username, email):
             print("Username or email already in use")
             return redirect(url_for('register'))
 
@@ -344,94 +374,84 @@ def register():
         print(f"Age: {age}")
         print(f"Address: {address}")
         print(f"Phone: {phone}")
-        add_info(username,password,email,name,age,address,phone)
+        add_info(username, password, email, name, age, address, phone)
         return redirect(url_for('home'))
     return render_template('register.html')
+
 
 @app.route('/adminHome')
 @role_required('admin')
 def adminHome():
     return 'Welcome Admin'
 
+
 @app.route('/teacherHome')
 @role_required('teacher')
 def teacherHome():
     return 'Welcome Teacher'
+
 
 @app.route('/learnerHome')
 @role_required('student')
 def learnerHome():
     return 'Welcome Student'
 
-'''
-@app.route('/storeAdmin')
-@role_required('admin')
-def admin_products():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM products")
-    products = cur.fetchall()
-    cur.close()
-    return render_template('adminStore.html', products=products)
-
-@app.route('/storeAddproduct', methods=['POST'])
-@role_required('admin')
-def addProduct():
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        price = request.form['price']
-        quantity = request.form['quantity']
-        # Insert product into database
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO products (name, description, price, quantity) VALUES (%s, %s, %s, %s)", (name, description, price, quantity))
-        mysql.connection.commit()
-        cur.close()
-        return redirect(url_for('storeAdmin'))
-
-@app.route('/storeDeleteproduct', methods=['POST'])
-@role_required('admin')
-def deleteProduct():
-    # Delete product from database
-    cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
-    mysql.connection.commit()
-    cur.close()
-    return redirect(url_for('storeAdmin'))
-
-@app.route('/storeUpdateproduct', methods=['POST'])
-@role_required('admin')
-def updateProduct():
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        price = request.form['price']
-        quantity = request.form['quantity']
-        # Update product in database
-        cur = mysql.connection.cursor()
-        cur.execute("UPDATE products SET name = %s, description = %s, price = %s, quantity = %s WHERE id = %s", (name, description, price, quantity, product_id))
-        mysql.connection.commit()
-        cur.close()
-        return redirect(url_for('storeAdmin'))
-
-@app.route('/storeGetproduct', methods=['GET'])
-@role_required('admin')
-def getProduct():
-    # Fetch all products from the database
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM products")
-    products = cur.fetchall()
-    cur.close()
-    return render_template('storeAdmin', products=products)
 
 '''
+@app.route('/store')
+@limiter.limit("5 per minute")
+def store():
+    mycursor.execute("SELECT * FROM storeproducts")
+    products = mycursor.fetchall()
+    return render_template("store.html", products=products)
 
+@app.route('/admin/store')
+@role_required('admin')
+def admin_store():
+    mycursor.execute("SELECT * FROM storeproducts")
+    products = mycursor.fetchall()
+    return render_template("adminStore.html", products=products)
+
+@app.route('/admin/store/add', methods=['POST'])
+@role_required('admin')
+def add_product():
+    name = request.form['name']
+    description = request.form['description']
+    price = request.form['price']
+    quantity = request.form['quantity']
+    mycursor.execute("INSERT INTO storeproducts (name, description, price, quantity) VALUES (%s, %s, %s, %s)",
+                     (name, description, price, quantity))
+    mydb.commit()
+    return redirect(url_for('admin_store'))
+
+@app.route('/admin/store/delete', methods=['POST'])
+@role_required('admin')
+def delete_product():
+    product_id = request.form['product_id']
+    mycursor.execute("DELETE FROM storeproducts WHERE id = %s", (product_id,))
+    mydb.commit()
+    return redirect(url_for('admin_store'))
+
+@app.route('/admin/store/update', methods=['POST'])
+@role_required('admin')
+def update_product():
+    product_id = request.form['product_id']
+    name = request.form['name']
+    description = request.form['description']
+    price = request.form['price']
+    quantity = request.form['quantity']
+    mycursor.execute("UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s WHERE id = %s",
+                     (name, description, price, quantity, product_id))
+    mydb.commit()
+    return redirect(url_for('admin_store'))
+
+'''
 
 if __name__ == '__main__':
-    #calling create table function
+    # calling create table function
     # Call the function when the application starts
     create_admin_user()
     app.run(debug=True)
-
 
 # @app.route('/blogs')
 # def blog():
