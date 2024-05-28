@@ -226,18 +226,21 @@ def verify_response(response):
 
 
 # Role-based access control
-def role_required(role):
+def roles_required(*roles):
     def wrapper(func):
         @wraps(func)
         def decorated_function(*args, **kwargs):
-            if 'user' not in session or session['user'][
-                'role'] != role:  # if user is not logged in or the user's role doesn't match the requirements
-                return abort(403)  # Indicates that the server understands the request but refuses to authorize it.
+            if 'user' not in session or session['user']['role'] not in roles:
+                return abort(403)  # Forbidden
             return func(*args, **kwargs)
-
         return decorated_function
-
     return wrapper
+
+role_redirects = {
+    'admin': 'adminHome',
+    'teacher': 'teacherHome',
+    'student': 'learnerHome'
+}
 
 
 tableCheck = ['users']
@@ -337,9 +340,11 @@ def login():
             mycursor.execute(query, (username,))
             user = mycursor.fetchone()
             if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
-                session['user'] = {'username': user[1], 'role': user[8]}
+                session['user'] = {'username': user[1], 'role': user[9]}
                 regenerate_session()
-                return render_template("profile.html")
+                role = user[9]
+                print(f"Logged in user role: {role}")
+                return redirect(url_for(role_redirects.get(role, 'home')))
             else:
                 print("Invalid username or password")
         except ValueError as e:
@@ -380,21 +385,21 @@ def register():
 
 
 @app.route('/adminHome')
-@role_required('admin')
+@roles_required('admin')
 def adminHome():
-    return 'Welcome Admin'
+    return render_template('adminHome.html')
 
 
 @app.route('/teacherHome')
-@role_required('teacher')
+@roles_required('teacher')
 def teacherHome():
     return 'Welcome Teacher'
 
 
 @app.route('/learnerHome')
-@role_required('student')
+@roles_required('student')
 def learnerHome():
-    return 'Welcome Student'
+    return render_template('profile.html')
 
 
 '''
