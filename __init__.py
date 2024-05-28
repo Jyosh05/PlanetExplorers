@@ -389,6 +389,11 @@ def register():
 def adminHome():
     return render_template('adminHome.html')
 
+@app.route('/adminStudentTable')
+@roles_required('admin')
+def adminUsersRetrieve():
+    return render_template('adminStudentTable.html')
+
 
 @app.route('/teacherHome')
 @roles_required('teacher')

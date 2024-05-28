@@ -1,0 +1,46 @@
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/adminNav.css') }}">
+
+<div class="logoPart">
+  <img src="/static/img/logo.png">
+  <span>PlanetExplorers</span>
+</div>
+
+
+
+
+<nav class="side-nav">
+  <div class="user-info">
+  {% if 'user' in session %}
+  <div class="user-profile">
+    <img src="/static/img/default_pp.png">
+    <div class="user-detail">
+    <p class="username">{{ session['user']['username'] }}</p>
+    <p class="role">{{ session['user']['role'] }}</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+  <ul>
+    <li>Home</li>
+
+        <ul>
+          <li><a href="#">Daily Challenge</a></li>
+          <li><a href="#">Products</a></li>
+        </ul>
+
+
+      <li>Others</li>
+
+        <ul>
+          <li><a href="#">My account</a></li>
+          <li><a href="teachersTable">Teachers</a></li>
+          <li><a href="adminStudentTable">Students</a></li>
+          <li><a href="logs">Logs</a></li>
+        </ul>
+
+    </ul>
+  </ul>
+</nav>
+
