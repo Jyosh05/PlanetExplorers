@@ -1,7 +1,7 @@
 DB_Config = {
     'host':'localhost',
     'user':'root',
-    'password':"YESYESYESYES",
+    'password':"mysql",
     'database':'planetexplorers',
     'port': 3306
 }

@@ -313,7 +313,7 @@ def login():
             if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                 session['user'] = {'username': user[1], 'role': user[8]}
                 regenerate_session()
-                return redirect(url_for('profile'))
+                return render_template("profile.html")
             else:
                 print("Invalid username or password")
         except ValueError as e:
