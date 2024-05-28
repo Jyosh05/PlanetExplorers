@@ -6,6 +6,8 @@ import re
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import psycopg2
+import datetime
 
 #IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY
 #CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
@@ -29,6 +31,8 @@ mydb = mysql.connector.connect(
     port=DB_Config['port'],
     database=DB_Config['database']
 )
+
+
 
 mycursor = mydb.cursor(buffered=True)
 
@@ -163,6 +167,28 @@ def create_admin_user():
 
 
 
+def log_this(event):
+    # We do a select max to get the last log_id in the table
+    # the fetchone returns the field in a tuple format
+    mycursor.execute("SELECT MAX(log_id) FROM audit_logs")
+    actual_id = mycursor.fetchone()
+    print(actual_id[0])
+    if actual_id == None:
+        actual_id = 0
+    next_id = actual_id[0] + 1
+    # ts1 = timestamp()
+    sql = "INSERT INTO audit_logs (log_id, event, timestamp, user_id) VALUES (%s,%s,%s,%s)"
+    val = (next_id, event, datetime.datetime.now(), 1)
+    mycursor.execute(sql, val)
+
+    mydb.commit()
+
+    print(actual_id)
+
+    print(next_id)
+
+
+
 @app.route('/')
 @limiter.limit("5 per minute")
 def home():
@@ -188,14 +214,28 @@ def login():
             user_input = request.form.get("password")
             input_validation(user_input)
             print("Input is valid")
+            log_this("login successful")
+
         except ValueError as e:
+
             #NEED TO ADD IN LOGGING FUNCTION IF THERE IS AN ERROR
+            log_this("runtime error during login")
             print(e)
     return render_template("login.html")
 
 @app.route('/forget_password')
 def forget_password():
     return render_template("forget_password.html")
+
+
+@app.route('/blogs')
+def blogs():
+    mycursor.execute("SELECT * FROM audit_logs")
+    data = mycursor.fetchall()
+    print(data)
+    return render_template("audit_logs.html", data = data)
+
+
 
 
 if __name__ == '__main__':
@@ -205,10 +245,4 @@ if __name__ == '__main__':
     app.run()
 
 
-# @app.route('/blogs')
-# def blog():
-#     app.logger.info('Info level log')
-#     app.logger.warning('Warning level log')
-#     return f"Welcome to the Blog"
-#
-# app.run(host='localhost', debug=True)
+
