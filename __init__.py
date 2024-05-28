@@ -302,6 +302,8 @@ def login():
         try:
             username = request.form.get("username")
             password = request.form.get("password")
+            if not username or not password:
+                raise ValueError("username and password are required")
             input_validation(username)
             input_validation(password)
 
