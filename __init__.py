@@ -22,8 +22,11 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can also use 'Strict'
 app.config['REMEMBER_COOKIE_SECURE'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+
+app.config['SESSION_PROTECTION'] = 'strong'
 
 # Mail configuration
 app.config.update(
@@ -52,7 +55,8 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor(buffered=True)
 
-
+def regenerate_session():
+    session.modified = True
 
 #Aloysius Portion
 def input_validation(input_string):
@@ -274,7 +278,12 @@ def create_admin_user():
     except mysql.connector.Error as err:
         print(f"Error while inserting admin user: {err}")
 
-
+@app.before_request
+def before_request():
+    if 'user' in session:
+        session.modified = True
+    else:
+        session.clear()
 
 @app.route('/')
 @limiter.limit("5 per minute")
