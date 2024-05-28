@@ -87,11 +87,8 @@ def validate_phone_number(phone_number):
         raise ValueError("Invalid input: Phone number does not match the requirements")
     return True
 
-
-
 def update_info(input_string):
     pass
-
 
 def check_existing_credentials(username=None,email=None):
     try:
@@ -123,6 +120,8 @@ def add_info(username, password, email, name, age, address, phone):
         # Checking if the user is in the db or not
         if check_existing_credentials(username, email):
             print("Username or email already in use")
+
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         # Standardized role of "student" for new user
         role = 'student'
         # Parameterized query
@@ -131,7 +130,7 @@ def add_info(username, password, email, name, age, address, phone):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
         """
         # Tuple to make sure the input cannot be changed
-        values = (username, password, email, name, age, address, phone, role)
+        values = (username, hashed_password, email, name, age, address, phone, role)
         # Executing the parameterized query and the tuple as the inputs
         mycursor.execute(query, values)
         mydb.commit()
@@ -143,14 +142,6 @@ def add_info(username, password, email, name, age, address, phone):
     except ValueError as e:
         print(f"error: {str(e)}")
 
-    #exception if the sql connector has an error
-    except mysql.connector.Error as err:
-        print(f"error: {str(err)}")
-    #input validation error, means there is malicious code
-    except ValueError as e:
-        print(f"error:{str(e)}")
-
-
 #NEED DECRYPTION OF THE PASSWORD
 def delete_info(username, password):
     try:
@@ -161,11 +152,12 @@ def delete_info(username, password):
         user = mycursor.fetchone()
         if not user:
             print("User not found")
+
         stored_password = user[0]
 
-        if password == stored_password:
+        if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
             delete_query = "DELETE FROM users WHERE username = %s"
-            mycursor.execute(query,(username,))
+            mycursor.execute(delete_query, (username,))
             mydb.commit()
             print("User deleted successfully")
         else:
@@ -308,12 +300,22 @@ def profile():
 def login():
     if request.method == "POST":
         try:
-            user_input = request.form.get("password")
-            input_validation(user_input)
-            print("Input is valid")
+            username = request.form.get("username")
+            password = request.form.get("password")
+            input_validation(username)
+            input_validation(password)
+
+            query = "SELECT * FROM users WHERE username = %s"
+            mycursor.execute(query, (username,))
+            user = mycursor.fetchone()
+            if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
+                session['user'] = {'username': user[1], 'role': user[8]}
+                regenerate_session()
+                return redirect(url_for('profile'))
+            else:
+                print("Invalid username or password")
         except ValueError as e:
-            #NEED TO ADD IN LOGGING FUNCTION IF THERE IS AN ERROR
-            print(e)
+            print(f"Error: {e}")
     return render_template("login.html")
 
 @app.route('/forget_password')
@@ -328,6 +330,7 @@ def register():
         email = request.form.get('email')
         if check_existing_credentials(username,email):
             print("Username or email already in use")
+            return redirect(url_for('register'))
 
         name = request.form.get('name')
         age = request.form.get('age')
