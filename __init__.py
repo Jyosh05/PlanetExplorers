@@ -1,25 +1,19 @@
 from flask import Flask, render_template,request, jsonify
 import mysql.connector
 #Configuration is a file containing sensitive information
-from Configuration import DB_Config,secret_key, admin_config
+from Configuration import DB_Config,secret_key, admin_config, pepper
 import re
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-#IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY
-#CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
-#ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
-#delete_info(),get_info()
-
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
 
 limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]
+    key_func=get_remote_address,
+    default_limits=["10 per minute", "5 per second"],  # Default rate limits
+    storage_uri="memory://"  # Default in-memory storage
 )
 
 mydb = mysql.connector.connect(
@@ -31,8 +25,6 @@ mydb = mysql.connector.connect(
 )
 
 mycursor = mydb.cursor(buffered=True)
-
-
 
 #Aloysius Portion
 def input_validation(input_string):
@@ -52,55 +44,13 @@ def input_validation(input_string):
         raise ValueError("Invalid input: Harmful input detected")
     return True
 
-def age_validation(age):
-    if not isinstance(age, int) or age<=0:
-        raise ValueError("Invalid input: Age must be a positive integer")
-    return True
-
 
 
 def update_info(input_string):
     pass
 
-
-#READ THIS FIRST!!!!!
-#add_info with role default as "student", if need to change role, cannot use this function
-def add_info(username, password, email, age, address):
-    try:
-        #checking the inputs from the add_info function
-        input_validation(username)
-        input_validation(password)
-        input_validation(email)
-        age_validation(age)
-        input_validation(address)
-        #checking if the user is in the db or not
-        mycursor.execute(
-            "SELECT * FROM users WHERE username = %s OR email = %s",(username,email)
-        )
-        existing_user = mycursor.fetchone()
-        if existing_user:
-            print("error: Username or Email already exists")
-        #standardized role of "student for new user"
-        role = 'student'
-        #parameterized query
-        query = """
-            INSERT INTO users (username, password, email, age, address, role)
-            VALUES (%s,%s,%s,%s,%s)
-        """
-        #tuple to make sure the input cannot be changed
-        values = (username, password, email, age, address, role)
-        #executing the parameterized query and the tuple as the inputs
-        mycursor.execute(query, values)
-        mydb.commit()
-        print("User added successfully")
-    #exception if the sql connector has an error
-    except mysql.connector.Error as err:
-        print(f"error: {str(err)}")
-    #input validation error, means there is malicious code
-    except ValueError as e:
-        print(f"error:{str(e)}")
-
-
+def add_info():
+    pass
 
 def delete_info():
     pass
@@ -132,9 +82,6 @@ for a in tableCheck:
                     """)
         print(f"Table 'users' Created")
 
-
-
-
 mycursor.execute('SELECT * FROM users')
 print(f"Using table 'users' ")
 
@@ -150,7 +97,12 @@ def create_admin_user():
             print("Admin already exists")
         else:
             plain_password = admin_config['password']
-            hashed_password = bcrypt.hashpw(plain_password.encode('utf-8'), bcrypt.gensalt())
+            # Generate a unique salt using bcrypt
+            salt = bcrypt.gensalt()
+            # Add pepper to the password
+            peppered_password = plain_password.encode('utf-8') + pepper.encode('utf-8')
+            # Hash the password using bcrypt with the unique salt
+            hashed_password = bcrypt.hashpw(peppered_password, salt)
 
             insert_admin_query = "INSERT INTO users (username, password, email, age, address, role) VALUES (%s, %s, %s, %s, %s, %s)"
             admin_user = (admin_config['username'], hashed_password, admin_config['email'], admin_config['age'], admin_config['address'], admin_config['role'])
@@ -164,17 +116,17 @@ def create_admin_user():
 
 
 @app.route('/')
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def home():
     return render_template("home.html") # need to create template
 
 @app.route('/store')
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def store():
     return render_template("store.html")
 
 @app.route('/profile')
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def profile():
     #need to add in authentication to ensure user is logged in before they can access profile page
     return render_template("profile.html")
