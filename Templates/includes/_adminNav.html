@@ -1,46 +1,115 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/adminNav.css') }}">
 
-<div class="logoPart">
-  <img src="/static/img/logo.png">
-  <span>PlanetExplorers</span>
-</div>
+<script>
+function openNav() {
+  document.getElementById("mySidenav").style.width = "350px";
+}
+
+function closeNav() {
+  document.getElementById("mySidenav").style.width = "0";
+}
+
+</script>
+
+<div class="header">
+    <a href="{{ url_for('adminHome') }}">
+        <div class="welcome-bar">
+            <img src="static/img/Logo.png">
+            <span>PlanetExplorers</span>
+        </div>
+    </a>
+
+<!--    <div class="dashboardBar">-->
+<!--        <span>Staff Management System</span>-->
+
+<!--&lt;!&ndash;        <a href="/profile">&ndash;&gt;-->
+<!--&lt;!&ndash;            <div class="profile">&ndash;&gt;-->
+<!--&lt;!&ndash;                <i class="fa-solid fa-user"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;        </a>&ndash;&gt;-->
+<!--        <div onclick="openNav()" class="profile">-->
+<!--            <i class="fa-solid fa-user"></i>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<body>
+<div class="main">
+    <div class="sidebar">
+
+        <div id="sidebarUser">
+<!--            <span class="dot"></span>-->
+<!--            <div class="welcome-text">-->
+<!--                {% if 'user_id' in session %}-->
+<!--                <span><img id="pfp" src="{{ User.User.get_profilePic_by_id(session['user_id']) }}" ></span>-->
+<!--                {% else %}-->
+<!--                <span><img src="{{ url_for('static', filename='img/Logo1.png') }}" alt="Default Profile Picture" style="max-width: 35px; max-height: 35px;"></span>-->
+<!--                {% endif %}-->
+<!--            </div>-->
+            <div class="welcome-text">
+                {% if 'user' in session %}
+                <img src="/static/img/default_pp.png">
+                <p><span>{{ session['user']['username'] }}</span>
+                  <p class="role">{{ session['user']['role'] }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <hr>
+
+        <div id="siderbarMain">
 
 
+            <h4>Home</h4>
+
+            <a href="/#">Daily Challenges</a>
+            <br>
+            <a href="/#">Products</a>
+            <br>
+          <br>
 
 
-<nav class="side-nav">
-  <div class="user-info">
-  {% if 'user' in session %}
-  <div class="user-profile">
-    <img src="/static/img/default_pp.png">
-    <div class="user-detail">
-    <p class="username">{{ session['user']['username'] }}</p>
-    <p class="role">{{ session['user']['role'] }}</p>
-      </div>
+                <h4>Others</h4>
+                    <a href="/#">My Account</a>
+          <br>
+                    <a href="/#">Teachers</a>
+          <br>
+                    <a href="/adminStudentTable">Students</a>
+          <br>
+                    <a href="/blogs">Logs</a>
+
+        </div>
+
+
+        <br>
+        <br>
+        <br>
+
+
     </div>
-  {% endif %}
+
+<!--    <div class="mainBody">-->
+<!--        <p>navbaradmin</p>-->
+<!--        <h2>mainBody</h2>-->
+<!--    </div>-->
 </div>
 
-  <ul>
-    <li>Home</li>
-
-        <ul>
-          <li><a href="#">Daily Challenge</a></li>
-          <li><a href="#">Products</a></li>
-        </ul>
-
-
-      <li>Others</li>
-
-        <ul>
-          <li><a href="#">My account</a></li>
-          <li><a href="teachersTable">Teachers</a></li>
-          <li><a href="adminStudentTable">Students</a></li>
-          <li><a href="logs">Logs</a></li>
-        </ul>
-
-    </ul>
-  </ul>
-</nav>
-
+<!--<div id="mySidenav" class="sidenav">-->
+<!--  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>-->
+<!--  <div class="username-container">-->
+<!--    {% if 'user_id' in session %}-->
+<!--      {% if User is defined %}-->
+<!--        <p>Welcome, {{ User.User.get_username_by_id(session['user_id']) }}!</p>-->
+<!--      {% else %}-->
+<!--        <p>Welcome, User is not defined. </p>-->
+<!--      {% endif %}-->
+<!--    {% else %}-->
+<!--      <p>Not logged in. <a href="{{ url_for('login') }}">Login</a></p>-->
+<!--    {% endif %}-->
+<!--  </div>-->
+<!--  <a href="/#" id="profile">Profile</a>-->
+<!--  <a href="#" id="settings">Settings</a>-->
+  <a href="/#" id="logout">Logout</a>
+<!--</div>-->
+</body>

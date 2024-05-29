@@ -5,86 +5,8 @@
     font-family: 'Khula', sans-serif;
   }
 
-.logoPart{
-    color: #fff;
-    background-color: #0D2818;
-    width: 200px;
-    height: 70px;
-    display: flex;
-}
 
-.logoPart img{
-    width: 80px;
-    height: 70px;
-}
-
-.logoPart span{
-    align-content: center;
-}
-
-.user-info .user-profile{
-    display: flex;
-}
-
-.user-info .user-profile p{
-    align-content: center;
-    padding-left: 20px;
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: -30px;
-}
-
-.user-details p {
-  margin: 0; /* Remove default margins */
-}
-
-.user-info p{
-    padding-left: 70px;
-
-}
-
-.user-info img{
-    width:50px;
-    height: 50px;
-}
-
-hr{
-    width: 200px;
-}
-
-.side-nav{
-    color: #000;
-    background-color: #91BBA4;
-    width: 200px;
-    height: 600px;
-}
-
-.side-nav ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.side-nav li {
-    padding: 10px;
-}
-
-/* Nested List Styles */
-.side-nav ul ul {
-    padding-left: 20px;
-}
-
-.side-nav li:hover {
-    background-color: #DBDCDB;
-    height: 60px;
-    width: 200px;
-    padding: 0;
-}
+.header{
 
 
-.side-nav ul ul li a{
-    color: #000;
-    text-decoration: none;
 }
