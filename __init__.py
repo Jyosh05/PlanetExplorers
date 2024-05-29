@@ -453,23 +453,130 @@ def register():
 def adminHome():
     return render_template('adminHome.html')
 
-
-@app.route('/adminStudentTable')
-@roles_required('admin')
-def adminUsersRetrieve():
-    return render_template('adminStudentTable.html', nameOfPage='User Management System')
-
-
 @app.route('/teacherHome')
 @roles_required('teacher')
 def teacherHome():
     return 'Welcome Teacher'
+
+@app.route('/adminTeacherTable', methods=['GET'])
+@roles_required('admin')
+def adminTeachersRetrieve():
+    select_query = "SELECT * FROM users WHERE role = %s or role = %s"
+    mycursor.execute(select_query, ('teacher', 'admin',))
+    rows = mycursor.fetchall()
+    count = len(rows)
+    return render_template('adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count)
+
+@app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
+@roles_required('admin')
+def adminTeacherUpdate(id):
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            role = request.form.get('role')
+
+            # Fetch existing product details from the database
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            teacher_details = mycursor.fetchone()
+
+            if teacher_details:
+                update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                data = (username, password, email, role, id)
+                mycursor.execute(update_teacher, data)
+                mydb.commit()
+
+                return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
+
+            else:
+                return "Teacher not found"
+
+        except Exception as e:
+            print("Error: ", e)
+            mydb.rollback()
+            return "Error occurred while updating teacher"
+
+    else:
+        try:
+            # Fetch existing teacher details to prepopulate the form
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            teacher_details = mycursor.fetchone()
+
+            if teacher_details:
+                return render_template('updateTeacher.html', teacher_details=teacher_details)
+            else:
+                return render_template('updateTeacher.html', teacher_details=None, error="Teacher not found")
+
+        except Exception as e:
+            print('Error:', e)
+            return "Error occurred while fetching teacher details"
 
 
 @app.route('/learnerHome')
 @roles_required('student')
 def learnerHome():
     return render_template('profile.html')
+
+@app.route('/adminStudentTable', methods=['GET'])
+@roles_required('admin')
+def adminUsersRetrieve():
+    select_query = "SELECT * FROM users WHERE role = %s"
+    mycursor.execute(select_query, ('student',))
+    rows = mycursor.fetchall()
+    count = len(rows)
+    return render_template('adminStudentTable.html', nameOfPage='User Management System', students=rows, count=count)
+
+@app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
+@roles_required('admin')
+def adminStudentUpdate(id):
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            role = request.form.get('role')
+
+            # Fetch existing product details from the database
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            student_details = mycursor.fetchone()
+
+            if student_details:
+                update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                data = (username, password, email, role, id)
+                mycursor.execute(update_student, data)
+                mydb.commit()
+
+                return redirect(url_for('adminStudentUpdate', id=student_details[0]))
+
+            else:
+                return "Student not found"
+
+        except Exception as e:
+            print("Error: ", e)
+            mydb.rollback()
+            return "Error occurred while updating student"
+
+    else:
+        try:
+            # Fetch existing teacher details to prepopulate the form
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            student_details = mycursor.fetchone()
+
+            if student_details:
+                return render_template('updateStudent.html', student_details=student_details)
+            else:
+                return render_template('updateStudent.html', student_details=None, error="Student not found")
+
+        except Exception as e:
+            print('Error:', e)
+            return "Error occurred while fetching student details"
+
+
 
 
 '''
