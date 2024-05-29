@@ -271,14 +271,39 @@ print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
 
+
+tableCheck = ['audit_logs']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'audit_logs'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+            CREATE TABLE IF NOT EXISTS audit_logs(
+                log_id INT PRIMARY KEY,
+                event VARCHAR(100) NULL,
+                timestamp DATETIME NULL,
+                user_id VARCHAR(45) NULL
+                
+            )
+        """)
+
+    print(f"Table 'audit_logs' Created")
+
+mycursor.execute('SELECT * FROM audit_logs')
+print(f"Using Table 'audit_logs'")
+
+audit_log = mycursor.fetchall()
+
+
 def log_this(event, user_id = "unknown"):
     # We do a select max to get the last log_id in the table
     # the fetchone returns the field in a tuple format
     mycursor.execute("SELECT MAX(log_id) FROM audit_logs")
     actual_id = mycursor.fetchone()
     print(actual_id[0])
-    if actual_id == None:
-        actual_id = 0
+    if actual_id[0] is None:
+        actual_id = (0,)  # Ensure actual_id is a tuple with the first element as 0
     next_id = actual_id[0] + 1
     # ts1 = timestamp()
     sql = "INSERT INTO audit_logs (log_id, event, timestamp, user_id) VALUES (%s,%s,%s,%s)"
@@ -359,7 +384,7 @@ def login():
             if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                 session['user'] = {'username': user[1], 'role': user[9]}
                 regenerate_session()
-                log_this("login successful", user)
+                log_this("login successful", user[0])  # Pass user_id instead of the whole user tuple
                 #return render_template("profile.html")
                 role = user[9]
                 print(f"Logged in user role: {role}")
