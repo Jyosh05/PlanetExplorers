@@ -47,7 +47,7 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor(buffered=True)
 
-# Caleb's entire ratelimiting, secure session management, https enforcement
+# Caleb's entire rate limiting, secure session management, https enforcement
 # Session Management
 app.config['SECRET_KEY'] = secret_key
 app.config['SESSION_COOKIE_HTTPONLY'] = True
