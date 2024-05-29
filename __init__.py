@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
+from flask import Flask, render_template, request, redirect, url_for, session, abort
 import mysql.connector
 # Configuration is a file containing sensitive information
 from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, \
@@ -10,26 +10,21 @@ from flask_limiter.util import get_remote_address
 from functools import wraps
 from flask_mail import Message, Mail
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from flask_session import Session
+from flask_talisman import Talisman
+from datetime import timedelta
 import requests
 import psycopg2
 import datetime
 
-#!!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
+# !!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
-#!!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
-#ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, password, email, age, address),
-#delete_info(),get_info()
+# !!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
+# ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, /password, email, age, address),
+# delete_info(),get_info()
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = secret_key
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can also use 'Strict'
-app.config['REMEMBER_COOKIE_SECURE'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
-
-app.config['SESSION_PROTECTION'] = 'strong'
 
 # Mail configuration
 app.config.update(
@@ -42,12 +37,6 @@ app.config.update(
 )
 mail = Mail(app)
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]
-)
-
 mydb = mysql.connector.connect(
     host=DB_Config['host'],
     user=DB_Config['user'],
@@ -58,8 +47,36 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor(buffered=True)
 
+# Caleb's entire ratelimiting, secure session management, https enforcement
+# Session Management
+app.config['SECRET_KEY'] = secret_key
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can also use 'Strict'
+app.config['REMEMBER_COOKIE_SECURE'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=3600)  # 1 hour
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+app.config['SESSION_PROTECTION'] = 'strong'
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+Session(app)
+
+
 def regenerate_session():
     session.modified = True
+    session.new = True
+
+
+# Secure the app with Flask-Talisman
+Talisman(app, content_security_policy=None)
+
+# Rate limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 
 # Aloysius Portion
@@ -234,15 +251,17 @@ def roles_required(*roles):
             if 'user' not in session or session['user']['role'] not in roles:
                 return abort(403)  # Forbidden
             return func(*args, **kwargs)
+
         return decorated_function
+
     return wrapper
+
 
 role_redirects = {
     'admin': 'adminHome',
     'teacher': 'teacherHome',
     'student': 'learnerHome'
 }
-
 
 tableCheck = ['users']
 for a in tableCheck:
@@ -271,7 +290,6 @@ print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
 
-
 tableCheck = ['audit_logs']
 for a in tableCheck:
     mycursor.execute(f"SHOW TABLES LIKE 'audit_logs'")
@@ -296,7 +314,7 @@ print(f"Using Table 'audit_logs'")
 audit_log = mycursor.fetchall()
 
 
-def log_this(event, user_id = "unknown"):
+def log_this(event, user_id="unknown"):
     # We do a select max to get the last log_id in the table
     # the fetchone returns the field in a tuple format
     mycursor.execute("SELECT MAX(log_id) FROM audit_logs")
@@ -327,8 +345,9 @@ def create_admin_user():
 
             insert_admin_query = "INSERT INTO users (username, password, email, name, age, address, phone, role) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             admin_user = (
-            admin_config['username'], hashed_password, admin_config['email'], admin_config['name'], admin_config['age'],
-            admin_config['address'], admin_config['phone'], admin_config['role'])
+                admin_config['username'], hashed_password, admin_config['email'], admin_config['name'],
+                admin_config['age'],
+                admin_config['address'], admin_config['phone'], admin_config['role'])
 
             mycursor.execute(insert_admin_query, admin_user)
             mydb.commit()
@@ -385,7 +404,7 @@ def login():
                 session['user'] = {'username': user[1], 'role': user[9]}
                 regenerate_session()
                 log_this("login successful", user[0])  # Pass user_id instead of the whole user tuple
-                #return render_template("profile.html")
+                # return render_template("profile.html")
                 role = user[9]
 
                 print(f"Logged in user role: {role}")
@@ -435,6 +454,7 @@ def register():
 @roles_required('admin')
 def adminHome():
     return render_template('adminHome.html')
+
 
 @app.route('/adminStudentTable')
 @roles_required('admin')
@@ -504,14 +524,13 @@ def update_product():
 
 '''
 
+
 @app.route('/blogs')
 def blogs():
     mycursor.execute("SELECT * FROM audit_logs")
     data = mycursor.fetchall()
     print(data)
-    return render_template("audit_logs.html", data = data, nameOfPage='Log')
-
-
+    return render_template("audit_logs.html", data=data, nameOfPage='Log')
 
 
 if __name__ == '__main__':
@@ -519,6 +538,3 @@ if __name__ == '__main__':
     # Call the function when the application starts
     create_admin_user()
     app.run(debug=True)
-
-
-
