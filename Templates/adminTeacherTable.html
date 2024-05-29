@@ -1,0 +1,44 @@
+{% extends 'adminBase.html' %}
+
+{% block title %} Teacher Users {% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/adminStudentTable.css') }}">
+
+<div class="count" style="font-weight: bolder;" >
+  {% if count == 0 %}
+  <p>There are no teachers.</p>
+  {% elif count == 1 %}
+  <p>There is 1 teacher.</p>
+  {% else %}
+  <p>There are {{ count }} teachers.</p>
+  {% endif %}
+
+</div>
+
+<table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+          <th>Name</th>
+        <th>Email</th>
+          <th>Role</th>
+
+
+      </tr>
+    </thead>
+   <tbody>
+    {% for teacher in teachers %}
+        <tr>
+            <td>{{ teacher[0] }}</td>
+            <td>{{ teacher[1] }}</td>
+            <td>{{ teacher[4] }}</td>
+            <td>{{ teacher[3] }}</td>
+            <td>{{ teacher[9] }}</td>
+            <td><a href="{{ url_for('adminTeacherUpdate', id=teacher[0]) }}" class="btn btn-warning">Update</a></td>
+
+   {% endfor %}
+            </tbody>
+        </table>
+{% endblock %}

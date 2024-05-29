@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, flash
 import mysql.connector
 # Configuration is a file containing sensitive information
 from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, \
@@ -32,14 +32,13 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 app.config['SESSION_PROTECTION'] = 'strong'
 
 # Mail configuration
-app.config.update(
-    MAIL_SERVER=email_config['mail_server'],
-    MAIL_PORT=email_config['mail_port'],
-    MAIL_USE_TLS=email_config['mail_use_tls'],
-    MAIL_USE_SSL=email_config['mail_use_ssl'],
-    MAIL_USERNAME=email_config['mail_username'],
-    MAIL_PASSWORD=email_config['mail_password']
-)
+app.config['MAIL_SERVER']=email_config['mail_server'],
+app.config['MAIL_PORT']=email_config['mail_port'],
+app.config['MAIL_USE_TLS']=email_config['mail_use_tls'],
+app.config['MAIL_USE_SSL']=email_config['mail_use_ssl'],
+app.config['MAIL_USERNAME']=email_config['mail_username'],
+app.config['MAIL_PASSWORD']=email_config['mail_password']
+
 mail = Mail(app)
 
 limiter = Limiter(
@@ -211,7 +210,7 @@ def confirm_token(token, expiration=300):
 
 
 def send_reset_link_email(email, subject, template):  # template is the html content of the email
-    msg = Message(subject, recipients=[email], html=template, sender='no-reply')
+    msg = Message(subject, recipients=[email], html=template, sender=email_config['mail_password'])
     mail.send(msg)
 
 
@@ -223,7 +222,24 @@ def verify_response(response):
     }
     response = requests.post(GOOGLE_VERIFY_URL, data=payload)
     data = response.json()
-    return data['success']
+    # return data['success']
+    print("reCAPTCHA verification response:", data)  # Debug statement
+    return data.get('success', False)
+
+
+# Function to update user password
+def update_password(username, new_password):
+    try:
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+
+        # Update the user's password in the database
+        update_query = "UPDATE users SET password = %s WHERE username = %s"
+        mycursor.execute(update_query, (hashed_password, username))
+        mydb.commit()
+
+        print("Password updated successfully")
+    except Exception as e:
+        print("Error updating password:", e)
 
 
 # Role-based access control
@@ -399,9 +415,56 @@ def login():
     return render_template("login.html")
 
 
-@app.route('/forget_password')
+@app.route('/forget_password', methods=['GET', 'POST'])
 def forget_password():
-    return render_template("forget_password.html")
+    if request.method == "POST":
+        email = request.form['email']
+        recaptcha = request.form['g-recaptcha-response']
+
+        #verify recaptcha
+        valid = verify_response(recaptcha)
+        if valid:
+            # generate reset token
+            token = generate_confirm_token(email)
+            reset_url = url_for('reset_password', token=token, _external=True)
+            subject = 'Password Reset Requested'
+            template = f'<p>Click the link to reset your password: <a href="{reset_url}">{reset_url}</a></p>'
+            send_reset_link_email(email, subject, template)
+            flash('Password reset link has been sent to your email.', 'success')
+        else:
+            flash('Invalid reCAPTCHA. Please try again.', 'danger')
+
+        return redirect(url_for('forget_password'))
+
+    return render_template("forget_password.html", RECAPTCHA_SITE_KEY=RECAPTCHA_SITE_KEY)
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # Verify the reset token
+    email = confirm_token(token)
+    if not email:
+        flash('Invalid or expired token.', 'danger')
+        return redirect(url_for('forget_password'))  # Redirect to the forgot password page if token is invalid
+
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        # Validate new password and confirm password
+        if new_password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return redirect(request.url)
+
+        # Update user's password in the database
+        update_password(email, new_password)
+
+        flash('Your password has been reset successfully.', 'success')
+        return redirect(url_for('login'))  # Redirect to login page after successful password reset
+
+    return render_template('reset_password.html', token=token)
+
+
 
 
 @app.route('/register', methods=["GET", "POST"])
@@ -436,10 +499,6 @@ def register():
 def adminHome():
     return render_template('adminHome.html')
 
-@app.route('/adminStudentTable')
-@roles_required('admin')
-def adminUsersRetrieve():
-    return render_template('adminStudentTable.html', nameOfPage='User Management System')
 
 
 @app.route('/teacherHome')
@@ -447,11 +506,125 @@ def adminUsersRetrieve():
 def teacherHome():
     return 'Welcome Teacher'
 
+@app.route('/adminTeacherTable', methods=['GET'])
+@roles_required('admin')
+def adminTeachersRetrieve():
+    select_query = "SELECT * FROM users WHERE role = %s or role = %s"
+    mycursor.execute(select_query, ('teacher', 'admin',))
+    rows = mycursor.fetchall()
+    count = len(rows)
+    return render_template('adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count)
+
+@app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
+@roles_required('admin')
+def adminTeacherUpdate(id):
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            role = request.form.get('role')
+
+            # Fetch existing product details from the database
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            teacher_details = mycursor.fetchone()
+
+            if teacher_details:
+                update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                data = (username, password, email, role, id)
+                mycursor.execute(update_teacher, data)
+                mydb.commit()
+
+                return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
+
+            else:
+                return "Teacher not found"
+
+        except Exception as e:
+            print("Error: ", e)
+            mydb.rollback()
+            return "Error occurred while updating teacher"
+
+    else:
+        try:
+            # Fetch existing teacher details to prepopulate the form
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            teacher_details = mycursor.fetchone()
+
+            if teacher_details:
+                return render_template('updateTeacher.html', teacher_details=teacher_details)
+            else:
+                return render_template('updateTeacher.html', teacher_details=None, error="Teacher not found")
+
+        except Exception as e:
+            print('Error:', e)
+            return "Error occurred while fetching teacher details"
+
 
 @app.route('/learnerHome')
 @roles_required('student')
 def learnerHome():
     return render_template('profile.html')
+
+@app.route('/adminStudentTable', methods=['GET'])
+@roles_required('admin')
+def adminUsersRetrieve():
+    select_query = "SELECT * FROM users WHERE role = %s"
+    mycursor.execute(select_query, ('student',))
+    rows = mycursor.fetchall()
+    count = len(rows)
+    return render_template('adminStudentTable.html', nameOfPage='User Management System', students=rows, count=count)
+
+@app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
+@roles_required('admin')
+def adminStudentUpdate(id):
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            role = request.form.get('role')
+
+            # Fetch existing product details from the database
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            student_details = mycursor.fetchone()
+
+            if student_details:
+                update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                data = (username, password, email, role, id)
+                mycursor.execute(update_student, data)
+                mydb.commit()
+
+                return redirect(url_for('adminStudentUpdate', id=student_details[0]))
+
+            else:
+                return "Student not found"
+
+        except Exception as e:
+            print("Error: ", e)
+            mydb.rollback()
+            return "Error occurred while updating student"
+
+    else:
+        try:
+            # Fetch existing teacher details to prepopulate the form
+            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            student_details = mycursor.fetchone()
+
+            if student_details:
+                return render_template('updateStudent.html', student_details=student_details)
+            else:
+                return render_template('updateStudent.html', student_details=None, error="Student not found")
+
+        except Exception as e:
+            print('Error:', e)
+            return "Error occurred while fetching student details"
+
+
 
 
 '''

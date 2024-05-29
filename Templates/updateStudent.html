@@ -1,0 +1,39 @@
+{% extends 'adminBase.html' %}
+
+{% block title %} Update Student {% endblock %}
+
+{% block content %}
+<form method="POST" action="">
+    <input type="hidden" id="id" name="id" value="{{ student_details[0] }}">
+        <div class="form-inputs">
+            {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+            {% if student_details %}
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" class="form-control" id="username" name="username" value="{{ student_details[1] }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" value="{{ student_details[2] }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ student_details[3] }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role:</label>
+                    <input type="text" class="form-control" id="role" name="role" value="{{ student_details[9] }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        {% else %}
+            <div class="alert alert-warning">No teacher details available</div>
+        {% endif %}
+    </div>
+
+
+{% endblock %}
+

@@ -4,9 +4,40 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/adminStudentTable.css') }}">
-<nav class="nav navbar sticky-top">
-    <div class="user-manage">
-        <h2>User Management System</h2>
-    </div>
-</nav>
+
+<div class="count" style="font-weight: bolder;">
+  {% if count == 0 %}
+  <p>There are no students.</p>
+  {% elif count == 1 %}
+  <p>There is 1 student.</p>
+  {% else %}
+  <p>There are {{ count }} students.</p>
+  {% endif %}
+</div>
+
+<table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+          <th>Name</th>
+        <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+
+
+      </tr>
+    </thead>
+   <tbody>
+    {% for student in students %}
+        <tr>
+            <td>{{ student[0] }}</td>
+            <td>{{ student[1] }}</td>
+            <td>{{ student[4] }}</td>
+            <td>{{ student[3] }}</td>
+            <td>{{ student[9] }}</td>
+            <td><a href="{{ url_for('adminStudentUpdate', id=student[0]) }}" class="btn btn-warning">Update</a></td>
+   {% endfor %}
+            </tbody>
+        </table>
 {% endblock %}

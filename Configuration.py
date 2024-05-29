@@ -26,9 +26,9 @@ email_config = {
     'mail_use_tls' : True,
     'mail_use_ssl': False,
     'mail_username' : 'jyoshwlitha@gmail.com',
-    'mail_password' : 'iizr xcth iqld aoep'
+    'mail_password' : 'JYOSHNA2006'
 }
 
-RECAPTCHA_SITE_KEY = '6LdTrukpAAAAAFS4uA4I6E5XwXVnatDgvyBTRIcy'
-RECAPTCHA_SECRET_KEY = '6LdTrukpAAAAAGVFg3LIh4dj7J9OkbKAH5P7MH5N'
+RECAPTCHA_SITE_KEY = '6LexAuwpAAAAALrgXs-NAppnveFtre_-oeg6ELen'
+RECAPTCHA_SECRET_KEY = '6LexAuwpAAAAAGzqHUtIhor0C--UtfAzrWAhACZs'
 GOOGLE_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
