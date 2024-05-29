@@ -382,11 +382,12 @@ def login():
             mycursor.execute(query, (username,))
             user = mycursor.fetchone()
             if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
-                session['user'] = {'username': user[1], 'role': user[8]}
+                session['user'] = {'username': user[1], 'role': user[9]}
                 regenerate_session()
                 log_this("login successful", user[0])  # Pass user_id instead of the whole user tuple
                 #return render_template("profile.html")
-                role = user[8]
+
+                role = user[9]
                 print(f"Logged in user role: {role}")
                 return redirect(url_for(role_redirects.get(role, 'home')))
             else:
@@ -438,7 +439,7 @@ def adminHome():
 @app.route('/adminStudentTable')
 @roles_required('admin')
 def adminUsersRetrieve():
-    return render_template('adminStudentTable.html')
+    return render_template('adminStudentTable.html', nameOfPage='User Management System')
 
 
 @app.route('/teacherHome')
@@ -508,7 +509,7 @@ def blogs():
     mycursor.execute("SELECT * FROM audit_logs")
     data = mycursor.fetchall()
     print(data)
-    return render_template("audit_logs.html", data = data)
+    return render_template("audit_logs.html", data = data, nameOfPage='Log')
 
 
 

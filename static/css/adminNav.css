@@ -2,11 +2,11 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Khula', sans-serif;
+    font-family: 'Verdana', sans-serif;
   }
 
 
 .header{
-
-
+    background-color: #1F2E25;
+    color: #fff;
 }
