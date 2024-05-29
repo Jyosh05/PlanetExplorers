@@ -131,7 +131,6 @@ def check_existing_credentials(username=None, email=None):
         print(f"Error: {str(err)}")
 
 
-# NEED ENCRYPTION OF THE PASSWORD
 # READ THIS FIRST!!!!!
 # add_info with role default as "student", if you need to change role, cannot use this function
 def add_info(username, password, email, name, age, address, phone):
@@ -170,7 +169,6 @@ def add_info(username, password, email, name, age, address, phone):
         print(f"error: {str(e)}")
 
 
-# NEED DECRYPTION OF THE PASSWORD
 def delete_info(username, password):
     try:
         input_validation(username)
