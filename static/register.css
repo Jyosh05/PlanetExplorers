@@ -8,6 +8,13 @@ body {
     font-family: Arial, sans-serif;
 }
 
+.back_to_login{
+    text-align:center;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+}
+
 img {
     position: absolute;
     top: 0;
