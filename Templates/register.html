@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Registration</title>
-    <link rel="stylesheet" type="text/css" href="Static/register.css">
+    <link rel="stylesheet" type="text/css" href="../static/register.css">
 </head>
 <body>
+    <img src="../static/img/logo.png" width="151" height="113">
     <form id="registrationForm" method="POST" action="/register">
         <div id="part1">
             <label for="username">Username:</label>
+            <br>
             <input type="text" id="username" name="username"><br>
             <label for="password">Password:</label>
+            <br>
             <input type="password" id="password" name="password"><br>
             <label for="email">Email:</label>
+            <br>
             <input type="email" id="email" name="email"><br>
             <button type="button" onclick="goToPart2()">Next</button>
         </div>

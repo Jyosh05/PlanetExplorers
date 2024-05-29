@@ -382,11 +382,11 @@ def login():
             mycursor.execute(query, (username,))
             user = mycursor.fetchone()
             if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
-                session['user'] = {'username': user[1], 'role': user[9]}
+                session['user'] = {'username': user[1], 'role': user[8]}
                 regenerate_session()
                 log_this("login successful", user[0])  # Pass user_id instead of the whole user tuple
                 #return render_template("profile.html")
-                role = user[9]
+                role = user[8]
                 print(f"Logged in user role: {role}")
                 return redirect(url_for(role_redirects.get(role, 'home')))
             else:
