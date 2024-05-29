@@ -8,12 +8,29 @@ body {
     font-family: Arial, sans-serif;
 }
 
-.back_to_login{
-    text-align:center;
-    display:flex;
-    justify-content:center;
-    gap:10px;
+.back_to_login {
+    display: flex;
+    align-items: center;  /* Vertically center the items */
+    justify-content: center;  /* Center the items horizontally */
+    gap: 10px;  /* Space between the text and link */
+    margin-top: 20px;  /* Add some margin to the top for spacing */
 }
+
+.back_to_login h4 {
+    margin: 0;  /* Remove default margin */
+    font-size: 16px;  /* Adjust font size as needed */
+}
+
+.back_to_login a {
+    text-decoration: none;
+    color: #27ae60;  /* Adjust link color as needed */
+    font-size: 16px;  /* Adjust font size as needed */
+}
+
+.back_to_login a:hover {
+    text-decoration: underline;
+}
+
 
 img {
     position: absolute;
@@ -58,6 +75,7 @@ label {
 }
 
 input {
+    background:#E8FFE9;
     margin-bottom: 10px;
     padding: 8px;
     border: 1px solid #bdc3c7;
