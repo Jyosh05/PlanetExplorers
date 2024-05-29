@@ -271,7 +271,7 @@ print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
 
-
+# hazig audit
 tableCheck = ['audit_logs']
 for a in tableCheck:
     mycursor.execute(f"SHOW TABLES LIKE 'audit_logs'")
@@ -294,6 +294,30 @@ mycursor.execute('SELECT * FROM audit_logs')
 print(f"Using Table 'audit_logs'")
 
 audit_log = mycursor.fetchall()
+
+# caleb store
+tableCheck = ['storeproducts']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'storeproducts'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+            CREATE TABLE IF NOT EXISTS storeproducts(
+                id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                price DECIMAL(10, 2) NOT NULL,
+                quantity INT NOT NULL
+
+            )
+        """)
+
+    print(f"Table 'storeproducts' Created")
+
+mycursor.execute('SELECT * FROM storeproducts')
+print(f"Using Table 'storeproducts'")
+storeproducts = mycursor.fetchall()
 
 
 def log_this(event, user_id = "unknown"):
