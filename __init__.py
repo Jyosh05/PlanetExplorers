@@ -209,8 +209,7 @@ def generate_confirm_token(email):
     # URLSafeTimedSerializer is a class in itsdangerous designed to create and verify timed, URL safe tokens
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])  # The serializer requires a secret key
     # to ensure the tokens are securely generated and can be validated later.
-    return serializer.dumps(email,
-                            salt=app.config['SECRET_KEY'])  # dumps method serializes the email address into a token
+    return serializer.dumps(email, salt=app.config['SECRET_KEY'])  # dumps method serializes the email address into a token
 
 
 # the salt parameter adds an additional layer of security
@@ -222,8 +221,7 @@ def confirm_token(token, expiration=300):
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     try:
         # The loads method deserializes the token to retrieve the original email address.
-        email = serializer.loads(token, salt=app.config['SECRET_KEY'],
-                                 max_age=expiration)  # The salt parameter ensures that the token was generated with the correct secret key.
+        email = serializer.loads(token, salt=app.config['SECRET_KEY'], max_age=expiration)  # The salt parameter ensures that the token was generated with the correct secret key.
     except SignatureExpired:  # if token is expired or invalid, it returns false
         return False
     return email
