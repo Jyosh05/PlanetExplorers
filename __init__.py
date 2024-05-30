@@ -312,6 +312,32 @@ print(f"Using Table 'audit_logs'")
 audit_log = mycursor.fetchall()
 
 
+tableCheck = ['storeproducts']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'storeproducts'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+        CREATE TABLE `storeproducts` (
+             `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+             `name` varchar(255) NOT NULL,
+             `description` text,
+             `price` decimal(10,2) NOT NULL,
+            `quantity` int NOT NULL,
+            'image_path varchar(255) NOT NULL,
+
+            )
+        """)
+
+    print(f"Table 'storeproducts' Created")
+
+mycursor.execute('SELECT * FROM storeproducts')
+print(f"Using Table 'storeproducts'")
+
+storeproducts = mycursor.fetchall()
+
+
 def log_this(event, user_id="unknown"):
     # We do a select max to get the last log_id in the table
     # the fetchone returns the field in a tuple format
@@ -366,12 +392,6 @@ def before_request():
 @limiter.limit("5 per minute")
 def home():
     return render_template("home.html")  # need to create template
-
-
-@app.route('/store')
-@limiter.limit("5 per minute")
-def store():
-    return render_template("store.html")
 
 
 @app.route('/profile')
@@ -578,56 +598,101 @@ def adminStudentUpdate(id):
 
 
 
-
-'''
 @app.route('/store')
 @limiter.limit("5 per minute")
 def store():
+    mycursor = mydb.cursor()
     mycursor.execute("SELECT * FROM storeproducts")
     products = mycursor.fetchall()
+    mycursor.close()
     return render_template("store.html", products=products)
 
-@app.route('/admin/store')
-@role_required('admin')
-def admin_store():
+@app.route('/adminstore')
+@roles_required('admin')
+def adminstore():
+    mycursor = mydb.cursor()
     mycursor.execute("SELECT * FROM storeproducts")
     products = mycursor.fetchall()
+    mycursor.close()
     return render_template("adminStore.html", products=products)
 
-@app.route('/admin/store/add', methods=['POST'])
-@role_required('admin')
-def add_product():
+
+UPLOAD_FOLDER = 'static/img'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+
+
+@app.route('/adminstoreadd', methods=['POST'])
+@roles_required('admin')
+def adminstoreadd():
+    mycursor = mydb.cursor()
     name = request.form['name']
     description = request.form['description']
     price = request.form['price']
     quantity = request.form['quantity']
-    mycursor.execute("INSERT INTO storeproducts (name, description, price, quantity) VALUES (%s, %s, %s, %s)",
-                     (name, description, price, quantity))
-    mydb.commit()
-    return redirect(url_for('admin_store'))
 
-@app.route('/admin/store/delete', methods=['POST'])
-@role_required('admin')
-def delete_product():
+    # Handle image upload
+    file = request.files.get('image')
+    if file and allowed_file(file.filename):
+        filename = file.filename
+        filepath = f"{app.config['UPLOAD_FOLDER']}/{filename}"
+        file.save(filepath)
+        image_path = f"img/{filename}"  # Store relative path
+
+        mycursor.execute(
+            "INSERT INTO storeproducts (name, description, price, quantity, image_path) VALUES (%s, %s, %s, %s, %s)",
+            (name, description, price, quantity, image_path))
+        mydb.commit()
+        mycursor.close()
+        return redirect(url_for('adminstore'))
+
+    return "File not allowed or not provided", 400
+
+
+@app.route('/adminstoredelete', methods=['POST'])
+@roles_required('admin')
+def adminstoredelete():
+    mycursor = mydb.cursor()
     product_id = request.form['product_id']
     mycursor.execute("DELETE FROM storeproducts WHERE id = %s", (product_id,))
     mydb.commit()
-    return redirect(url_for('admin_store'))
+    mycursor.close()
+    return redirect(url_for('adminstore'))
 
-@app.route('/admin/store/update', methods=['POST'])
-@role_required('admin')
-def update_product():
+
+@app.route('/adminstoreupdate', methods=['POST'])
+@roles_required('admin')
+def adminstoreupdate():
+    mycursor = mydb.cursor()
     product_id = request.form['product_id']
     name = request.form['name']
     description = request.form['description']
     price = request.form['price']
     quantity = request.form['quantity']
-    mycursor.execute("UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s WHERE id = %s",
-                     (name, description, price, quantity, product_id))
-    mydb.commit()
-    return redirect(url_for('admin_store'))
 
-'''
+    # Handle image upload
+    file = request.files.get('image')
+    if file and allowed_file(file.filename):
+        filename = file.filename
+        filepath = f"{app.config['UPLOAD_FOLDER']}/{filename}"
+        file.save(filepath)
+        image_path = f"img/{filename}"
+
+        # Update the product with a new image
+        mycursor.execute(
+            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s, image_path = %s WHERE id = %s",
+            (name, description, price, quantity, image_path, product_id))
+    else:
+        # Update the product without changing the image
+        mycursor.execute(
+            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s WHERE id = %s",
+            (name, description, price, quantity, product_id))
+
+    mydb.commit()
+    mycursor.close()
+    return redirect(url_for('adminstore'))
 
 
 @app.route('/blogs')
