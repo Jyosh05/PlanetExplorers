@@ -463,6 +463,7 @@ def login():
 
     return render_template("login.html")
 
+
 @app.route('/forget_password', methods=['GET', 'POST'])
 def forget_password():
     if request.method == "POST":
