@@ -597,6 +597,12 @@ def adminStudentUpdate(id):
             return "Error occurred while fetching student details"
 
 
+UPLOAD_FOLDER = 'static/img'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+
 
 @app.route('/store')
 @limiter.limit("5 per minute")
@@ -607,6 +613,7 @@ def store():
     mycursor.close()
     return render_template("store.html", products=products)
 
+
 @app.route('/adminstore')
 @roles_required('admin')
 def adminstore():
@@ -615,13 +622,6 @@ def adminstore():
     products = mycursor.fetchall()
     mycursor.close()
     return render_template("adminStore.html", products=products)
-
-
-UPLOAD_FOLDER = 'static/img'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
 
 @app.route('/adminstoreadd', methods=['POST'])

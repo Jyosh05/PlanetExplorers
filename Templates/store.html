@@ -9,7 +9,10 @@
         {% for product in products %}
         <li>
             <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" width="100" height="100">
-            {{ product[1] }} - ${{ product[3] }} ({{ product[4] }} in stock)
+            <h2>{{ product[1] }}</h2>
+            <p>{{ product[2] }}</p> <!-- Displaying the product description -->
+            <p>Price: ${{ product[3] }}</p>
+            <p>Stock: {{ product[4] }} units available</p>
         </li>
         {% endfor %}
     </ul>
