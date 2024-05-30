@@ -26,7 +26,7 @@ email_config = {
     'mail_use_tls' : True,
     'mail_use_ssl': False,
     'mail_username' : 'jyoshwlitha@gmail.com',
-    'mail_password' : 'JYOSHNA2006'
+    'mail_password' : 'iizr xcth iqld aoep'
 }
 
 RECAPTCHA_SITE_KEY = '6Lf4S-wpAAAAAHD-uP1RuhOVDb_VmFD4ZWTKbmOq'

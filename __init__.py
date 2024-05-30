@@ -246,13 +246,13 @@ def verify_response(response):
 
 
 # Function to update user password
-def update_password(username, new_password):
+def update_password(email, new_password):
     try:
         hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
 
         # Update the user's password in the database
-        update_query = "UPDATE users SET password = %s WHERE username = %s"
-        mycursor.execute(update_query, (hashed_password, username))
+        update_query = "UPDATE users SET password = %s WHERE email = %s"
+        mycursor.execute(update_query, (hashed_password, email))
         mydb.commit()
 
         print("Password updated successfully")
@@ -488,7 +488,7 @@ def reset_password(token):
         return redirect(url_for('forget_password'))  # Redirect to the forgot password page if token is invalid
 
     if request.method == 'POST':
-        new_password = request.form['new_password']
+        new_password = request.form['password']
         confirm_password = request.form['confirm_password']
 
         # Validate new password and confirm password
@@ -704,7 +704,7 @@ def adminstoreadd():
         filename = file.filename
         filename = secure_filename(filename)
         filepath = f"{app.config['UPLOAD_FOLDER']}/{filename}"
-        file.save(filepath)
+        # file.save(filepath)
         image_path = f"img/{filename}"  # Store relative path
 
         mycursor.execute(
