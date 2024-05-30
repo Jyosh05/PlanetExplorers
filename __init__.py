@@ -1,8 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort
+from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
 import mysql.connector
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, \
-    GOOGLE_VERIFY_URL
+from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY
 import re
 import bcrypt
 from flask_limiter import Limiter
@@ -36,6 +35,8 @@ app.config.update(
     MAIL_PASSWORD=email_config['mail_password']
 )
 mail = Mail(app)
+GOOGLE_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
+
 
 mydb = mysql.connector.connect(
     host=DB_Config['host'],
@@ -240,6 +241,20 @@ def verify_response(response):
     data = response.json()
     return data['success']
 
+# Function to update user password
+def update_password(username, new_password):
+    try:
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+
+        # Update the user's password in the database
+        update_query = "UPDATE users SET password = %s WHERE username = %s"
+        mycursor.execute(update_query, (hashed_password, username))
+        mydb.commit()
+
+        print("Password updated successfully")
+    except Exception as e:
+        print("Error updating password:", e)
+
 
 # Role-based access control
 def roles_required(*roles):
@@ -321,11 +336,11 @@ for a in tableCheck:
         mycursor.execute("""
         CREATE TABLE `storeproducts` (
              `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-             `name` varchar(255) NOT NULL,
-             `description` text,
-             `price` decimal(10,2) NOT NULL,
-            `quantity` int NOT NULL,
-            'image_path varchar(255) NOT NULL,
+             `name` VARCHAR(255) NOT NULL,
+             `description` VARCHAR(600),
+             `price` DECIMAL(10,2) NOT NULL,
+            `quantity` INT NOT NULL,
+            `image_path` VARCHAR(255) NOT NULL
 
             )
         """)
@@ -436,9 +451,55 @@ def login():
     return render_template("login.html")
 
 
-@app.route('/forget_password')
+@app.route('/forget_password', methods=['GET', 'POST'])
 def forget_password():
-    return render_template("forget_password.html")
+    if request.method == "POST":
+        email = request.form['email']
+        recaptcha = request.form['g-recaptcha-response']
+
+        #verify recaptcha
+        valid = verify_response(recaptcha)
+        if valid:
+            # generate reset token
+            token = generate_confirm_token(email)
+            reset_url = url_for('reset_password', token=token, _external=True)
+            subject = 'Password Reset Requested'
+            template = f'<p>Click the link to reset your password: <a href="{reset_url}">{reset_url}</a></p>'
+            send_reset_link_email(email, subject, template)
+            flash('Password reset link has been sent to your email.', 'success')
+        else:
+            flash('Invalid reCAPTCHA. Please try again.', 'danger')
+
+        return redirect(url_for('forget_password'))
+
+    return render_template("forget_password.html", site_key=RECAPTCHA_SITE_KEY)
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # Verify the reset token
+    email = confirm_token(token)
+    if not email:
+        flash('Invalid or expired token.', 'danger')
+        return redirect(url_for('forget_password'))  # Redirect to the forgot password page if token is invalid
+
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        # Validate new password and confirm password
+        if new_password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return redirect(request.url)
+
+        # Update user's password in the database
+        update_password(email, new_password)
+
+        flash('Your password has been reset successfully.', 'success')
+        return redirect(url_for('login'))  # Redirect to login page after successful password reset
+
+    return render_template('reset_password.html', token=token)
+
 
 
 @app.route('/register', methods=["GET", "POST"])
