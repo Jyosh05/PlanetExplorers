@@ -17,6 +17,7 @@ from datetime import timedelta
 import requests
 import psycopg2
 import datetime
+import urllib.parse
 
 # !!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
@@ -452,8 +453,15 @@ def login():
         except ValueError as e:
             print(f"Error: {e}")
             log_this("Runtime error during login")
-    return render_template("login.html")
 
+    # Encode sensitive data in the URL for GET requests
+    if request.method == "GET" and 'username' in request.args and 'password' in request.args:
+        encoded_username = urllib.parse.quote(request.args.get("username"))
+        encoded_password = urllib.parse.quote(request.args.get("password"))
+        encoded_url = f"/login?username={encoded_username}&password={encoded_password}"
+        return redirect(encoded_url)
+
+    return render_template("login.html")
 
 @app.route('/forget_password', methods=['GET', 'POST'])
 def forget_password():
