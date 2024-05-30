@@ -241,7 +241,9 @@ def verify_response(response):
     }
     response = requests.post(GOOGLE_VERIFY_URL, data=payload)
     data = response.json()
+    print(data)
     return data['success']
+
 
 # Function to update user password
 def update_password(username, new_password):
