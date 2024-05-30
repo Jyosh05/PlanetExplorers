@@ -31,7 +31,6 @@ body {
     text-decoration: underline;
 }
 
-
 img {
     position: absolute;
     top: 0;
@@ -75,13 +74,40 @@ label {
 }
 
 input {
-    background:#E8FFE9;
+    background: #E8FFE9;
+    color: #333; /* Set a default text color */
     margin-bottom: 10px;
     padding: 8px;
     border: 1px solid #bdc3c7;
     border-radius: 4px;
     width: 394px;  /* Set the width of the input fields */
     height: 41px;  /* Set the height of the input fields */
+}
+
+/* Ensure text color for auto-filled inputs */
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px #E8FFE9 inset;
+    -webkit-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+}
+
+input:-moz-autofill {
+    box-shadow: 0 0 0px 1000px #E8FFE9 inset;
+    -moz-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+}
+
+input:-ms-autofill {
+    box-shadow: 0 0 0px 1000px #E8FFE9 inset;
+    -ms-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+}
+
+input:-o-autofill {
+    box-shadow: 0 0 0px 1000px #E8FFE9 inset;
+    -o-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+}
+
+input:autofill {
+    box-shadow: 0 0 0px 1000px #E8FFE9 inset;
+    text-fill-color: #333; /* Ensure text color for auto-filled inputs */
 }
 
 button {
