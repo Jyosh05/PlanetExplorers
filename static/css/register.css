@@ -10,21 +10,22 @@ body {
 
 .back_to_login {
     display: flex;
-    align-items: center;  /* Vertically center the items */
-    justify-content: center;  /* Center the items horizontally */
-    gap: 10px;  /* Space between the text and link */
-    margin-top: 20px;  /* Add some margin to the top for spacing */
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
 }
 
 .back_to_login h4 {
-    margin: 0;  /* Remove default margin */
-    font-size: 16px;  /* Adjust font size as needed */
+    margin: 0;
+    font-size: bold;
 }
 
 .back_to_login a {
+    font-weight:bold;
     text-decoration: none;
-    color: #27ae60;  /* Adjust link color as needed */
-    font-size: 16px;  /* Adjust font size as needed */
+    color: #FFFFFF;
+    font-size: 16px;
 }
 
 .back_to_login a:hover {
@@ -38,11 +39,13 @@ img {
 }
 
 .form-container {
-    background-color: #1E7043; /* Background color for the form */
+    background-color: #1E7043;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    width: 80%;
+    max-width:400px;
+    margin:auto;
 }
 
 .step-indicator {
@@ -75,48 +78,48 @@ label {
 
 input {
     background: #E8FFE9;
-    color: #333; /* Set a default text color */
+    color: #333;
     margin-bottom: 10px;
     padding: 8px;
     border: 1px solid #bdc3c7;
     border-radius: 4px;
-    width: 394px;  /* Set the width of the input fields */
-    height: 41px;  /* Set the height of the input fields */
+    width: 100%;
+    height: 41px;
 }
 
-/* Ensure text color for auto-filled inputs */
 input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0px 1000px #E8FFE9 inset;
-    -webkit-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+    -webkit-text-fill-color: #333;
 }
 
 input:-moz-autofill {
     box-shadow: 0 0 0px 1000px #E8FFE9 inset;
-    -moz-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+    -moz-text-fill-color: #333;
 }
 
 input:-ms-autofill {
     box-shadow: 0 0 0px 1000px #E8FFE9 inset;
-    -ms-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+    -ms-text-fill-color: #333;
 }
 
 input:-o-autofill {
     box-shadow: 0 0 0px 1000px #E8FFE9 inset;
-    -o-text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+    -o-text-fill-color: #333;
 }
 
 input:autofill {
     box-shadow: 0 0 0px 1000px #E8FFE9 inset;
-    text-fill-color: #333; /* Ensure text color for auto-filled inputs */
+    text-fill-color: #333;
 }
 
 button {
-    padding: 10px;
+    padding: 8px;
     background-color: #27ae60;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    width:100%;
 }
 
 button:hover {
@@ -148,15 +151,13 @@ button:hover {
     color: #1E7043;
 }
 
-/* New CSS to apply background color to the form */
 #registrationForm {
-    background-color: #1E7043; /* Background color for the form */
-    padding: 20px;
+    background-color: #1E7043;
+    padding: 30px;
     border-radius: 8px;
-    color: white; /* Ensuring text color is readable */
+    color: white;
 }
 
-/* Adjusting input styles inside the form */
 #registrationForm input {
     margin-bottom: 10px;
     padding: 8px;
@@ -166,14 +167,21 @@ button:hover {
     height: 30px;
 }
 
-/* Adjusting button styles inside the form */
+.button-container {
+    display: flex;
+    gap:10px;
+    justify-content: space-between;
+}
+
 #registrationForm button {
-    padding: 10px;
+    padding: 8px;
     background-color: #27ae60;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    width: 100%; /* Set width to fill the container */
+    height: 41px;
 }
 
 #registrationForm button:hover {
