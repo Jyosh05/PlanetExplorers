@@ -1,0 +1,61 @@
+/* styles.css */
+
+/* Body and Heading Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+/* Product List Styles */
+.product-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.product-item {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    width: calc(30% - 20px);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+/* Product Image Styles */
+.product-image {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* Product Details Styles */
+.product-details {
+    padding: 10px;
+}
+
+.product-name {
+    color: #333;
+    font-size: 20px;
+    margin-top: 0;
+}
+
+.product-description {
+    color: #666;
+}
+
+.product-price,
+.product-stock {
+    color: #333;
+    margin-top: 5px;
+}

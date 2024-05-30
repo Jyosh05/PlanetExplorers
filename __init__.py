@@ -741,10 +741,10 @@ def adminstoreupdate():
     # Handle image upload
     file = request.files.get('image')
     if file and allowed_file(file.filename):
-        filename = file.filename
+        filename = secure_filename(file.filename)
         filepath = f"{app.config['UPLOAD_FOLDER']}/{filename}"
         file.save(filepath)
-        image_path = f"img/{filename}"
+        image_path = f"img/{filename}"  # Store relative path
 
         # Update the product with a new image
         mycursor.execute(
