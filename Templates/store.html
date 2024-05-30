@@ -2,17 +2,20 @@
 <html>
 <head>
     <title>Store</title>
+    <link rel="stylesheet" type="text/css" href="../static/css/store.css">
 </head>
 <body>
+    {% include 'navbar.html'%}
     <h1>Store Products</h1>
-    <ul>
+    <ul class="product-list">
         {% for product in products %}
-        <li>
-            <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" width="100" height="100">
-            <h2>{{ product[1] }}</h2>
-            <p>{{ product[2] }}</p> <!-- Displaying the product description -->
-            <p>Price: ${{ product[3] }}</p>
-            <p>Stock: {{ product[4] }} units available</p>
+        <li class="product-item">
+            <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" class="product-image">
+            <div class="product-details">
+                <h2 class="product-name">{{ product[1] }}</h2>
+                <p class="product-description">{{ product[2] }}</p>
+                <p class="product-price">Price: ${{ product[3] }}</p>
+            </div>
         </li>
         {% endfor %}
     </ul>
