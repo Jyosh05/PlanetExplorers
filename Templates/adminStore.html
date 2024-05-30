@@ -2,6 +2,73 @@
 <html>
 <head>
     <title>Admin Store</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #fff;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        li img {
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        button {
+            margin-right: 10px;
+            margin-bottom: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        input[type="file"] {
+            margin-right: 0;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <h1>Manage Store Products</h1>
@@ -9,20 +76,22 @@
         {% for product in products %}
         <li>
             <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" width="100" height="100">
-            {{ product[1] }} - ${{ product[3] }} ({{ product[4] }} in stock)
-            <form action="{{ url_for('adminstoredelete') }}" method="post" style="display:inline;">
-                <input type="hidden" name="product_id" value="{{ product[0] }}">
-                <button type="submit">Delete</button>
-            </form>
-            <form action="{{ url_for('adminstoreupdate') }}" method="post" style="display:inline;" enctype="multipart/form-data">
-                <input type="hidden" name="product_id" value="{{ product[0] }}">
-                <input type="text" name="name" value="{{ product[1] }}">
-                <input type="text" name="description" value="{{ product[2] }}">
-                <input type="number" name="price" value="{{ product[3] }}">
-                <input type="number" name="quantity" value="{{ product[4] }}">
-                <input type="file" name="image">
-                <button type="submit">Update</button>
-            </form>
+            <div>
+                <p>{{ product[1] }} - ${{ product[3] }} ({{ product[4] }} in stock)</p>
+                <form action="{{ url_for('adminstoredelete') }}" method="post" style="display:inline;">
+                    <input type="hidden" name="product_id" value="{{ product[0] }}">
+                    <button type="submit">Delete</button>
+                </form>
+                <form action="{{ url_for('adminstoreupdate') }}" method="post" style="display:inline;" enctype="multipart/form-data">
+                    <input type="hidden" name="product_id" value="{{ product[0] }}">
+                    <input type="text" name="name" value="{{ product[1] }}">
+                    <input type="text" name="description" value="{{ product[2] }}">
+                    <input type="number" name="price" value="{{ product[3] }}">
+                    <input type="number" name="quantity" value="{{ product[4] }}">
+                    <input type="file" name="image">
+                    <button type="submit">Update</button>
+                </form>
+            </div>
         </li>
         {% endfor %}
     </ul>
