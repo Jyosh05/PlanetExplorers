@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
 import mysql.connector
+from werkzeug.utils import secure_filename
+
 # Configuration is a file containing sensitive information
 from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY
 import re
@@ -698,6 +700,7 @@ def adminstoreadd():
     file = request.files.get('image')
     if file and allowed_file(file.filename):
         filename = file.filename
+        filename = secure_filename(filename)
         filepath = f"{app.config['UPLOAD_FOLDER']}/{filename}"
         file.save(filepath)
         image_path = f"img/{filename}"  # Store relative path
