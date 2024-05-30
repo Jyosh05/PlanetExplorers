@@ -3,7 +3,7 @@ import mysql.connector
 from werkzeug.utils import secure_filename
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY
+from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, PEPPER
 import re
 import bcrypt
 from flask_limiter import Limiter
@@ -12,7 +12,6 @@ from functools import wraps
 from flask_mail import Message, Mail
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from flask_session import Session
-from flask_talisman import Talisman
 from datetime import timedelta
 import requests
 import psycopg2
@@ -53,29 +52,25 @@ mycursor = mydb.cursor(buffered=True)
 
 # Caleb's entire rate limiting, secure session management, https enforcement
 # Session Management
-app.config['SECRET_KEY'] = secret_key
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can also use 'Strict'
-app.config['REMEMBER_COOKIE_SECURE'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=3600)  # 1 hour
-app.config['SESSION_REFRESH_EACH_REQUEST'] = True
-app.config['SESSION_PROTECTION'] = 'strong'
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_USE_SIGNER'] = True
+app.config['SECRET_KEY'] = secret_key # cryptographic signing, prevent session tampering and various attacks
+app.config['SESSION_COOKIE_HTTPONLY'] = True # prevent client side JS access to s.cookie. prevent XSS
+app.config['SESSION_COOKIE_SECURE'] = True # restrict to only HTTPS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # prevent CSRF
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=3600)  # session duration
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True # refreshed on request, if user active :)
+app.config['SESSION_PROTECTION'] = 'strong' # detect IP address during a sessioon
+app.config['SESSION_TYPE'] = 'filesystem' # session data stored on mah server files
+app.config['SESSION_PERMANENT'] = False # browser closed? NO MORE SESSION!
+app.config['SESSION_USE_SIGNER'] = True # digitally signing the cookie sessions. no tampering by clients
 Session(app)
 
 
-def regenerate_session():
+def regenerate_session(): #regenerate session. update session data, ensure security after login or logout.
     session.modified = True
     session.new = True
 
 
-# Secure the app with Flask-Talisman
-Talisman(app, content_security_policy=None)
-
-# Rate limiter
+# Rate limiter to limit rates
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -151,7 +146,9 @@ def add_info(username, password, email, name, age, address, phone):
         if check_existing_credentials(username, email):
             print("Username or email already in use")
 
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        peppered_password = password + PEPPER
+
+        hashed_password = bcrypt.hashpw(peppered_password.encode('utf-8'), bcrypt.gensalt())
         # Standardized role of "student" for new user
         role = 'student'
         # Parameterized query
@@ -185,7 +182,9 @@ def delete_info(username, password):
 
         stored_password = user[0]
 
-        if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
+        peppered_password = password + PEPPER
+
+        if bcrypt.checkpw(peppered_password.encode('utf-8'), stored_password.encode('utf-8')):
             delete_query = "DELETE FROM users WHERE username = %s"
             mycursor.execute(delete_query, (username,))
             mydb.commit()

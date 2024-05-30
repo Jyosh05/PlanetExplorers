@@ -7,6 +7,7 @@ DB_Config = {
 }
 
 secret_key = "my_super_secret_key"
+PEPPER = "my_super_secret_key_again"
 
 
 admin_config = {
