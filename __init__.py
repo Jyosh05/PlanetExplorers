@@ -10,12 +10,12 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from functools import wraps
 from flask_mail import Message, Mail
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_session import Session
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 import requests
+# import datetime
 import psycopg2
-import datetime
 import urllib.parse
 
 # !!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
@@ -208,23 +208,39 @@ def generate_confirm_token(email):
     # URLSafeTimedSerializer is a class in itsdangerous designed to create and verify timed, URL safe tokens
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])  # The serializer requires a secret key
     # to ensure the tokens are securely generated and can be validated later.
-    return serializer.dumps(email, salt=app.config['SECRET_KEY'])  # dumps method serializes the email address into a token
+    token = serializer.dumps(email, salt=app.config['SECRET_KEY'])  # dumps method serializes the email address into a token
+    expiration = datetime.utcnow() + timedelta(minutes=5)  # Token expires in 5 minutes
+    save_token = 'INSERT INTO token_validation (email, token, expiration) VALUES (%s, %s, %s)'
+    mycursor.execute(save_token, (email, token, expiration))
+    mydb.commit()
+
+    return token
 
 
 # the salt parameter adds an additional layer of security
 # Using the secret key as the salt ensures that the token cannot be tampered with or replicated without the secret key.
 
-def confirm_token(token, expiration=300):
+def confirm_token(token):
     # a URLSafeTimedSerializer object is created using the same secret key.
     # This ensures that the token can be verified against the same key and salt used to create it.
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-    try:
-        # The loads method deserializes the token to retrieve the original email address.
-        email = serializer.loads(token, salt=app.config['SECRET_KEY'], max_age=expiration)  # The salt parameter ensures that the token was generated with the correct secret key.
-    except SignatureExpired:  # if token is expired or invalid, it returns false
-        return False
-    return email
+    retrieve_token = 'SELECT email, expiration FROM token_validation WHERE token = %s'
+    mycursor.execute(retrieve_token, (token,))
+    row = mycursor.fetchone()
 
+    if not row or row[1] < datetime.utcnow():
+        return False
+
+    email = row[0]
+    try:
+        email_from_token = serializer.loads(token, salt=app.config['SECRET_KEY'])
+    except (SignatureExpired, BadSignature):
+        return False
+
+    if email != email_from_token:
+        return False
+
+    return email
 
 def send_reset_link_email(email, subject, template):  # template is the html content of the email
     msg = Message(subject, recipients=[email], html=template, sender='no-reply')
@@ -354,6 +370,28 @@ print(f"Using Table 'storeproducts'")
 
 storeproducts = mycursor.fetchall()
 
+tableCheck = ['token_validation']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'token_validation'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+                    CREATE TABLE IF NOT EXISTS token_validation(
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        email VARCHAR(255) NOT NULL,
+                        token VARCHAR(255) UNIQUE NOT NULL,
+                        expiration DATETIME NOT NULL,
+                        used BOOLEAN DEFAULT FALSE
+                    )
+                    """)
+        print(f"Table 'token_validation' Created")
+
+mycursor.execute('SELECT * FROM token_validation')
+print(f"Using table 'token_validation' ")
+
+token_validation = mycursor.fetchall()
+
 
 def log_this(event, user_id="unknown"):
     # We do a select max to get the last log_id in the table
@@ -366,7 +404,7 @@ def log_this(event, user_id="unknown"):
     next_id = actual_id[0] + 1
     # ts1 = timestamp()
     sql = "INSERT INTO audit_logs (log_id, event, timestamp, user_id) VALUES (%s,%s,%s,%s)"
-    val = (next_id, event, datetime.datetime.now(), user_id)
+    val = (next_id, event, datetime.now(), user_id)
     mycursor.execute(sql, val)
 
     mydb.commit()
