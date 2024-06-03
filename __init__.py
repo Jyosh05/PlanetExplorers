@@ -146,9 +146,8 @@ def add_info(username, password, email, name, age, address, phone):
         if check_existing_credentials(username, email):
             print("Username or email already in use")
 
-        peppered_password = password + PEPPER
 
-        hashed_password = bcrypt.hashpw(peppered_password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         # Standardized role of "student" for new user
         role = 'student'
         # Parameterized query
@@ -182,9 +181,7 @@ def delete_info(username, password):
 
         stored_password = user[0]
 
-        peppered_password = password + PEPPER
-
-        if bcrypt.checkpw(peppered_password.encode('utf-8'), stored_password.encode('utf-8')):
+        if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
             delete_query = "DELETE FROM users WHERE username = %s"
             mycursor.execute(delete_query, (username,))
             mydb.commit()
