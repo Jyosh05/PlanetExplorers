@@ -3,7 +3,7 @@ import mysql.connector
 from werkzeug.utils import secure_filename
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY, PEPPER
+from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY
 import re
 import bcrypt
 from flask_limiter import Limiter
