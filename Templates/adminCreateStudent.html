@@ -1,3 +1,43 @@
 {% extends 'adminBase.html' %}
 
-{% block title %} Create User {% endblock %}
+{% block title %} Create Student {% endblock %}
+
+{% block content %}
+<form method="POST" action="">
+    <div class="form-inputs">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <label for="username">Username:</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+
+        <label for="password">Password:</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+
+        <label for="email">Email:</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+
+        <label for="role">Role:</label>
+        <input type="text" class="form-control" id="role" name="role" value="student" readonly>
+
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name">
+
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age">
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address">
+
+        <label for="phone">Phone:</label>
+        <input type="text" id="phone" name="phone">
+
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+</form>
+{% endblock %}
