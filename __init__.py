@@ -629,7 +629,7 @@ def adminCreateTeacher():
             print(f"Age: {age}")
             print(f"Address: {address}")
             print(f"Phone: {phone}")
-            add_info(username, password, email, name, age, address, phone, role)
+            add_info(username, password, email, name, age, address, phone)
             flash('Teacher created successfully!', 'success')
             return redirect(url_for('adminHome'))
         except Exception as e:
