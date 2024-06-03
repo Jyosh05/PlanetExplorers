@@ -16,6 +16,9 @@
 
 </div>
 
+<a href="/adminCreateTeacher" class="btn btn-primary">Create Teacher</a>
+
+
 <table class="table table-striped">
     <thead>
       <tr>
@@ -24,6 +27,7 @@
           <th>Name</th>
         <th>Email</th>
           <th>Role</th>
+          <th>Actions</th>
 
 
       </tr>
@@ -37,6 +41,41 @@
             <td>{{ teacher[3] }}</td>
             <td>{{ teacher[9] }}</td>
             <td><a href="{{ url_for('adminTeacherUpdate', id=teacher[0]) }}" class="btn btn-warning">Update</a></td>
+<td>
+            <form action="{{url_for('adminDeleteTeacher', id=teacher[0]) }}" method="POST">
+
+                <!-- Button to Open the Modal -->
+<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#myModal_{{ teacher[0] }}">
+  Delete
+</button>
+
+<!-- The Modal -->
+<div class="modal" id="myModal_{{ teacher[0] }}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title">Delete Confirmation</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+        Are you sure you want to delete {{ teacher[1] }}?
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <input type="submit" value="Delete" class="btn btn-danger">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+          </form>
+            </td>
 
    {% endfor %}
             </tbody>

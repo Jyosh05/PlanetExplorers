@@ -582,10 +582,90 @@ def register():
 def adminHome():
     return render_template('adminHome.html')
 
+
+
 @app.route('/teacherHome')
 @roles_required('teacher')
 def teacherHome():
     return 'Welcome Teacher'
+
+@app.route('/adminCreateTeacher', methods = ['GET', 'POST'])
+@roles_required('admin')
+def adminCreateTeacher():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email')
+
+        name = request.form.get('name')
+        age = request.form.get('age')
+        address = request.form.get('address')
+        phone = request.form.get('phone')
+
+
+        existing_teacher_check_username = "SELECT * FROM users WHERE username = %s"
+        mycursor.execute(existing_teacher_check_username, (username,))
+        existing_teacher_username = mycursor.fetchone()
+
+        # checking for existing teacher username
+        if existing_teacher_username:
+            flash('Teacher with the same username already exists. Please choose a different username.')
+            return render_template('adminCreateTeacher.html')
+
+        existing_teacher_email = "SELECT * FROM users WHERE email = %s"
+        mycursor.execute(existing_teacher_email, (email,))
+        existing_teacher_email_check = mycursor.fetchone()
+
+        # checking for existing teacher email
+        if existing_teacher_email_check:
+            flash('Teacher with the same email already exists. Please choose a different email.')
+            return render_template('adminCreateTeacher.html')
+
+        try:
+            role = 'teacher'
+            print("Received form data:")
+            print(f"Username: {username}")
+            print(f"Password: {password}")
+            print(f"Email: {email}")
+            print(f"Name: {name}")
+            print(f"Age: {age}")
+            print(f"Address: {address}")
+            print(f"Phone: {phone}")
+            add_info(username, password, email, name, age, address, phone, role)
+            flash('Teacher created successfully!', 'success')
+            return redirect(url_for('adminHome'))
+        except Exception as e:
+            flash(f'An error occurred: {str(e)}', 'danger')
+            return render_template('adminCreateTeacher.html')
+
+    return render_template('adminCreateTeacher.html')
+
+
+
+
+@app.route('/adminDeleteTeacher/<int:id>', methods=['GET', 'POST'])
+def adminDeleteTeacher(id):
+    try:
+        select_query = "SELECT * FROM users WHERE id = %s"
+        mycursor.execute(select_query, (id,))
+        teacher = mycursor.fetchone()
+
+        if teacher:
+            delete_query = "DELETE FROM users WHERE id = %s"
+            mycursor.execute(delete_query, (id,))
+            mydb.commit()
+
+            return redirect(url_for('adminHome'))
+        else:
+            return "Teacher not found"
+
+    except Exception as e:
+        print('Error: ', e)
+        mydb.rollback()
+        return "Error occurred while deleting teacher"
+
+
+
 
 @app.route('/adminTeacherTable', methods=['GET'])
 @roles_required('admin')
@@ -649,6 +729,11 @@ def adminTeacherUpdate(id):
 def learnerHome():
     return render_template('profile.html')
 
+@app.route('/adminCreateStudent')
+@roles_required('admin')
+def adminCreateStudent():
+    return render_template('adminCreateStudent.html')
+
 @app.route('/adminStudentTable', methods=['GET'])
 @roles_required('admin')
 def adminUsersRetrieve():
@@ -704,6 +789,28 @@ def adminStudentUpdate(id):
         except Exception as e:
             print('Error:', e)
             return "Error occurred while fetching student details"
+
+
+@app.route('/adminDeleteStudent/<int:id>', methods=['GET', 'POST'])
+def adminDeleteStudent(id):
+    try:
+        select_query = "SELECT * FROM users WHERE id = %s"
+        mycursor.execute(select_query, (id,))
+        student = mycursor.fetchone()
+
+        if student:
+            delete_query = "DELETE FROM users WHERE id = %s"
+            mycursor.execute(delete_query, (id,))
+            mydb.commit()
+
+            return redirect(url_for('adminHome'))
+        else:
+            return "Student not found"
+
+    except Exception as e:
+        print('Error: ', e)
+        mydb.rollback()
+        return "Error occurred while deleting student"
 
 
 UPLOAD_FOLDER = 'static/img'
