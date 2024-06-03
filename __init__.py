@@ -467,12 +467,11 @@ def login():
             input_validation(username)
             input_validation(password)
 
-            peppered_password = password + PEPPER
 
             query = "SELECT * FROM users WHERE username = %s"
             mycursor.execute(query, (username,))
             user = mycursor.fetchone()
-            if user and bcrypt.checkpw(peppered_password.encode('utf-8'), user[2].encode('utf-8')):
+            if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                 session['user'] = {'username': user[1], 'role': user[9]}
                 regenerate_session()
                 log_this("login successful", user[0])  # Pass user_id instead of the whole user tuple
