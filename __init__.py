@@ -454,7 +454,7 @@ def profile():
     return render_template("profile.html")
 
 
-# need to make a functional login page
+
 @app.route('/login', methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def login():
@@ -494,7 +494,7 @@ def login():
         encoded_url = f"/login?username={encoded_username}&password={encoded_password}"
         return redirect(encoded_url)
 
-    return render_template("login.html")
+    return render_template("login/login.html")
 
 
 @app.route('/forget_password', methods=['GET', 'POST'])
