@@ -3,51 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store - Planet Explorers</title>
+    <title>My profile</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .navbar {
-            margin-bottom: 20px;
-        }
-        .product {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-            transition: box-shadow 0.3s ease-in-out;
-        }
-        .product:hover {
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        }
-        .product img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto 10px;
-        }
-        .product-title {
-            font-size: 1.25em;
-            margin-bottom: 10px;
-        }
-        .product-price {
-            color: #28a745;
-            font-size: 1.2em;
-            margin-bottom: 10px;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            text-align: center;
-            margin-top: 20px;
-        }
-    </style>
+
 </head>
 <body>
     {% include 'navbar.html' %}
-    <h1>Hello, how are you? I am under the water, please help me, here too much raining. olulululu</h1>
-    <iframe width="1045" height="588" src="https://www.youtube.com/embed/SfT4FMkh1-w" title="Hello Im Under The Water..." frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <div class="container">
+        {% if 'user' in session %}
+
+    <div class="profile-container">
+        <div class="profile-picture">
+
+            {% set profile_pic = user[8] %}
+                {% if user[8] %}
+                <img src="{{ url_for('static', filename=user[8]) }}"  style="max-width: 200px; max-height: 200px;">
+                {% else %}
+                <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture"
+                     style="max-width: 200px; max-height: 200px;">
+                {% endif %}
+
+            </div>
+
+        <div class="profile-card">
+            {% set name = user[4] %}
+            {% if name %}
+                <h3>Welcome, {{ user[4] }}</h3>
+            {% else %}
+            <h3>Welcome, {{ user[1] }}</h3>
+
+            {% endif %}
+                <br>
+                <h4>Username: {{ user[1] }}</h4>
+                <h4>Email: {{ user[3] }}</h4>
+                <h4>Age: {{ user[5] }} </h4>
+            {% set address =  user[6] %}
+                {% if address %}
+            <h4>Address: {{ address }}</h4>
+            {% else %}
+            <h4>Address: -</h4>
+            {% endif %}
+            {% set hp = user[7] %}
+                {% if hp %}
+                    <h4>Phone: {{ hp }}</h4>
+                {% else %}
+                    <h4>Phone: -</h4>
+                {% endif %}
+
+            <br>
+                    <!-- Update Profile Button -->
+                    <a href="{{ url_for('updateProfile') }}" class="btn btn-primary">Update Profile</a>
+                </div>
+
+         <!-- Button to Open the Modal -->
+                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
+                    Delete
+                </button>
+
+                <!-- The Modal -->
+                <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <!-- Modal Header -->
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel">Delete Confirmation</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <!-- Modal Body -->
+                            <div class="modal-body">
+                                Are you sure you want to delete your account?
+                            </div>
+                            <!-- Modal Footer -->
+                            <div class="modal-footer">
+                                <form action="{{ url_for('deleteAccount') }}" method="POST">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+
+                </form>
+
+
+        </div>
+                    {% endif %}
+
+
+
+                </div>
+
+
+
+
 </body>
 </html>

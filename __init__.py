@@ -17,6 +17,7 @@ import requests
 # import datetime
 import psycopg2
 import urllib.parse
+import os
 
 # !!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
 
@@ -63,6 +64,9 @@ app.config['SESSION_TYPE'] = 'filesystem' # session data stored on mah server fi
 app.config['SESSION_PERMANENT'] = False # browser closed? NO MORE SESSION!
 app.config['SESSION_USE_SIGNER'] = True # digitally signing the cookie sessions. no tampering by clients
 Session(app)
+
+UPLOAD_FOLDER = 'static/img'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 def regenerate_session(): #regenerate session. update session data, ensure security after login or logout.
@@ -432,6 +436,12 @@ def create_admin_user():
     except mysql.connector.Error as err:
         print(f"Error while inserting admin user: {err}")
 
+def userSession(username):
+    query = "SELECT * FROM users WHERE username = %s"
+    mycursor.execute(query, (username,))
+    user = mycursor.fetchone()
+    return user
+
 
 @app.before_request
 def before_request():
@@ -575,6 +585,80 @@ def register():
         return redirect(url_for('home'))
     return render_template('register.html')
 
+@app.route('/updateProfile', methods=['GET', 'POST'])
+@roles_required('student', 'teacher')
+def updateProfile():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        if request.method == 'POST':
+            new_username = request.form['username']
+            name = request.form['name']
+            email = request.form['email']
+            age = request.form['age']
+            address = request.form['address']
+            phone = request.form['phone']
+            mycursor.execute(
+                "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
+                (new_username, name, email, age, address, phone, username))
+            mydb.commit()
+
+            # Handle profile picture upload
+            if 'profile_pic' in request.files:
+                file = request.files['profile_pic']
+                if file.filename == '':
+                    flash('No profile picture selected')
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    filepath = f"{app.config['UPLOAD_FOLDER']}/{filename}"
+                    # file.save(filepath)
+                    image_path = f"img/{filename}"  # Store relative path
+                    # Update profile picture path in the database
+                    mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s", (image_path, username))
+                    mydb.commit()
+                    flash('Profile picture uploaded successfully!', 'success')
+                else:
+                    flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
+
+            # Fetch updated user data
+            user = userSession(new_username)
+            if user:
+                session['user']['username'] = new_username  # Update session with new username if changed
+                return render_template("profile.html", user=user)
+            else:
+                flash("User not found in database after update")
+                return redirect(url_for('login'))  # Redirect to login if user not found after update
+        else:
+            # GET request handling
+            user = userSession(username)
+            return render_template("updateProfile.html", user=user)  # Render form with current user data prepopulated
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))
+
+@app.route('/deleteAccount', methods=['POST'])
+@roles_required('student', 'teacher')
+def deleteAccount():
+    try:
+        if 'user' in session:
+            username = session['user']['username']
+            delete_account = 'DELETE from users WHERE username = %s'
+            mycursor.execute(delete_account, (username,))
+            mydb.commit()
+            session.pop('user', None)
+            flash('Your account has been deleted', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Account not found', 'error')
+            return redirect(url_for('profile'))
+    except Exception as e:
+        print('Error: ', e)
+        mydb.rollback()
+        flash('Error occurred while deleting account', 'error')
+        return redirect(url_for('profile'))
+
+
+
 
 @app.route('/adminHome')
 @roles_required('admin')
@@ -586,9 +670,39 @@ def adminHome():
 @app.route('/teacherHome')
 @roles_required('teacher')
 def teacherHome():
-    return 'Welcome Teacher'
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        user = userSession(username)
+        if user:
+            print(f'user {username} is logged in')
+            return render_template("teacherHome.html", user=user)
+        else:
+            flash("User not found in database")
+            return redirect(url_for('login'))  # Redirect to login if user not found
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))  # Redirect to login if session not found
 
-@app.route('/adminCreateTeacher', methods = ['GET', 'POST'])
+
+@app.route('/learnerHome')
+@roles_required('student')
+def learnerHome():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        user = userSession(username)
+        if user:
+            print(f'user {username} is logged in')
+            return render_template("profile.html", user=user)
+        else:
+            flash("User not found in database")
+            return redirect(url_for('login'))  # Redirect to login if user not found
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))  # Redirect to login if session not found
+
+
+
+@app.route('/adminCreateTeacher', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminCreateTeacher():
     if request.method == 'POST':
@@ -600,7 +714,6 @@ def adminCreateTeacher():
         age = request.form.get('age')
         address = request.form.get('address')
         phone = request.form.get('phone')
-
 
         existing_teacher_check_username = "SELECT * FROM users WHERE username = %s"
         mycursor.execute(existing_teacher_check_username, (username,))
@@ -621,6 +734,7 @@ def adminCreateTeacher():
             return render_template('adminCreateTeacher.html')
 
         try:
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
             role = 'teacher'
             print("Received form data:")
             print(f"Username: {username}")
@@ -630,7 +744,15 @@ def adminCreateTeacher():
             print(f"Age: {age}")
             print(f"Address: {address}")
             print(f"Phone: {phone}")
-            add_info(username, password, email, name, age, address, phone)
+            query = """
+                        INSERT INTO users (username, password, email, name ,age, address, phone, role)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
+                    """
+            # Tuple to make sure the input cannot be changed
+            values = (username, hashed_password, email, name, age, address, phone, role)
+            # Executing the parameterized query and the tuple as the inputs
+            mycursor.execute(query, values)
+            mydb.commit()
             flash('Teacher created successfully!', 'success')
             return redirect(url_for('adminHome'))
         except Exception as e:
@@ -691,8 +813,11 @@ def adminTeacherUpdate(id):
             teacher_details = mycursor.fetchone()
 
             if teacher_details:
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
+                teacher_details[2]
+
                 update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
-                data = (username, password, email, role, id)
+                data = (username, hashed_password, email, role, id)
                 mycursor.execute(update_teacher, data)
                 mydb.commit()
 
@@ -723,14 +848,64 @@ def adminTeacherUpdate(id):
             return "Error occurred while fetching teacher details"
 
 
-@app.route('/learnerHome')
-@roles_required('student')
-def learnerHome():
-    return render_template('profile.html')
 
-@app.route('/adminCreateStudent')
+@app.route('/adminCreateStudent', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminCreateStudent():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email')
+
+        name = request.form.get('name')
+        age = request.form.get('age')
+        address = request.form.get('address')
+        phone = request.form.get('phone')
+
+        existing_student_check_username = "SELECT * FROM users WHERE username = %s"
+        mycursor.execute(existing_student_check_username, (username,))
+        existing_student_check_username = mycursor.fetchone()
+
+        # checking for existing teacher username
+        if existing_student_check_username:
+            flash('User with the same username already exists. Please choose a different username.')
+            return render_template('adminCreateStudent.html')
+
+        existing_student_email = "SELECT * FROM users WHERE email = %s"
+        mycursor.execute(existing_student_email, (email,))
+        existing_student_email = mycursor.fetchone()
+
+        # checking for existing teacher email
+        if existing_student_email:
+            flash('User with the same email already exists. Please choose a different email.')
+            return render_template('adminCreateStudent.html')
+
+        try:
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            role = 'student'
+            print("Received form data:")
+            print(f"Username: {username}")
+            print(f"Password: {password}")
+            print(f"Email: {email}")
+            print(f"Name: {name}")
+            print(f"Age: {age}")
+            print(f"Address: {address}")
+            print(f"Phone: {phone}")
+            query = """
+                        INSERT INTO users (username, password, email, name ,age, address, phone, role)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
+                    """
+            # Tuple to make sure the input cannot be changed
+            values = (username, hashed_password, email, name, age, address, phone, role)
+            # Executing the parameterized query and the tuple as the inputs
+            mycursor.execute(query, values)
+            mydb.commit()
+            flash('Student created successfully!', 'success')
+            return redirect(url_for('adminHome'))
+        except Exception as e:
+            flash(f'An error occurred: {str(e)}', 'danger')
+            return render_template('adminCreateStudent.html')
+
     return render_template('adminCreateStudent.html')
 
 @app.route('/adminStudentTable', methods=['GET'])
@@ -758,8 +933,12 @@ def adminStudentUpdate(id):
             student_details = mycursor.fetchone()
 
             if student_details:
+                # Hash the password if provided, otherwise keep the existing one
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
+                student_details[2]
+
                 update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
-                data = (username, password, email, role, id)
+                data = (username, hashed_password, email, role, id)
                 mycursor.execute(update_student, data)
                 mydb.commit()
 
@@ -812,8 +991,6 @@ def adminDeleteStudent(id):
         return "Error occurred while deleting student"
 
 
-UPLOAD_FOLDER = 'static/img'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
@@ -912,6 +1089,7 @@ def adminstoreupdate():
 
 
 @app.route('/blogs')
+@roles_required('admin')
 def blogs():
     mycursor.execute("SELECT * FROM audit_logs")
     data = mycursor.fetchall()

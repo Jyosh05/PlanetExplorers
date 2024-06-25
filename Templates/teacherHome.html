@@ -2,9 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My profile</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
 </head>
 <body>
+    <div class="container">
+        {% if 'user' in session %}
+
+    <div class="profile-container">
+        <div class="profile-picture">
+
+                {% set profile_pic = user[8] %}
+                {% if profile_pic %}
+                <img id="pfp" src="{{ profile_pic }}" style="max-width: 200px; max-height: 200px;">
+                {% else %}
+                <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture"
+                     style="max-width: 200px; max-height: 200px;">
+                {% endif %}
+
+            </div>
+
+        <div class="profile-card">
+                <h3>Welcome, {{ user[4] }}</h3>
+                <br>
+                <h4>Username: {{ user[1] }}</h4>
+                <h4>Email: {{ user[3] }}</h4>
+                <h4>Age: {{ user[5] }} </h4>
+            {% set address =  user[6] %}
+                {% if address %}
+            <h4>Address: {{ address }}</h4>
+            {% else %}
+            <h4>Address: -</h4>
+            {% endif %}
+            {% set hp = user[7] %}
+                {% if hp %}
+                    <h4>Phone: {{ hp }}</h4>
+                {% else %}
+                    <h4>Phone: -</h4>
+                {% endif %}
+
+            <br>
+                    <!-- Update Profile Button -->
+                    <a href="{{ url_for('updateProfile') }}" class="btn btn-primary">Update Profile</a>
+
+
+
+        </div>
+                    {% endif %}
+
+
+                </div>
+                </div>
+
+
+
 
 </body>
 </html>
