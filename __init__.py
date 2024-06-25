@@ -74,7 +74,7 @@ def regenerate_session(): #regenerate session. update session data, ensure secur
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["500 per day", "100 per hour"]
 )
 
 
@@ -442,20 +442,20 @@ def before_request():
 
 
 @app.route('/')
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def home():
     return render_template("home.html")  # need to create template
 
 
 @app.route('/profile')
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def profile():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template("profile.html")
 
 
-# need to make a functional login page
+
 @app.route('/login', methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def login():
@@ -495,7 +495,7 @@ def login():
         encoded_url = f"/login?username={encoded_username}&password={encoded_password}"
         return redirect(encoded_url)
 
-    return render_template("login.html")
+    return render_template("login/login.html")
 
 
 @app.route('/forget_password', methods=['GET', 'POST'])
@@ -630,7 +630,7 @@ def adminCreateTeacher():
             print(f"Age: {age}")
             print(f"Address: {address}")
             print(f"Phone: {phone}")
-            add_info(username, password, email, name, age, address, phone, role)
+            add_info(username, password, email, name, age, address, phone)
             flash('Teacher created successfully!', 'success')
             return redirect(url_for('adminHome'))
         except Exception as e:
