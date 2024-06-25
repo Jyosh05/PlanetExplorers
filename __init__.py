@@ -74,7 +74,7 @@ def regenerate_session(): #regenerate session. update session data, ensure secur
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["500 per day", "100 per hour"]
 )
 
 
@@ -441,13 +441,13 @@ def before_request():
 
 
 @app.route('/')
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def home():
     return render_template("home.html")  # need to create template
 
 
 @app.route('/profile')
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def profile():
     if 'user' not in session:
         return redirect(url_for('login'))
