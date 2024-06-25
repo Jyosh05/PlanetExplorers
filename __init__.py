@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
+from flask import Flask, render_template, request, redirect, url_for, session, abort, flash, jsonify
 import mysql.connector
 from werkzeug.utils import secure_filename
 
@@ -94,6 +94,7 @@ def input_validation(input_string):
 
     if combined_regex.search(input_string):
         raise ValueError("Invalid input: Harmful input detected")
+    log_this("Harmful input detected")
     return True
 
 
@@ -916,6 +917,7 @@ def blogs():
     data = mycursor.fetchall()
     print(data)
     return render_template("audit_logs.html", data=data, nameOfPage='Log')
+
 
 
 if __name__ == '__main__':
