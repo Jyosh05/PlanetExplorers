@@ -505,7 +505,7 @@ def login():
         encoded_url = f"/login?username={encoded_username}&password={encoded_password}"
         return redirect(encoded_url)
 
-    return render_template("login/login.html")
+    return render_template("User/login.html")
 
 
 @app.route('/forget_password', methods=['GET', 'POST'])
@@ -529,7 +529,7 @@ def forget_password():
 
         return redirect(url_for('forget_password'))
 
-    return render_template("forget_password.html", site_key=RECAPTCHA_SITE_KEY)
+    return render_template("User/forget_password.html", site_key=RECAPTCHA_SITE_KEY)
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
@@ -555,7 +555,7 @@ def reset_password(token):
         flash('Your password has been reset successfully.', 'success')
         return redirect(url_for('login'))  # Redirect to login page after successful password reset
 
-    return render_template('reset_password.html', token=token)
+    return render_template('User/reset_password.html', token=token)
 
 
 
@@ -583,7 +583,7 @@ def register():
         print(f"Phone: {phone}")
         add_info(username, password, email, name, age, address, phone)
         return redirect(url_for('home'))
-    return render_template('register.html')
+    return render_template('User/register.html')
 
 @app.route('/updateProfile', methods=['GET', 'POST'])
 @roles_required('student', 'teacher')
