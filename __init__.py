@@ -624,18 +624,18 @@ def updateProfile():
             user = userSession(new_username)
             if user:
                 session['user']['username'] = new_username  # Update session with new username if changed
-                return render_template("profile.html", user=user)
+                return render_template("User/profile.html", user=user)
             else:
                 flash("User not found in database after update")
                 return redirect(url_for('login'))  # Redirect to login if user not found after update
         else:
             # GET request handling
             user = userSession(username)
-            return render_template("updateProfile.html", user=user)  # Render form with current user data prepopulated
+            return render_template("User/updateProfile.html", user=user)  # Render form with current user data prepopulated
     else:
         flash("User session not found")
         return redirect(url_for('login'))
-
+#NEED TO FINISH THE DELETE ACCOUNT
 @app.route('/deleteAccount', methods=['POST'])
 @roles_required('student', 'teacher')
 def deleteAccount():
@@ -655,7 +655,7 @@ def deleteAccount():
         print('Error: ', e)
         mydb.rollback()
         flash('Error occurred while deleting account', 'error')
-        return redirect(url_for('profile'))
+        return redirect(url_for('User/profile'))
 
 
 
@@ -663,7 +663,7 @@ def deleteAccount():
 @app.route('/adminHome')
 @roles_required('admin')
 def adminHome():
-    return render_template('adminHome.html')
+    return render_template('Admin/adminHome.html')
 
 
 
@@ -675,7 +675,7 @@ def teacherHome():
         user = userSession(username)
         if user:
             print(f'user {username} is logged in')
-            return render_template("teacherHome.html", user=user)
+            return render_template("Teacher/teacherHome.html", user=user)
         else:
             flash("User not found in database")
             return redirect(url_for('login'))  # Redirect to login if user not found
@@ -692,7 +692,7 @@ def learnerHome():
         user = userSession(username)
         if user:
             print(f'user {username} is logged in')
-            return render_template("profile.html", user=user)
+            return render_template("User/profile.html", user=user)
         else:
             flash("User not found in database")
             return redirect(url_for('login'))  # Redirect to login if user not found
@@ -722,7 +722,7 @@ def adminCreateTeacher():
         # checking for existing teacher username
         if existing_teacher_username:
             flash('Teacher with the same username already exists. Please choose a different username.')
-            return render_template('adminCreateTeacher.html')
+            return render_template('Admin/adminCreateTeacher.html')
 
         existing_teacher_email = "SELECT * FROM users WHERE email = %s"
         mycursor.execute(existing_teacher_email, (email,))
@@ -731,7 +731,7 @@ def adminCreateTeacher():
         # checking for existing teacher email
         if existing_teacher_email_check:
             flash('Teacher with the same email already exists. Please choose a different email.')
-            return render_template('adminCreateTeacher.html')
+            return render_template('Admin/adminCreateTeacher.html')
 
         try:
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -757,9 +757,9 @@ def adminCreateTeacher():
             return redirect(url_for('adminHome'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
-            return render_template('adminCreateTeacher.html')
+            return render_template('Admin/adminCreateTeacher.html')
 
-    return render_template('adminCreateTeacher.html')
+    return render_template('Admin/adminCreateTeacher.html')
 
 
 
@@ -795,7 +795,7 @@ def adminTeachersRetrieve():
     mycursor.execute(select_query, ('teacher', 'admin',))
     rows = mycursor.fetchall()
     count = len(rows)
-    return render_template('adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count)
+    return render_template('Admin/adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count)
 
 @app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
 @roles_required('admin')
@@ -839,9 +839,9 @@ def adminTeacherUpdate(id):
             teacher_details = mycursor.fetchone()
 
             if teacher_details:
-                return render_template('updateTeacher.html', teacher_details=teacher_details)
+                return render_template('Admin/updateTeacher.html', teacher_details=teacher_details)
             else:
-                return render_template('updateTeacher.html', teacher_details=None, error="Teacher not found")
+                return render_template('Admin/updateTeacher.html', teacher_details=None, error="Teacher not found")
 
         except Exception as e:
             print('Error:', e)
@@ -878,7 +878,7 @@ def adminCreateStudent():
         # checking for existing teacher email
         if existing_student_email:
             flash('User with the same email already exists. Please choose a different email.')
-            return render_template('adminCreateStudent.html')
+            return render_template('Admin/adminCreateStudent.html')
 
         try:
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -904,9 +904,9 @@ def adminCreateStudent():
             return redirect(url_for('adminHome'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
-            return render_template('adminCreateStudent.html')
+            return render_template('Admin/adminCreateStudent.html')
 
-    return render_template('adminCreateStudent.html')
+    return render_template('Admin/adminCreateStudent.html')
 
 @app.route('/adminStudentTable', methods=['GET'])
 @roles_required('admin')
@@ -915,7 +915,7 @@ def adminUsersRetrieve():
     mycursor.execute(select_query, ('student',))
     rows = mycursor.fetchall()
     count = len(rows)
-    return render_template('adminStudentTable.html', nameOfPage='User Management System', students=rows, count=count)
+    return render_template('Admin/adminStudentTable.html', nameOfPage='User Management System', students=rows, count=count)
 
 @app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
 @roles_required('admin')
@@ -960,9 +960,9 @@ def adminStudentUpdate(id):
             student_details = mycursor.fetchone()
 
             if student_details:
-                return render_template('updateStudent.html', student_details=student_details)
+                return render_template('Admin/updateStudent.html', student_details=student_details)
             else:
-                return render_template('updateStudent.html', student_details=None, error="Student not found")
+                return render_template('Admin/updateStudent.html', student_details=None, error="Student not found")
 
         except Exception as e:
             print('Error:', e)
@@ -1003,7 +1003,7 @@ def store():
     mycursor.execute("SELECT * FROM storeproducts")
     products = mycursor.fetchall()
     mycursor.close()
-    return render_template("store.html", products=products)
+    return render_template("Store/store.html", products=products)
 
 
 @app.route('/adminstore')
@@ -1013,7 +1013,7 @@ def adminstore():
     mycursor.execute("SELECT * FROM storeproducts")
     products = mycursor.fetchall()
     mycursor.close()
-    return render_template("adminStore.html", products=products)
+    return render_template("Store/adminStore.html", products=products)
 
 
 @app.route('/adminstoreadd', methods=['POST'])
@@ -1086,6 +1086,8 @@ def adminstoreupdate():
     mydb.commit()
     mycursor.close()
     return redirect(url_for('adminstore'))
+
+#DONE
 
 
 @app.route('/blogs')
