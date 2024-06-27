@@ -17,17 +17,12 @@ from Admin import *
 # delete_info(),get_info()
 
 
-
 @app.before_request
 def before_request():
     if 'user' in session:
         session.modified = True
     else:
         session.clear()
-
-
-
-
 
 
 @app.route('/forget_password', methods=['GET', 'POST'])
@@ -80,7 +75,6 @@ def reset_password(token):
     return render_template('User/reset_password.html', token=token)
 
 
-
 @app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -106,6 +100,7 @@ def register():
         add_info(username, password, email, name, age, address, phone)
         return redirect(url_for('home'))
     return render_template('User/register.html')
+
 
 @app.route('/updateProfile', methods=['GET', 'POST'])
 @roles_required('student', 'teacher')
@@ -157,6 +152,8 @@ def updateProfile():
     else:
         flash("User session not found")
         return redirect(url_for('login'))
+
+
 #NEED TO FINISH THE DELETE ACCOUNT
 @app.route('/deleteAccount', methods=['POST'])
 @roles_required('student', 'teacher')
@@ -180,12 +177,6 @@ def deleteAccount():
         return redirect(url_for('User/profile'))
 
 
-
-
-
-
-
-
 @app.route('/teacherHome')
 @roles_required('teacher')
 def teacherHome():
@@ -203,13 +194,6 @@ def teacherHome():
         return redirect(url_for('login'))  # Redirect to login if session not found
 
 
-
-
-
-
-
-
-
 @app.route('/store')
 @limiter.limit("5 per minute")
 def store():
@@ -218,10 +202,6 @@ def store():
     products = mycursor.fetchall()
     mycursor.close()
     return render_template("Store/store.html", products=products)
-
-
-
-
 
 
 if __name__ == '__main__':

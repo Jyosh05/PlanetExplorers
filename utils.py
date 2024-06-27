@@ -15,6 +15,7 @@ from flask_session import Session
 from datetime import timedelta, datetime
 import requests
 
+
 app = Flask(__name__)
 app.config.update(
     MAIL_SERVER=email_config['mail_server'],
@@ -36,6 +37,7 @@ mydb = mysql.connector.connect(
     database=DB_Config['database']
 )
 
+
 mycursor = mydb.cursor(buffered=True)
 
 # Caleb's entire rate limiting, secure session management, https enforcement
@@ -52,6 +54,7 @@ app.config['SESSION_PERMANENT'] = False # browser closed? NO MORE SESSION!
 app.config['SESSION_USE_SIGNER'] = True # digitally signing the cookie sessions. no tampering by clients
 Session(app)
 
+
 UPLOAD_FOLDER = 'static/img'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -60,6 +63,7 @@ role_redirects = {
     'teacher': 'teacherHome',
     'student': 'learnerHome'
 }
+
 
 tableCheck = ['users']
 for a in tableCheck:

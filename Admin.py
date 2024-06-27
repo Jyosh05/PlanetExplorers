@@ -87,6 +87,7 @@ def adminDeleteTeacher(id):
         mydb.rollback()
         return "Error occurred while deleting teacher"
 
+
 @app.route('/adminTeacherTable', methods=['GET'])
 @roles_required('admin')
 def adminTeachersRetrieve():
@@ -95,6 +96,7 @@ def adminTeachersRetrieve():
     rows = mycursor.fetchall()
     count = len(rows)
     return render_template('Admin/adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count)
+
 
 @app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
 @roles_required('admin')
@@ -145,6 +147,7 @@ def adminTeacherUpdate(id):
         except Exception as e:
             print('Error:', e)
             return "Error occurred while fetching teacher details"
+
 
 @app.route('/adminCreateStudent', methods=['GET', 'POST'])
 @roles_required('admin')
@@ -205,6 +208,7 @@ def adminCreateStudent():
 
     return render_template('Admin/adminCreateStudent.html')
 
+
 @app.route('/adminStudentTable', methods=['GET'])
 @roles_required('admin')
 def adminUsersRetrieve():
@@ -213,6 +217,7 @@ def adminUsersRetrieve():
     rows = mycursor.fetchall()
     count = len(rows)
     return render_template('Admin/adminStudentTable.html', nameOfPage='User Management System', students=rows, count=count)
+
 
 @app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
 @roles_required('admin')
@@ -286,6 +291,7 @@ def adminDeleteStudent(id):
         print('Error: ', e)
         mydb.rollback()
         return "Error occurred while deleting student"
+
 
 @app.route('/adminstore')
 @roles_required('admin')
@@ -367,8 +373,6 @@ def adminstoreupdate():
     mydb.commit()
     mycursor.close()
     return redirect(url_for('adminstore'))
-
-#DONE
 
 
 @app.route('/blogs')
