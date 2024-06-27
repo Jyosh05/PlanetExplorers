@@ -6,6 +6,18 @@
 </head>
 <body>
     {% include 'navbar.html' %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
     <form method="POST" action="login">
         <label for="username">User ID</label>
         <input type="text" name="username" id="username">
@@ -17,5 +29,6 @@
         <button type="submit">Login</button>
     </form>
     <a href="{{ url_for('register') }}">Register Account</a>
+
 </body>
 </html>

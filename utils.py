@@ -14,6 +14,7 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_session import Session
 from datetime import timedelta, datetime
 import requests
+import secrets
 
 
 app = Flask(__name__)
@@ -82,7 +83,11 @@ for a in tableCheck:
                         address VARCHAR(255),
                         phone INT NOT NULL,
                         profilePic VARCHAR(600) NULL,
-                        role ENUM('student','teacher','admin') NOT NULL
+                        role ENUM('student','teacher','admin') NOT NULL,
+                        locked BOOLEAN DEFAULT FALSE,
+                        unlock_token VARCHAR(255),
+                        failed_login_attempts INT DEFAULT 0,
+                        lockout_time DATETIME
                     )
                     """)
         print(f"Table 'users' Created")
@@ -91,6 +96,7 @@ mycursor.execute('SELECT * FROM users')
 print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
+
 
 tableCheck = ['audit_logs']
 for a in tableCheck:
@@ -433,3 +439,7 @@ def userSession(username):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+
+def generate_unlock_token():
+    token = secrets.token_urlsafe(32)  # Generate a URL-safe token with 32 bytes of randomness
+    return token

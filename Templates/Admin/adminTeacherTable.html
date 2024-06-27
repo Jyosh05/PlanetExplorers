@@ -27,6 +27,7 @@
           <th>Name</th>
         <th>Email</th>
           <th>Role</th>
+        <th>Account Status</th>
           <th>Actions</th>
 
 
@@ -40,8 +41,16 @@
             <td>{{ teacher[4] }}</td>
             <td>{{ teacher[3] }}</td>
             <td>{{ teacher[9] }}</td>
-            <td><a href="{{ url_for('adminTeacherUpdate', id=teacher[0]) }}" class="btn btn-warning">Update</a></td>
+            <td>{{ 'Locked' if teacher[10] else 'Not Locked' }}</td>
+
+
+           <td>
+                {% if teacher[0] != admin_id %}
+                <a href="{{ url_for('adminTeacherUpdate', id=teacher[0]) }}" class="btn btn-warning">Update</a>
+                {% endif %}
+            </td>
 <td>
+    {% if teacher[0] != admin_id %}
             <form action="{{url_for('adminDeleteTeacher', id=teacher[0]) }}" method="POST">
 
                 <!-- Button to Open the Modal -->
@@ -75,6 +84,8 @@
   </div>
 </div>
           </form>
+                    {% endif %}
+
             </td>
 
    {% endfor %}

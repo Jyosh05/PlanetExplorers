@@ -5,35 +5,44 @@
 {% block content %}
 <form method="POST" action="">
     <input type="hidden" id="id" name="id" value="{{ student_details[0] }}">
-        <div class="form-inputs">
-            {% if error %}
+    <div class="form-inputs">
+        {% if error %}
             <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
-            {% if student_details %}
-            <form method="POST">
-                <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" class="form-control" id="username" name="username" value="{{ student_details[1] }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" class="form-control" id="password" name="password" value="{{ student_details[2] }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" class="form-control" id="email" name="email" value="{{ student_details[3] }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="role">Role:</label>
-                    <input type="text" class="form-control" id="role" name="role" value="{{ student_details[9] }}" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Update</button>
-            </form>
+        {% if student_details %}
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{ student_details[1] }}" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
+                <small class="form-text text-muted">Leave blank to keep the current password</small>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ student_details[2] }}" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <input type="text" class="form-control" id="role" name="role" value="{{ student_details[3] }}" required>
+            </div>
+            <div class="form-group">
+                <label for="locked">Account Status:</label>
+                <input type="text" class="form-control" id="locked" name="locked" value="{{ 'Locked' if student_details[10] else 'Not locked' }}" readonly>
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="lock_account" name="lock_account">
+                <label class="form-check-label" for="lock_account">Lock Account</label>
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="unlock_account" name="unlock_account">
+                <label class="form-check-label" for="unlock_account">Unlock Account</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Update</button>
         {% else %}
-            <div class="alert alert-warning">No teacher details available</div>
+            <div class="alert alert-danger" role="alert">Student details not found</div>
         {% endif %}
     </div>
-
-
+</form>
 {% endblock %}
-

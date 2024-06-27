@@ -4,7 +4,27 @@ from werkzeug.utils import secure_filename
 @app.route('/adminHome')
 @roles_required('admin')
 def adminHome():
+
     return render_template('Admin/adminHome.html')
+
+@app.route('/adminProfile')
+@roles_required('admin')
+def adminProfile():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        user = userSession(username)
+        if user:
+            print(f'user {username} is logged in')
+            return render_template("Admin/adminProfile.html", user=user)
+        else:
+            flash("User not found in database")
+            return redirect(url_for('login'))  # Redirect to login if user not found
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))  # Redirect to login if session not found
+
+
+
 
 @app.route('/adminCreateTeacher', methods=['GET', 'POST'])
 @roles_required('admin')
@@ -67,6 +87,7 @@ def adminCreateTeacher():
 
 
 @app.route('/adminDeleteTeacher/<int:id>', methods=['GET', 'POST'])
+@roles_required('admin')
 def adminDeleteTeacher(id):
     try:
         select_query = "SELECT * FROM users WHERE id = %s"
@@ -91,37 +112,58 @@ def adminDeleteTeacher(id):
 @app.route('/adminTeacherTable', methods=['GET'])
 @roles_required('admin')
 def adminTeachersRetrieve():
+    if 'user' in session and 'id' in session['user']:
+        admin_id = session['user']['id']
     select_query = "SELECT * FROM users WHERE role = %s or role = %s"
     mycursor.execute(select_query, ('teacher', 'admin',))
     rows = mycursor.fetchall()
     count = len(rows)
-    return render_template('Admin/adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count)
+    return render_template('Admin/adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count, admin_id=admin_id)
 
 
 @app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminTeacherUpdate(id):
+    if 'user' in session and 'id' in session['user']:
+        admin_id = session['user']['id']
+
     if request.method == 'POST':
         try:
             username = request.form.get('username')
             password = request.form.get('password')
             email = request.form.get('email')
             role = request.form.get('role')
+            lock_account = request.form.get('lock_account')
+            unlock_account = request.form.get('unlock_account')
 
-            # Fetch existing product details from the database
+
+            # Fetch existing teacher details from the database
             select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
             mycursor.execute(select_query, (id,))
             teacher_details = mycursor.fetchone()
 
             if teacher_details:
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
-                teacher_details[2]
+                # Hash the password if provided, otherwise keep the existing one
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else teacher_details[2]
 
                 update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
                 data = (username, hashed_password, email, role, id)
                 mycursor.execute(update_teacher, data)
+
+                if lock_account:
+                    mycursor.execute('UPDATE users SET locked = TRUE, locked_until = %s WHERE id = %s', (
+                        datetime.now() + timedelta(days=365),
+                        id))  # Locked for a long period, essentially permanently locked
+
+                # Unlock account if requested
+                if unlock_account:
+                    mycursor.execute(
+                        'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
+                        (id,))
+
                 mydb.commit()
 
+                flash('Teacher details updated successfully', 'success')
                 return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
 
             else:
@@ -134,13 +176,13 @@ def adminTeacherUpdate(id):
 
     else:
         try:
-            # Fetch existing teacher details to prepopulate the form
-            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            # Fetch existing teacher details to prepopulate the form, excluding the hashed password
+            select_query = "SELECT id, username, email, role, locked FROM users WHERE id = %s"
             mycursor.execute(select_query, (id,))
             teacher_details = mycursor.fetchone()
 
             if teacher_details:
-                return render_template('Admin/updateTeacher.html', teacher_details=teacher_details)
+                return render_template('Admin/updateTeacher.html', teacher_details=teacher_details, admin_id=admin_id)
             else:
                 return render_template('Admin/updateTeacher.html', teacher_details=None, error="Teacher not found")
 
@@ -228,6 +270,8 @@ def adminStudentUpdate(id):
             password = request.form.get('password')
             email = request.form.get('email')
             role = request.form.get('role')
+            lock_account = request.form.get('lock_account')
+            unlock_account = request.form.get('unlock_account')
 
             # Fetch existing product details from the database
             select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
@@ -236,14 +280,26 @@ def adminStudentUpdate(id):
 
             if student_details:
                 # Hash the password if provided, otherwise keep the existing one
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
-                student_details[2]
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else student_details[2]
 
                 update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
                 data = (username, hashed_password, email, role, id)
                 mycursor.execute(update_student, data)
+                # Lock account if requested
+                if lock_account:
+                    mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
+                    datetime.now() + timedelta(days=365),
+                    id))  # Locked for a long period, essentially permanently locked
+
+                # Unlock account if requested
+                if unlock_account:
+                    mycursor.execute(
+                        'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
+                        (id,))
+
                 mydb.commit()
 
+                flash('Student details updated successfully.', 'success')
                 return redirect(url_for('adminStudentUpdate', id=student_details[0]))
 
             else:
@@ -257,7 +313,7 @@ def adminStudentUpdate(id):
     else:
         try:
             # Fetch existing teacher details to prepopulate the form
-            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+            select_query = "SELECT id, username, email, role FROM users WHERE id = %s"
             mycursor.execute(select_query, (id,))
             student_details = mycursor.fetchone()
 
