@@ -154,7 +154,6 @@ def updateProfile():
         return redirect(url_for('login'))
 
 
-#NEED TO FINISH THE DELETE ACCOUNT
 @app.route('/deleteAccount', methods=['POST'])
 @roles_required('student', 'teacher')
 def deleteAccount():
@@ -174,7 +173,7 @@ def deleteAccount():
         print('Error: ', e)
         mydb.rollback()
         flash('Error occurred while deleting account', 'error')
-        return redirect(url_for('User/profile'))
+        return redirect(url_for('profile'))
 
 
 @app.route('/teacherHome')
