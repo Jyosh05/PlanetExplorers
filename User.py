@@ -125,3 +125,8 @@ def send_unlock_email(email, token):
                f'<p>If you did not request this, please ignore this email.</p>' \
                f'<p>Best regards,<br>PlanetExplorers Team</p>'
     send_reset_link_email(email, subject, template)
+
+@app.route('/teacher/create_module')
+@roles_required("teacher")
+def create_module():
+    return render_template("Teacher/module.html")

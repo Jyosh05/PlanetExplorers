@@ -141,6 +141,7 @@ for a in tableCheck:
 
     print(f"Table 'storeproducts' Created")
 
+
 mycursor.execute('SELECT * FROM storeproducts')
 print(f"Using Table 'storeproducts'")
 
@@ -165,8 +166,30 @@ for a in tableCheck:
 
 mycursor.execute('SELECT * FROM token_validation')
 print(f"Using table 'token_validation' ")
-
 token_validation = mycursor.fetchall()
+
+tableCheck = ['modules']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'modules'")
+    tableExist = mycursor.fetchone()
+    if not tableExist:
+        mycursor.execute("""
+            CREATE TABLE IF NOT EXISTS modules(
+                module_id INT AUTO_INCREMENT PRIMARY KEY,
+                module_name VARCHAR(255) NOT NULL,
+                module_type ENUM('MCQ', 'Open-ended') NOT NULL,
+                is_public BOOLEAN DEFAULT FALSE,
+                teacher_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        print(f"Table 'modules' Created")
+
+mycursor.execute('SELECT * FROM modules')
+print(f"Using table 'modules'")
+modules = mycursor.fetchall()
+
+
 def regenerate_session():  # regenerate session. update session data, ensure security after login or logout.
     session.modified = True
     session.new = True
@@ -181,7 +204,7 @@ limiter = Limiter(
 
 
 # Aloysius Portion
-def input_validation(input_string):
+def input_validation(*input_string):
     # INJECTION, JAVASCRIPT AND PYTHON MALICIOUS CODE USING REGEX
     sql_injection_patterns = [
         r"\b(SELECT|INSERT|DELETE|UPDATE|DROP|ALTER|CREATE|TRUNCATE|EXEC|UNION|--|;)\b",
@@ -194,7 +217,7 @@ def input_validation(input_string):
 
     combined_regex = re.compile(combined_pattern, re.IGNORECASE)
 
-    if combined_regex.search(input_string):
+    if combined_regex.search(*input_string):
         raise ValueError("Invalid input: Harmful input detected")
     log_this("Harmful input detected")
     return True
@@ -238,12 +261,8 @@ def check_existing_credentials(username=None, email=None):
 def add_info(username, password, email, name, age, address, phone):
     try:
         # Checking the inputs from the add_info function
-        input_validation(username)
-        input_validation(password)
-        input_validation(email)
-        input_validation(name)  # This line checks the input validation for name
+        input_validation(username, password,email,name,address)
         age_validation(int(age))
-        input_validation(address)
         validate_phone_number(phone)
         # Checking if the user is in the db or not
         if check_existing_credentials(username, email):
@@ -273,8 +292,7 @@ def add_info(username, password, email, name, age, address, phone):
 
 def delete_info(username, password):
     try:
-        input_validation(username)
-        input_validation(password)
+        input_validation(username,password)
         query = "SELECT password FROM users WHERE username = %s"
         mycursor.execute(query, (username,))
         user = mycursor.fetchone()
