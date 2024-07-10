@@ -14,7 +14,11 @@
             <input type="text" id="username" name="username"><br>
             <label for="password">Password:</label>
             <br>
-            <input type="password" id="password" name="password"><br>
+            <input type="password" id="password" name="password" oninput="checkPasswordStrength()"><br>
+            <div id="password-strength-bar-container">
+                <div id="password-strength-bar"></div>
+            </div>
+            <ul id="password-feedback"></ul>
             <label for="email">Email:</label>
             <br>
             <input type="email" id="email" name="email"><br>
@@ -50,36 +54,6 @@
             <a href="{{ url_for('login')}}">Login</a>
         </div>
     </form>
-
-    <script>
-        function goToPart2() {
-            document.getElementById("part1").style.display = "none";
-            document.getElementById("part2").style.display = "block";
-        }
-
-        function goToPart1() {
-            document.getElementById("part2").style.display = "none";
-            document.getElementById("part1").style.display = "block";
-        }
-
-        function submitForm() {
-            // Combine form data from both parts
-            var username = document.getElementById("username").value;
-            var password = document.getElementById("password").value;
-            var email = document.getElementById("email").value;
-            var name = document.getElementById("name").value;
-            var age = document.getElementById("age").value;
-            var address = document.getElementById("address").value;
-            var phone = document.getElementById("phone").value;
-
-            // Set values for part 1 fields (hidden fields)
-            document.getElementById("username").value = username;
-            document.getElementById("password").value = password;
-            document.getElementById("email").value = email;
-
-            // Submit the form
-            document.getElementById("registrationForm").submit();
-        }
-    </script>
+    <script src="../../static/javascript/register.js"></script>
 </body>
 </html>

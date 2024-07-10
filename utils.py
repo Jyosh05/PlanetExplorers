@@ -203,7 +203,6 @@ limiter = Limiter(
 )
 
 
-# Aloysius Portion
 def input_validation(*input_string):
     # INJECTION, JAVASCRIPT AND PYTHON MALICIOUS CODE USING REGEX
     sql_injection_patterns = [
