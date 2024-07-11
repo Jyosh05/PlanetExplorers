@@ -35,6 +35,12 @@ function checkPasswordStrength() {
     // Clear previous feedback
     feedback.innerHTML = "";
 
+    // Check if the password field is empty
+    if (password.trim() === "") {
+        nextButton.disabled = true; // Ensure the button stays disabled
+        return; // Exit the function early if password is empty
+    }
+
     // Define criteria
     var criteria = [
         { regex: /.{8,}/, message: "Must be at least 8 characters long" },
@@ -94,5 +100,6 @@ function checkPasswordStrength() {
 
     feedback.insertBefore(overallMessage, feedback.firstChild);
 }
+
 
 
