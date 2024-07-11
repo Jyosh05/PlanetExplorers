@@ -203,8 +203,10 @@ limiter = Limiter(
 )
 
 
-def input_validation(*input_string):
-    # INJECTION, JAVASCRIPT AND PYTHON MALICIOUS CODE USING REGEX
+import re
+
+def input_validation(*input_strings):
+    # Patterns for detecting harmful content
     sql_injection_patterns = [
         r"\b(SELECT|INSERT|DELETE|UPDATE|DROP|ALTER|CREATE|TRUNCATE|EXEC|UNION|--|;)\b",
         r"\b(OR|AND)\b\s*?[^\s]*?="
@@ -212,17 +214,25 @@ def input_validation(*input_string):
     javascript_pattern = r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>"
     python_script_pattern = r"\b(import|from|exec|eval|os|sys|subprocess)\b"
 
+    # Combine all patterns into one
     combined_pattern = "|".join(sql_injection_patterns) + "|" + javascript_pattern + "|" + python_script_pattern
 
+    # Compile the combined regex pattern
     combined_regex = re.compile(combined_pattern, re.IGNORECASE)
 
-    if combined_regex.search(*input_string):
-        raise ValueError("Invalid input: Harmful input detected")
-    log_this("Harmful input detected")
+    # Check each input string against the combined regex pattern
+    for input_string in input_strings:
+        if combined_regex.search(input_string):
+            raise ValueError("Invalid input: Harmful input detected")
+        # Log harmless input
+        log_this("Input validated: No harmful content detected")
+
     return True
 
 
+
 def age_validation(age):
+    age = int(age)
     if not isinstance(age, int) or age <= 0:
         raise ValueError("Invalid input: Age must be a positive integer")
     return True
