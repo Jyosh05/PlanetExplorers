@@ -15,6 +15,7 @@ from flask_session import Session
 from datetime import timedelta, datetime
 import requests
 import secrets
+import stripe
 
 
 app = Flask(__name__)
@@ -188,6 +189,30 @@ for a in tableCheck:
 mycursor.execute('SELECT * FROM modules')
 print(f"Using table 'modules'")
 modules = mycursor.fetchall()
+
+
+tableCheck = ['cart']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'cart'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+        CREATE TABLE `cart` (
+            `cart_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT NOT NULL,
+            `product_id` INT NOT NULL,
+            `quantity` INT NOT NULL,
+            FOREIGN KEY (`user_id`) REFERENCES `users`(`id`),
+            FOREIGN KEY (`product_id`) REFERENCES `storeproducts`(`id`)
+        )
+        """)
+        print(f"Table 'cart' Created")
+
+mycursor.execute('SELECT * FROM cart')
+print(f"Using Table 'cart'")
+
+cart = mycursor.fetchall()
 
 
 def regenerate_session():  # regenerate session. update session data, ensure security after login or logout.

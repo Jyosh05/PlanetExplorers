@@ -2,22 +2,34 @@
 <html>
 <head>
     <title>Store</title>
-    <link rel="stylesheet" type="text/css" href="../static/css/store.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/store.css') }}">
+    <script src="{{ url_for('static', filename='javascript/store.js') }}"></script>
 </head>
 <body>
     {% include 'navbar.html'%}
-    <h1>Store Products</h1>
-    <ul class="product-list">
-        {% for product in products %}
-        <li class="product-item">
-            <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" class="product-image">
-            <div class="product-details">
-                <h2 class="product-name">{{ product[1] }}</h2>
-                <p class="product-description">{{ product[2] }}</p>
-                <p class="product-price">Price: ${{ product[3] }}</p>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <h1>Store Products</h1>
+        <ul class="product-list">
+            {% for product in products %}
+            <li class="product-item">
+                <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" class="product-image">
+                <div class="product-details">
+                    <h2 class="product-name">{{ product[1] }}</h2>
+                    <p class="product-description">{{ product[2] }}</p>
+                    <p class="product-price">Price: ${{ product[3] }}</p>
+                    <form action="/add_to_cart" method="POST" class="add-to-cart-form">
+                        <input type="hidden" name="product_id" value="{{ product[0] }}">
+                        <div class="quantity-input">
+                            <button type="button" class="quantity-btn minus-btn">-</button>
+                            <input type="text" name="quantity" value="1" class="quantity-field" readonly>
+                            <button type="button" class="quantity-btn plus-btn">+</button>
+                        </div>
+                        <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 </body>
 </html>

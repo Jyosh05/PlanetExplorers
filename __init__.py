@@ -206,6 +206,97 @@ def store():
     return render_template("Store/store.html", products=products)
 
 
+@app.route('/cart')
+@limiter.limit("20 per minute")
+@roles_required('user','admin')
+def cart():
+    user_id = session['user_id']
+    mycursor = mydb.cursor()
+
+    # Fetch cart items for the logged-in user
+    mycursor.execute(
+        "SELECT cart.cart_id, storeproducts.name, storeproducts.price, cart.quantity FROM cart JOIN storeproducts ON cart.product_id = storeproducts.id WHERE cart.user_id = %s",
+        (user_id,)
+    )
+    cart_items = mycursor.fetchall()
+
+    mycursor.close()
+    return render_template('cart.html', cart_items=cart_items)
+
+
+@app.route('/add_to_cart', methods=['POST'])
+@limiter.limit("20 per minute")
+@roles_required('user', 'admin')
+def add_to_cart():
+    if 'user_id' not in session:
+        flash('Please log in to add items to your cart.')
+        return redirect(url_for('login'))  # Redirect to login page if not logged in
+
+    user_id = session['user_id']
+    product_id = request.form['product_id']
+    quantity = int(request.form['quantity'])
+
+    mycursor = mydb.cursor()
+
+    try:
+        # Check if the product exists and has enough quantity
+        mycursor.execute("SELECT * FROM storeproducts WHERE id = %s", (product_id,))
+        product = mycursor.fetchone()
+
+        if not product:
+            flash('Product not found.')
+            return redirect(url_for('store'))
+
+        if quantity > product['quantity']:
+            flash('Not enough quantity available.')
+            return redirect(url_for('store'))
+
+        # Insert into cart table
+        mycursor.execute(
+            "INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)",
+            (user_id, product_id, quantity)
+        )
+        mydb.commit()
+        flash('Product added to cart successfully.')
+
+    except Exception as e:
+        flash(f'Error: {e}')
+        mydb.rollback()
+
+    finally:
+        mycursor.close()
+
+    return redirect(url_for('store'))
+
+@app.route('/remove_from_cart', methods=['POST'])
+@limiter.limit("20 per minute")
+@roles_required('user', 'admin')
+def remove_from_cart():
+    if 'user_id' not in session:
+        flash('Please log in to manage your cart.')
+        return redirect(url_for('login'))  # Redirect to login page if not logged in
+
+    cart_id = request.form['cart_id']
+    user_id = session['user_id']
+
+    mycursor = mydb.cursor()
+
+    try:
+        # Delete the item from cart
+        mycursor.execute("DELETE FROM cart WHERE cart_id = %s AND user_id = %s", (cart_id, user_id))
+        mydb.commit()
+        flash('Item removed from cart successfully.')
+    except Exception as e:
+        flash(f'Error: {e}')
+        mydb.rollback()
+    finally:
+        mycursor.close()
+
+    return redirect(url_for('cart'))
+
+
+
+
 if __name__ == '__main__':
     # calling create table function
     # Call the function when the application starts

@@ -2,9 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Your Cart</title>
+    <link rel="stylesheet" type="text/css" href="../static/css/cart.css">
 </head>
 <body>
-
+    {% include 'navbar.html'%}
+    <div class="container">
+        <h1>Your Cart</h1>
+        <ul class="cart-items">
+            {% for item in cart_items %}
+            <li class="cart-item">
+                <img src="{{ url_for('static', filename=item['image_path']) }}" alt="{{ item['name'] }}" class="cart-image">
+                <div class="cart-details">
+                    <h2 class="cart-name">{{ item['name'] }}</h2>
+                    <p class="cart-price">Price: ${{ item['price'] }}</p>
+                    <p class="cart-quantity">Quantity: {{ item['quantity'] }}</p>
+                    <form action="/remove_from_cart" method="POST">
+                        <input type="hidden" name="cart_id" value="{{ item['cart_id'] }}">
+                        <button type="submit">Remove</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="checkout-button">
+            <a href="/checkout">Proceed to Checkout</a>
+        </div>
+    </div>
 </body>
 </html>
