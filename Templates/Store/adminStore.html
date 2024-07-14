@@ -2,41 +2,33 @@
 <html>
 <head>
     <title>Admin Store</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/adminStore.css') }}">
 </head>
 <body>
     {% include 'adminBase.html' %}
-    <h1>Manage Store Products</h1>
-    <ul>
-        {% for product in products %}
-        <li>
-            <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" width="100" height="100">
-            <div>
-                <p>{{ product[1] }} - ${{ product[3] }} ({{ product[4] }} in stock)</p>
-                <form action="{{ url_for('adminstoredelete') }}" method="post" style="display:inline;">
-                    <input type="hidden" name="product_id" value="{{ product[0] }}">
-                    <button type="submit">Delete</button>
-                </form>
-                <form action="{{ url_for('adminstoreupdate') }}" method="post" style="display:inline;" enctype="multipart/form-data">
-                    <input type="hidden" name="product_id" value="{{ product[0] }}">
-                    <input type="text" name="name" value="{{ product[1] }}">
-                    <input type="text" name="description" value="{{ product[2] }}">
-                    <input type="number" name="price" value="{{ product[3] }}">
-                    <input type="number" name="quantity" value="{{ product[4] }}">
-                    <input type="file" name="image">
-                    <button type="submit">Update</button>
-                </form>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
-    <h2>Add Product</h2>
-    <form action="{{ url_for('adminstoreadd') }}" method="post" enctype="multipart/form-data">
-        <input type="text" name="name" placeholder="Name">
-        <input type="text" name="description" placeholder="Description">
-        <input type="number" step="0.01" name="price" placeholder="Price">
-        <input type="number" name="quantity" placeholder="Quantity">
-        <input type="file" name="image">
-        <button type="submit">Add</button>
-    </form>
+    <div class="container">
+        <h1>Manage Store Products</h1>
+        <ul>
+            {% for product in products %}
+            <li>
+                <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" width="100" height="100">
+                <div>
+                    <p>{{ product[1] }} - ${{ product[3] }} ({{ product[4] }} in stock)</p>
+                    <form action="{{ url_for('adminstoreupdatepage', product_id=product[0]) }}" method="get">
+                        <button type="submit">Update</button>
+                    </form>
+                    <form action="{{ url_for('adminstoredelete') }}" method="post">
+                        <input type="hidden" name="product_id" value="{{ product[0] }}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <h2>Add Product</h2>
+        <form action="{{ url_for('adminstoreaddpage') }}" method="get" class="add-product-form">
+            <button type="submit">Add New Product</button>
+        </form>
+    </div>
 </body>
 </html>

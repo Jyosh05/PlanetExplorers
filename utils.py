@@ -435,9 +435,7 @@ def roles_required(*roles):
             if 'user' not in session or session['user']['role'] not in roles:
                 return abort(403)  # Forbidden
             return func(*args, **kwargs)
-
         return decorated_function
-
     return wrapper
 
 

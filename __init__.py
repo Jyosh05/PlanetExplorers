@@ -208,25 +208,31 @@ def store():
 
 @app.route('/cart')
 @limiter.limit("20 per minute")
-@roles_required('user','admin')
+@roles_required('user')
 def cart():
-    user_id = session['user_id']
-    mycursor = mydb.cursor()
+    if 'user' in session:
+        user_id = session['user']['id']
 
-    # Fetch cart items for the logged-in user
-    mycursor.execute(
-        "SELECT cart.cart_id, storeproducts.name, storeproducts.price, cart.quantity FROM cart JOIN storeproducts ON cart.product_id = storeproducts.id WHERE cart.user_id = %s",
-        (user_id,)
-    )
-    cart_items = mycursor.fetchall()
+        # Now fetch cart items for the logged-in user using user_id
+        mycursor = mydb.cursor()
+        mycursor.execute(
+            "SELECT cart.cart_id, storeproducts.name, storeproducts.price, cart.quantity FROM cart "
+            "JOIN storeproducts ON cart.product_id = storeproducts.id WHERE cart.user_id = %s",
+            (user_id,)
+        )
+        cart_items = mycursor.fetchall()
+        mycursor.close()
 
-    mycursor.close()
-    return render_template('cart.html', cart_items=cart_items)
+        return render_template('cart.html', cart_items=cart_items)
+
+    # Handle case when user session is not available or user is not authenticated
+    flash('Please log in to view your cart.', 'info')
+    return redirect(url_for('login'))
 
 
 @app.route('/add_to_cart', methods=['POST'])
 @limiter.limit("20 per minute")
-@roles_required('user', 'admin')
+@roles_required('user')
 def add_to_cart():
     if 'user_id' not in session:
         flash('Please log in to add items to your cart.')
@@ -270,7 +276,7 @@ def add_to_cart():
 
 @app.route('/remove_from_cart', methods=['POST'])
 @limiter.limit("20 per minute")
-@roles_required('user', 'admin')
+@roles_required('user')
 def remove_from_cart():
     if 'user_id' not in session:
         flash('Please log in to manage your cart.')

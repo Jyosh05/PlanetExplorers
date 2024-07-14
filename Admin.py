@@ -359,6 +359,11 @@ def adminstore():
     return render_template("Store/adminStore.html", products=products)
 
 
+@app.route('/adminstoreaddpage', methods=['GET'])
+@roles_required('admin')
+def adminstoreaddpage():
+    return render_template("Store/addProduct.html")
+
 @app.route('/adminstoreadd', methods=['POST'])
 @roles_required('admin')
 def adminstoreadd():
@@ -374,7 +379,7 @@ def adminstoreadd():
         filename = file.filename
         filename = secure_filename(filename)
         filepath = f"{app.config['UPLOAD_FOLDER']}/{filename}"
-        # file.save(filepath)
+        file.save(filepath)
         image_path = f"img/{filename}"  # Store relative path
 
         mycursor.execute(
@@ -386,17 +391,14 @@ def adminstoreadd():
 
     return "File not allowed or not provided", 400
 
-
-@app.route('/adminstoredelete', methods=['POST'])
+@app.route('/adminstoreupdatepage/<int:product_id>', methods=['GET'])
 @roles_required('admin')
-def adminstoredelete():
+def adminstoreupdatepage(product_id):
     mycursor = mydb.cursor()
-    product_id = request.form['product_id']
-    mycursor.execute("DELETE FROM storeproducts WHERE id = %s", (product_id,))
-    mydb.commit()
+    mycursor.execute("SELECT * FROM storeproducts WHERE id = %s", (product_id,))
+    product = mycursor.fetchone()
     mycursor.close()
-    return redirect(url_for('adminstore'))
-
+    return render_template("Store/updateProduct.html", product=product)
 
 @app.route('/adminstoreupdate', methods=['POST'])
 @roles_required('admin')
@@ -426,6 +428,18 @@ def adminstoreupdate():
             "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s WHERE id = %s",
             (name, description, price, quantity, product_id))
 
+    mydb.commit()
+    mycursor.close()
+    return redirect(url_for('adminstore'))
+
+
+
+@app.route('/adminstoredelete', methods=['POST'])
+@roles_required('admin')
+def adminstoredelete():
+    mycursor = mydb.cursor()
+    product_id = request.form['product_id']
+    mycursor.execute("DELETE FROM storeproducts WHERE id = %s", (product_id,))
     mydb.commit()
     mycursor.close()
     return redirect(url_for('adminstore'))
