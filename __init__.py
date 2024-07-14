@@ -206,101 +206,86 @@ def store():
     return render_template("Store/store.html", products=products)
 
 
-@app.route('/cart')
-@limiter.limit("20 per minute")
-@roles_required('user')
-def cart():
-    if 'user' in session:
+@app.route('/view_cart')
+@roles_required('student', 'teacher')
+def view_cart():
+    if 'user' in session and 'id' in session['user']:
         user_id = session['user']['id']
 
-        # Now fetch cart items for the logged-in user using user_id
-        mycursor = mydb.cursor()
-        mycursor.execute(
-            "SELECT cart.cart_id, storeproducts.name, storeproducts.price, cart.quantity FROM cart "
-            "JOIN storeproducts ON cart.product_id = storeproducts.id WHERE cart.user_id = %s",
-            (user_id,)
-        )
+        # Fetch items in the cart for the current user
+        mycursor.execute("""
+            SELECT sp.id, sp.name, sp.price, c.quantity
+            FROM cart c
+            INNER JOIN storeproducts sp ON c.product_id = sp.id
+            WHERE c.user_id = %s
+        """, (user_id,))
         cart_items = mycursor.fetchall()
-        mycursor.close()
 
-        return render_template('cart.html', cart_items=cart_items)
+        total_items = sum(item[3] for item in cart_items)  # Calculate total items in the cart
 
-    # Handle case when user session is not available or user is not authenticated
-    flash('Please log in to view your cart.', 'info')
-    return redirect(url_for('login'))
+        return render_template("Store/cart.html", cart_items=cart_items, total_items=total_items)
+    else:
+        flash("User session not found", 'danger')
+        return redirect(url_for('login'))
 
+@app.route('/add_to_cart/<int:product_id>', methods=["POST"])
+@roles_required('student', 'teacher')
+def add_to_cart(product_id):
+    if 'user' in session and 'id' in session['user']:
+        user_id = session['user']['id']
+        quantity = int(request.form.get('quantity', 1))
 
-@app.route('/add_to_cart', methods=['POST'])
-@limiter.limit("20 per minute")
-@roles_required('user')
-def add_to_cart():
-    if 'user_id' not in session:
-        flash('Please log in to add items to your cart.')
-        return redirect(url_for('login'))  # Redirect to login page if not logged in
-
-    user_id = session['user_id']
-    product_id = request.form['product_id']
-    quantity = int(request.form['quantity'])
-
-    mycursor = mydb.cursor()
-
-    try:
-        # Check if the product exists and has enough quantity
+        # Check if the product exists
         mycursor.execute("SELECT * FROM storeproducts WHERE id = %s", (product_id,))
         product = mycursor.fetchone()
 
-        if not product:
-            flash('Product not found.')
-            return redirect(url_for('store'))
+        if product:
+            # Check if the item is already in the cart
+            mycursor.execute("SELECT * FROM cart WHERE user_id = %s AND product_id = %s", (user_id, product_id))
+            cart_item = mycursor.fetchone()
 
-        if quantity > product['quantity']:
-            flash('Not enough quantity available.')
-            return redirect(url_for('store'))
+            if cart_item:
+                # Update quantity if item is already in the cart
+                new_quantity = cart_item[3] + quantity
+                mycursor.execute("UPDATE cart SET quantity = %s WHERE id = %s", (new_quantity, cart_item[0]))
+            else:
+                # Add new item to cart if not already in the cart
+                mycursor.execute("INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)",
+                                 (user_id, product_id, quantity))
 
-        # Insert into cart table
-        mycursor.execute(
-            "INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)",
-            (user_id, product_id, quantity)
-        )
-        mydb.commit()
-        flash('Product added to cart successfully.')
+            mydb.commit()
+            flash(f"{quantity} {product[1]} added to cart successfully", 'success')
+        else:
+            flash("Product not found", 'danger')
 
-    except Exception as e:
-        flash(f'Error: {e}')
-        mydb.rollback()
-
-    finally:
-        mycursor.close()
-
-    return redirect(url_for('store'))
-
-@app.route('/remove_from_cart', methods=['POST'])
-@limiter.limit("20 per minute")
-@roles_required('user')
-def remove_from_cart():
-    if 'user_id' not in session:
-        flash('Please log in to manage your cart.')
-        return redirect(url_for('login'))  # Redirect to login page if not logged in
-
-    cart_id = request.form['cart_id']
-    user_id = session['user_id']
-
-    mycursor = mydb.cursor()
-
-    try:
-        # Delete the item from cart
-        mycursor.execute("DELETE FROM cart WHERE cart_id = %s AND user_id = %s", (cart_id, user_id))
-        mydb.commit()
-        flash('Item removed from cart successfully.')
-    except Exception as e:
-        flash(f'Error: {e}')
-        mydb.rollback()
-    finally:
-        mycursor.close()
-
-    return redirect(url_for('cart'))
+        return redirect(url_for('view_cart'))
+    else:
+        flash("User session not found", 'danger')
+        return redirect(url_for('login'))
 
 
+@app.route('/remove_from_cart/<int:cart_id>', methods=["POST"])
+@roles_required('student', 'teacher')
+def remove_from_cart(cart_id):
+    if 'user' in session and 'id' in session['user']:
+        user_id = session['user']['id']
+
+        # Check if the cart item exists and belongs to the current user
+        mycursor.execute("SELECT * FROM cart WHERE id = %s AND user_id = %s", (cart_id, user_id))
+        cart_item = mycursor.fetchone()
+
+        if cart_item:
+            # Remove the item from the cart
+            mycursor.execute("DELETE FROM cart WHERE id = %s", (cart_id,))
+            mydb.commit()
+            flash("Item removed from cart successfully", 'success')
+        else:
+            flash("Cart item not found or does not belong to the current user", 'danger')
+
+        return redirect(url_for('view_cart'))
+    else:
+        flash("User session not found", 'danger')
+        return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
