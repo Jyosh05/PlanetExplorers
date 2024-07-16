@@ -29,7 +29,7 @@
                     {% if user[8] %}
                         <img src="{{ url_for('static', filename=user[8]) }}" class="profile-pic">
                     {% else %}
-                        <img src="{{ url_for('static', filename='img/default_pp.png') }}" class="profile-pic" style="width: 150px, height: 150px;">
+                        <img src="{{ url_for('static', filename='img/default_pp.png') }}" class="profile-pic">
                     {% endif %}
                     <label for="profile_pic" id="uploadBtn">Change</label>
                     <input type="file" class="form-control" id="profile_pic" name="image">
