@@ -8,6 +8,9 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../../static/css/profile.css">
+
 </head>
 <body>
     {% include 'navbar.html' %}
@@ -16,16 +19,18 @@
         {% if 'user' in session %}
 
     <div class="profile-container">
+        <div class="profile-pic-div">
         <div class="profile-picture">
 
             {% set profile_pic = user[8] %}
                 {% if user[8] %}
-                <img src="{{ url_for('static', filename=user[8]) }}"  style="max-width: 200px; max-height: 200px;">
+                <img src="{{ url_for('static', filename=user[8]) }}" class="profile-img">
                 {% else %}
                 <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture"
                      style="max-width: 200px; max-height: 200px;">
                 {% endif %}
 
+            </div>
             </div>
 
         <div class="profile-card">

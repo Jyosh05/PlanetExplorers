@@ -1,0 +1,37 @@
+.profile-pic-div {
+    position: relative;
+    display: inline-block;
+    width: 150px;
+    height: 150px;
+}
+
+.profile-pic {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: fill;
+    border: 1px solid grey;
+}
+
+#uploadBtn {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    display: block;
+    cursor: pointer;
+}
+
+
+
+.profile-pic-div:hover #uploadBtn {
+    display: block;
+}
+
+#profile_pic {
+    display: none;
+}

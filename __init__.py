@@ -135,9 +135,13 @@ def updateProfile():
                 if file.filename == '':
                     flash('No profile picture selected', 'error')
                 elif file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(filepath)
+                    if file.content_length < 32* 1024 *1024: # check if files size is less than 32 MB
+                        filename = secure_filename(file.filename)
+                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(filepath)
+                    else:
+                        flash('Profile Picture must be less than 32 MB', 'error')
+
 
                     try:
                         file_id = scan_file(filepath)
@@ -173,7 +177,6 @@ def updateProfile():
                                                              (image_path, username))
                                             mydb.commit()
                                             flash('Profile picture scanned and uploaded successfully!', 'success')
-                                            return redirect(url_for('profile'))
                                         except Exception as e:
                                             flash(f'Error updating profile picture: {str(e)}', 'error')
                                         return redirect(url_for('updateProfile'))

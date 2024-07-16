@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Profile</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../static/css/updateProfile.css">
+    <script src="../../static/javascript/updateProfile.js"></script>
 </head>
 <body>
     {% include 'navbar.html' %}
@@ -23,16 +25,26 @@
         <form action="{{ url_for('updateProfile') }}" method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="current_pic">Current Profile Picture</label><br>
-                {% if user[8] %}
-                    <img src="{{ url_for('static', filename=user[8]) }}" style="max-width: 100px; max-height: 100px;">
-                {% else %}
-                    <img src="{{ url_for('static', filename='img/default_pp.png') }}" style="max-width: 100px; max-height: 100px;">
-                {% endif %}
+                <div class="profile-pic-div">
+                    {% if user[8] %}
+                        <img src="{{ url_for('static', filename=user[8]) }}" class="profile-pic">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/default_pp.png') }}" class="profile-pic" style="width: 150px, height: 150px;">
+                    {% endif %}
+                    <label for="profile_pic" id="uploadBtn">Change</label>
+                    <input type="file" class="form-control" id="profile_pic" name="image">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="profile_pic">Profile Picture</label>
-                <input type="file" class="form-control" id="profile_pic" name="image">
+
+            <div class="profile-pic-requirements">
+                <h6>Profile Picture Requirements</h6>
+                <ul>
+                    <li>Picture must be less than 32 MB</li>
+                    <li>Picture format must be only PNG, JPG, JPEG or GIF</li>
+                    <li>If the page loads for too long after picture upload, its due to scanning of picture</li>
+                </ul>
             </div>
+
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" class="form-control" id="username" name="username" value="{{ user[1] }}" required>
