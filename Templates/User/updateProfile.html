@@ -18,12 +18,20 @@
                 </div>
             {% endfor %}
         {% endif %}
-    {% endwith %}
+        {% endwith %}
 
         <form action="{{ url_for('updateProfile') }}" method="POST" enctype="multipart/form-data">
             <div class="form-group">
+                <label for="current_pic">Current Profile Picture</label><br>
+                {% if user[8] %}
+                    <img src="{{ url_for('static', filename=user[8]) }}" style="max-width: 100px; max-height: 100px;">
+                {% else %}
+                    <img src="{{ url_for('static', filename='img/default_pp.png') }}" style="max-width: 100px; max-height: 100px;">
+                {% endif %}
+            </div>
+            <div class="form-group">
                 <label for="profile_pic">Profile Picture</label>
-                <input type="file" class="form-control" id="profile_pic" name="profile_pic">
+                <input type="file" class="form-control" id="profile_pic" name="image">
             </div>
             <div class="form-group">
                 <label for="username">Username</label>
