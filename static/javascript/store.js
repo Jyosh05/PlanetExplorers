@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const productItems = document.querySelectorAll('.product-item');
     const popup = document.getElementById('product-popup');
     const closeBtn = document.querySelector('.close-btn');
-    const addToCartForm = document.querySelector('.add-to-cart-form');
+    const addToCartForm = document.getElementById('add-to-cart-form');
 
     productItems.forEach(item => {
         item.addEventListener('click', function() {
@@ -51,22 +51,28 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // Add event listener to the add to cart form
     addToCartForm.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
 
-        console.log('Form submission started...');
-
-        // Retrieve form data
         const formData = new FormData(addToCartForm);
         const productId = formData.get('product_id');
         const quantity = formData.get('quantity');
 
-        // You can now process this data as needed (e.g., send it to server via fetch or XHR)
-        console.log(`Product ID: ${productId}, Quantity: ${quantity}`);
-        console.log('Form submission completed.');
-
-        // Optionally, you can close the popup after adding to cart
-        popup.style.display = 'none';
+        fetch(`/add_to_cart/${productId}`, {
+            method: 'POST',
+            body: new URLSearchParams(formData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+            } else {
+                alert(data.error);
+            }
+            popup.style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     });
 });

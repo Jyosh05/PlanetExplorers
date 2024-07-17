@@ -161,6 +161,7 @@ for a in tableCheck:
                 user_id INT NOT NULL,
                 product_id INT NOT NULL,
                 quantity INT NOT NULL,
+                total_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
                 FOREIGN KEY (user_id) REFERENCES users(id),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )

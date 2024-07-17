@@ -1,6 +1,6 @@
 import time
 
-from flask import render_template, request, redirect, url_for, session, flash
+from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 
 # Configuration is a file containing sensitive information
@@ -263,21 +263,29 @@ def view_cart():
     if 'user' in session and 'id' in session['user']:
         user_id = session['user']['id']
 
-        # Fetch items in the cart for the current user
+        # Fetch items in the cart for the current user with total price calculation
         mycursor.execute("""
-            SELECT sp.id, sp.name, sp.price, c.quantity
+            SELECT sp.id, sp.name, sp.price, c.quantity, sp.price * c.quantity AS total_price
             FROM cart c
             INNER JOIN storeproducts sp ON c.product_id = sp.id
             WHERE c.user_id = %s
         """, (user_id,))
         cart_items = mycursor.fetchall()
 
-        total_items = sum(item[3] for item in cart_items)  # Calculate total items in the cart
+        if not cart_items:
+            # Cart is empty, display a message
+            flash("Your Planet Explorer's Cart is empty.", 'info')
+            return render_template("Store/cart.html", cart_items=[], total_items=0, total_price=0, empty_message=True)
 
-        return render_template("Store/cart.html", cart_items=cart_items, total_items=total_items)
+        total_items = sum(item[3] for item in cart_items)  # Calculate total items in the cart
+        total_price = sum(item[4] for item in cart_items)  # Calculate total price of all items in the cart
+
+        return render_template("Store/cart.html", cart_items=cart_items, total_items=total_items, total_price=total_price, empty_message=False)
     else:
         flash("User session not found", 'danger')
         return redirect(url_for('login'))
+
+
 
 @app.route('/add_to_cart/<int:product_id>', methods=["POST"])
 @roles_required('student', 'teacher')
@@ -305,38 +313,55 @@ def add_to_cart(product_id):
                                  (user_id, product_id, quantity))
 
             mydb.commit()
-            flash(f"{quantity} {product[1]} added to cart successfully", 'success')
+            return jsonify({'success': True, 'message': f"{quantity} {product[1]} added to cart successfully"})
         else:
-            flash("Product not found", 'danger')
-
-        return redirect(url_for('view_cart'))
+            return jsonify({'success': False, 'error': "Product not found"})
     else:
-        flash("User session not found", 'danger')
-        return redirect(url_for('login'))
+        return jsonify({'success': False, 'error': "User session not found"})
 
 
-@app.route('/remove_from_cart/<int:cart_id>', methods=["POST"])
+@app.route('/update_cart/<int:product_id>', methods=['POST'])
 @roles_required('student', 'teacher')
-def remove_from_cart(cart_id):
+def update_cart(product_id):
+    if 'user' in session and 'id' in session['user']:
+        user_id = session['user']['id']
+        data = request.get_json()
+        new_quantity = data.get('quantity', 1)
+
+        mycursor.execute("UPDATE cart SET quantity = %s WHERE user_id = %s AND product_id = %s", (new_quantity, user_id, product_id))
+        mydb.commit()
+
+        # Calculate total items and total price
+        mycursor.execute("SELECT SUM(quantity) FROM cart WHERE user_id = %s", (user_id,))
+        total_items = mycursor.fetchone()[0] or 0
+
+        mycursor.execute("SELECT SUM(c.quantity * p.price) FROM cart c JOIN storeproducts p ON c.product_id = p.id WHERE c.user_id = %s", (user_id,))
+        total_price = mycursor.fetchone()[0] or 0.0
+
+        return jsonify(success=True, total_items=total_items, total_price=total_price)
+    else:
+        return jsonify(success=False), 403
+
+
+@app.route('/remove_from_cart/<int:product_id>', methods=['POST'])
+@roles_required('student', 'teacher')
+def remove_from_cart(product_id):
     if 'user' in session and 'id' in session['user']:
         user_id = session['user']['id']
 
-        # Check if the cart item exists and belongs to the current user
-        mycursor.execute("SELECT * FROM cart WHERE id = %s AND user_id = %s", (cart_id, user_id))
-        cart_item = mycursor.fetchone()
+        mycursor.execute("DELETE FROM cart WHERE user_id = %s AND product_id = %s", (user_id, product_id))
+        mydb.commit()
 
-        if cart_item:
-            # Remove the item from the cart
-            mycursor.execute("DELETE FROM cart WHERE id = %s", (cart_id,))
-            mydb.commit()
-            flash("Item removed from cart successfully", 'success')
-        else:
-            flash("Cart item not found or does not belong to the current user", 'danger')
+        # Calculate total items and total price
+        mycursor.execute("SELECT SUM(quantity) FROM cart WHERE user_id = %s", (user_id,))
+        total_items = mycursor.fetchone()[0] or 0
 
-        return redirect(url_for('view_cart'))
+        mycursor.execute("SELECT SUM(c.quantity * p.price) FROM cart c JOIN storeproducts p ON c.product_id = p.id WHERE c.user_id = %s", (user_id,))
+        total_price = mycursor.fetchone()[0] or 0.0
+
+        return jsonify(success=True, total_items=total_items, total_price=total_price)
     else:
-        flash("User session not found", 'danger')
-        return redirect(url_for('login'))
+        return jsonify(success=False), 403
 
 
 if __name__ == '__main__':
