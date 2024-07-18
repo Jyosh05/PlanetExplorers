@@ -267,7 +267,7 @@ def updatePassword():
                                     break
 
                             if password_exists:
-                                flash('Password already exists. Please create another password', 'error')
+                                flash('Password already exists. Please create another password', 'danger')
                                 return redirect(url_for('updatePassword'))
                             else:
                                 try:
@@ -287,11 +287,11 @@ def updatePassword():
                                     #     return redirect(url_for('login'))
 
                                 except Exception as e:
-                                    flash(f'Error updating password: {str(e)}', 'error')
+                                    flash(f'Error updating password: {str(e)}', 'danger')
                                     print(f'SQL Update Error: {str(e)}')  # Debug statement
                                     return redirect(url_for('updatePassword'))
                         except Exception as e:
-                            flash(f'Error checking existing password: {str(e)}', 'error')
+                            flash(f'Error checking existing password: {str(e)}', 'danger')
                             print(f'SQL Select Error: {str(e)}')  # Debug statement
                             return redirect(url_for('updatePassword'))
                     else:

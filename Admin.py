@@ -1,6 +1,8 @@
 from utils import *
 from flask import render_template, flash, request, redirect,url_for
 from werkzeug.utils import secure_filename
+import time
+import os
 @app.route('/adminHome')
 @roles_required('admin')
 def adminHome():
@@ -22,6 +24,179 @@ def adminProfile():
     else:
         flash("User session not found")
         return redirect(url_for('login'))  # Redirect to login if session not found
+
+@app.route('/adminUpdateProfile', methods=['GET', 'POST'])
+@roles_required('admin')
+def adminUpdateProfile():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        if request.method == 'POST':
+            new_username = request.form.get('username')
+            name = request.form.get('name')
+            email = request.form.get('email')
+            age = request.form.get('age')
+            address = request.form.get('address')
+            phone = request.form.get('phone')
+            if new_username or name or email or age or address or phone:
+                try:
+                    mycursor.execute(
+                        "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
+                        (new_username, name, email, age, address, phone, username))
+                    mydb.commit()
+                    flash('User information updated successfully', 'success')
+                except Exception as e:
+                    flash(f'Error updating user information: {str(e)}', 'error')
+                    return redirect(url_for('adminUpdateProfile'))
+
+            # Handle profile picture upload
+            if 'image' in request.files:
+                file = request.files['image']
+                if file.filename == '':
+                    flash('No profile picture selected', 'error')
+                elif file and allowed_file(file.filename):
+                    if file.content_length < 32* 1024 *1024: # check if files size is less than 32 MB
+                        filename = secure_filename(file.filename)
+                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(filepath)
+                    else:
+                        flash('Profile Picture must be less than 32 MB', 'error')
+
+
+                    try:
+                        file_id = scan_file(filepath)
+                    except Exception as e:
+                        flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
+                        os.remove(filepath)
+                        return redirect(url_for('adminUpdateProfile'))
+
+                    if file_id:
+                        flash('Give us a moment! We are scanning your file contents', 'info')
+
+                        start_time = time.time()
+                        timeout = 300  # 5 minutes timeout
+                        while time.time() - start_time < timeout:
+                            try:
+                                report = get_scan_report(file_id)
+                            except Exception as e:
+                                flash(f'Error retrieving scan report: {str(e)}', 'error')
+                                break
+
+                            if report:
+                                attributes = report.get('data', {}).get('attributes', {})
+                                if attributes.get('status') == 'completed':
+                                    if any(result['category'] == 'malicious' for result in
+                                           attributes.get('results', {}).values()):
+                                        flash('The file is malicious and has not been saved.', 'error')
+                                        os.remove(filepath)  # Remove the file if it is malicious
+                                        return redirect(url_for('adminUpdateProfile'))
+                                    else:
+                                        image_path = f"img/{filename}"
+                                        try:
+                                            mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
+                                                             (image_path, username))
+                                            mydb.commit()
+                                            flash('Profile picture scanned and uploaded successfully!', 'success')
+                                        except Exception as e:
+                                            flash(f'Error updating profile picture: {str(e)}', 'error')
+                                        return redirect(url_for('adminUpdateProfile'))
+                            else:
+                                flash('Failed to retrieve scan report.', 'error')
+                                break
+                            time.sleep(10)  # wait for 10 seconds before retrying
+                        else:
+                            flash('Scan is not yet complete. Try again later.', 'error')
+                    else:
+                        flash('Failed to upload file to VirusTotal for scanning.', 'error')
+                else:
+                    flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
+
+            # Fetch updated user data
+            user = userSession(new_username if new_username else username)
+            if user:
+                session['user']['username'] = new_username if new_username else username # Update session with new username if changed
+                return render_template("Admin/adminProfile.html", user=user)
+            else:
+                flash("User not found in database after update")
+                return redirect(url_for('login'))  # Redirect to login if user not found after update
+        else:
+            # GET request handling
+            user = userSession(username)
+            return render_template("Admin/adminUpdateProfile.html", user=user)  # Render form with current user data prepopulated
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))
+
+@app.route('/adminUpdatePassword', methods=['POST', 'GET'])
+@roles_required('admin')
+def adminUpdatePassword():
+    if 'user' in session:
+        if 'username' in session['user']:
+            username = session['user']['username']
+            print("Session data:", session['user'])  # Debug statement
+            print("Username from session:", username)  # Debug statement
+
+            if request.method == 'POST':
+                new_password = request.form.get('new_password')
+                confirm_password = request.form.get('confirm_password')
+
+                if new_password and confirm_password:
+                    if new_password == confirm_password:
+                        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                        try:
+                            # Check if the new hashed password already exists in the database
+                            print("Checking if the new hashed password already exists in the database.")  # Debug statement
+                            mycursor.execute("SELECT password FROM users")
+                            all_passwords = mycursor.fetchall()
+
+                            # Check if the new password matches any existing password
+                            password_exists = False
+                            for stored_password in all_passwords:
+                                if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
+                                    password_exists = True
+                                    break
+
+                            if password_exists:
+                                flash('Password already exists. Please create another password', 'danger')
+                                return redirect(url_for('adminUpdatePassword'))
+                            else:
+                                try:
+                                    print(f"Updating password for username: {username}")  # Debug statement
+                                    print(f"Hashed password: {hashed_password}")  # Debug statement
+                                    mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
+                                    mydb.commit()
+                                    flash('Password updated successfully', 'success')
+                                    print('Password updated successfully')  # Debug statement
+
+                                    # # Refresh session user data
+                                    # user = userSession(username)
+                                    # if user:
+                                    #     session['user'] = user  # Update session with refreshed user data
+                                    # else:
+                                    #     flash('User not found in database after update', 'error')
+                                    #     return redirect(url_for('login'))
+
+                                except Exception as e:
+                                    flash(f'Error updating password: {str(e)}', 'danger')
+                                    print(f'SQL Update Error: {str(e)}')  # Debug statement
+                                    return redirect(url_for('adminUpdatePassword'))
+                        except Exception as e:
+                            flash(f'Error checking existing password: {str(e)}', 'danger')
+                            print(f'SQL Select Error: {str(e)}')  # Debug statement
+                            return redirect(url_for('adminUpdatePassword'))
+                    else:
+                        flash('Passwords do not match.', 'danger')
+                        return redirect(url_for('adminUpdatePassword'))
+                else:
+                    flash('Please provide both password fields.', 'danger')
+                    return redirect(url_for('adminUpdatePassword'))
+        else:
+            flash("Username not found in session")
+            return redirect(url_for('login'))
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))
+
+    return render_template("Admin/adminUpdatePassword.html")
 
 
 
@@ -45,7 +220,7 @@ def adminCreateTeacher():
 
         # checking for existing teacher username
         if existing_teacher_username:
-            flash('Teacher with the same username already exists. Please choose a different username.')
+            flash('User with the same username already exists. Please choose a different username.')
             return render_template('Admin/adminCreateTeacher.html')
 
         existing_teacher_email = "SELECT * FROM users WHERE email = %s"
@@ -54,7 +229,7 @@ def adminCreateTeacher():
 
         # checking for existing teacher email
         if existing_teacher_email_check:
-            flash('Teacher with the same email already exists. Please choose a different email.')
+            flash('User with the same email already exists. Please choose a different email.')
             return render_template('Admin/adminCreateTeacher.html')
 
         try:
