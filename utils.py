@@ -1,4 +1,4 @@
-from flask import Flask,session, abort
+from flask import Flask,session, abort, flash
 import mysql.connector
 
 
@@ -411,21 +411,6 @@ def verify_response(response):
     data = response.json()
     print(data)
     return data['success']
-
-
-# Function to update user password
-def update_password(email, new_password):
-    try:
-        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-
-        # Update the user's password in the database
-        update_query = "UPDATE users SET password = %s WHERE email = %s"
-        mycursor.execute(update_query, (hashed_password, email))
-        mydb.commit()
-
-        print("Password updated successfully")
-    except Exception as e:
-        print("Error updating password:", e)
 
 
 # Role-based access control
