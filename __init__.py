@@ -375,11 +375,6 @@ def view_cart():
         """, (user_id,))
         cart_items = mycursor.fetchall()
 
-        if not cart_items:
-            # Cart is empty, display a message
-            flash("Your Planet Explorer's Cart is empty.", 'info')
-            return render_template("Store/cart.html", cart_items=[], total_items=0, total_price=0, empty_message=True)
-
         total_items = sum(item[3] for item in cart_items)  # Calculate total items in the cart
         total_price = sum(item[4] for item in cart_items)  # Calculate total price of all items in the cart
 
