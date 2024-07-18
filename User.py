@@ -14,7 +14,17 @@ def learnerHome():
         user = userSession(username)
         if user:
             print(f'user {username} is logged in')
-            return render_template("User/profile.html", user=user)
+            mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
+            profile_pic = mycursor.fetchone()
+
+            if profile_pic and profile_pic[0]:
+                profile_pic_url = url_for('static', filename=profile_pic[0])
+            else:
+                profile_pic_url = url_for('static', filename='img/default_profile_pic.png')
+
+            # You can store the profile_pic_url in the session or pass it to the template
+            session['profile_pic_url'] = profile_pic_url
+            return render_template("User/profile.html", user=user, profile_pic_url=profile_pic_url)
         else:
             flash("User not found in database")
             return redirect(url_for('login'))  # Redirect to login if user not found

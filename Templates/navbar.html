@@ -45,7 +45,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
         <!-- Bootstrap 5 navbar-brand component for logo -->
-        <a class="navbar-brand" href="{{ url_for('home') }}">PlanetExplorers</a>
+        <a class="navbar-brand" href="{{ url_for('home') }}"><i class="fa-solid fa-earth-asia"></i>PlanetExplorers</a>
         <!-- Bootstrap 5 navbar-toggler component for responsive collapsing -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,9 +55,31 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <!-- Bootstrap 5 navbar-nav component for navbar menu -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a href="{{ url_for('store') }}" class="nav-link">Store</a></li>
+                <li class="nav-item"><a href="#" class="nav-link"> <i class="fa-solid fa-trophy"></i> Daily Challenge</a></li>
+                <li class="nav-item"><a href="#" class="nav-link"> <i class="fa-solid fa-earth-oceania"></i> Explorer's Points</a></li>
+                <li class="nav-item"><a href="{{ url_for('store') }}" class="nav-link"> <i class="fa-solid fa-cart-shopping"></i> Store</a></li>
+                <li class="nav-item"><a href="{{ url_for('view_cart')}}" class="nav-link"><i class="fa-solid fa-basket-shopping"></i> Cart</a></li>
+
+                {% if 'user' in session %}
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 profile-menu">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="profile-pic">
+                                    <img src="{{ session['profile_pic_url'] }}" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%;">
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="updateProfile"><i class="fas fa-sliders-h fa-fw"></i> Account</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt fa-fw"></i> Log Out</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                {% else %}
                 <li class="nav-item"><a href="{{ url_for('login')}}" class="nav-link">Login</a></li>
-                <li class="nav-item"><a href="{{ url_for('view_cart')}}" class="nav-link"><i class="fa-solid fa-cart-shopping"></i></a></li>
+                {% endif %}
+
             </ul>
         </div>
 
