@@ -393,38 +393,44 @@ def view_cart():
         return redirect(url_for('login'))
 
 
-
-@app.route('/add_to_cart/<int:product_id>', methods=["POST"])
+@app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 @roles_required('student', 'teacher')
 def add_to_cart(product_id):
-    if 'user' in session and 'id' in session['user']:
+    if 'user' in session:
         user_id = session['user']['id']
-        quantity = int(request.form.get('quantity', 1))
+        quantity = int(request.form.get('quantity'))
 
-        # Check if the product exists
-        mycursor.execute("SELECT * FROM storeproducts WHERE id = %s", (product_id,))
+        # Check if the product exists and get its details
+        mycursor.execute("SELECT quantity FROM storeproducts WHERE id = %s", (product_id,))
         product = mycursor.fetchone()
 
         if product:
-            # Check if the item is already in the cart
-            mycursor.execute("SELECT * FROM cart WHERE user_id = %s AND product_id = %s", (user_id, product_id))
-            cart_item = mycursor.fetchone()
+            available_quantity = product[0]
+            # Check if the requested quantity is available
+            if quantity <= available_quantity:
+                # Check if the product is already in the cart
+                mycursor.execute("SELECT quantity FROM cart WHERE user_id = %s AND product_id = %s", (user_id, product_id))
+                cart_item = mycursor.fetchone()
 
-            if cart_item:
-                # Update quantity if item is already in the cart
-                new_quantity = cart_item[3] + quantity
-                mycursor.execute("UPDATE cart SET quantity = %s WHERE id = %s", (new_quantity, cart_item[0]))
+                if cart_item:
+                    # Update the quantity in the cart
+                    new_quantity = cart_item[0] + quantity
+                    if new_quantity <= available_quantity:
+                        mycursor.execute("UPDATE cart SET quantity = %s WHERE user_id = %s AND product_id = %s", (new_quantity, user_id, product_id))
+                        mydb.commit()
+                        return jsonify(success=True, message='Item added to cart successfully.')
+                    else:
+                        return jsonify(success=False, error='You have surpassed the maximum available quantity for this item..')
+                else:
+                    # Insert the new item into the cart
+                    mycursor.execute("INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)", (user_id, product_id, quantity))
+                    mydb.commit()
+                    return jsonify(success=True, message='Item added to cart successfully.')
             else:
-                # Add new item to cart if not already in the cart
-                mycursor.execute("INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)",
-                                 (user_id, product_id, quantity))
-
-            mydb.commit()
-            return jsonify({'success': True, 'message': f"{quantity} {product[1]} added to cart successfully"})
+                return jsonify(success=False, error='You have surpassed the maximum available quantity for this item.')
         else:
-            return jsonify({'success': False, 'error': "Product not found"})
-    else:
-        return jsonify({'success': False, 'error': "User session not found"})
+            return jsonify(success=False, error='Product not found.')
+    return jsonify(success=False, error='You need to log in to add items to your cart.')
 
 
 @app.route('/update_cart/<int:product_id>', methods=['POST'])
@@ -469,6 +475,33 @@ def remove_from_cart(product_id):
         return jsonify(success=True, total_items=total_items, total_price=total_price)
     else:
         return jsonify(success=False), 403
+
+
+@app.route('/purchase', methods=['POST'])
+@roles_required('student', 'teacher')
+def purchase():
+    if 'user' in session and 'id' in session['user']:
+        user_id = session['user']['id']
+
+        # Fetch items in the cart for the current user
+        mycursor.execute("""
+            SELECT sp.id, sp.name, sp.price, c.quantity, c.total_price
+            FROM cart c
+            INNER JOIN storeproducts sp ON c.product_id = sp.id
+            WHERE c.user_id = %s
+        """, (user_id,))
+        cart_items = mycursor.fetchall()
+
+        if not cart_items:
+            flash("Your cart is empty. Please add items to your cart before proceeding to purchase.", 'warning')
+            return redirect(url_for('view_cart'))
+
+        total_price = sum(item[4] for item in cart_items)  # Calculate total price for all items in the cart
+
+        return render_template("Store/payment.html", cart_items=cart_items, total_price=total_price)
+    else:
+        flash("User session not found", 'danger')
+        return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
