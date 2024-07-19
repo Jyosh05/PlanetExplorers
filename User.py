@@ -92,9 +92,46 @@ def login():
 
                     return redirect(url_for('login'))
             else:
-                flash('Invalid username or password.', 'danger')
-                log_this("Invalid username or password")
-                return redirect(url_for('login'))
+                # Query all users from the database
+                query = "SELECT id, password, failed_login_attempts, email FROM users"
+                mycursor.execute(query)
+                users = mycursor.fetchall()
+
+                # Iterate through users to find a match
+                for user in users:
+                    if bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):
+                        user_id = user[0]
+                        failed_login_attempts = user[2] + 1
+                        lockout_duration = 0
+
+                        if failed_login_attempts == 3:
+                            lockout_duration = 15  # 15 minutes for 3 failed attempts
+                        elif failed_login_attempts > 3:
+                            lockout_duration = 15 * (
+                                        failed_login_attempts - 2)  # 15 minutes for each attempt after the third
+
+                        locked_until = datetime.now() + timedelta(
+                            minutes=lockout_duration) if lockout_duration else None
+                        unlock_token = generate_unlock_token()
+
+                        mycursor.execute(
+                            'UPDATE users SET failed_login_attempts = %s, locked = TRUE, lockout_time = %s, unlock_token = %s WHERE id = %s',
+                            (failed_login_attempts, locked_until, unlock_token, user_id)
+                        )
+                        mydb.commit()
+
+                        if lockout_duration:
+                            flash(
+                                f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.',
+                                'danger')
+                            send_unlock_email(user[3], unlock_token)
+                        else:
+                            flash('Invalid credentials. Please try again.', 'danger')
+                            log_this("Invalid username or password")
+
+                        return redirect(url_for('login'))
+
+
 
         except ValueError as e:
             print(f"Error: {e}")
