@@ -474,7 +474,7 @@ def userSession(username):
     return user
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif', 'zip'}
 
 def generate_unlock_token():
     token = secrets.token_urlsafe(32)  # Generate a URL-safe token with 32 bytes of randomness

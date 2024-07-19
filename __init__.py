@@ -165,59 +165,68 @@ def updateProfile():
                 if file.filename == '':
                     flash('No profile picture selected', 'error')
                 elif file and allowed_file(file.filename):
-                    if file.content_length < 32* 1024 *1024: # check if files size is less than 32 MB
+                    if file.content_length < 32 * 1024 * 1024:  # Check if file size is less than 32 MB
+                        # Save the file to a temporary location first
                         filename = secure_filename(file.filename)
-                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                        file.save(filepath)
+                        temp_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f'temp_{filename}')
+                        file.save(temp_filepath)
+
+                        try:
+                            file_id = scan_file(temp_filepath)
+                        except Exception as e:
+                            flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
+                            os.remove(temp_filepath)
+                            return redirect(url_for('updateProfile'))
+
+                        if file_id:
+                            flash('Give us a moment! We are scanning your file contents', 'info')
+
+                            start_time = time.time()
+                            timeout = 300  # 5 minutes timeout
+                            while time.time() - start_time < timeout:
+                                try:
+                                    report = get_scan_report(file_id)
+                                except Exception as e:
+                                    flash(f'Error retrieving scan report: {str(e)}', 'error')
+                                    break
+
+                                if report:
+                                    attributes = report.get('data', {}).get('attributes', {})
+                                    if attributes.get('status') == 'completed':
+                                        scan_results = attributes.get('results', {})
+                                        is_non_malicious = all(
+                                            result.get('category') != 'malicious' for result in scan_results.values()
+                                        )
+
+                                        if is_non_malicious:
+                                            # Rename and move the file to its final location
+                                            final_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                                            os.rename(temp_filepath, final_filepath)
+                                            image_path = f"img/{filename}"
+                                            try:
+                                                mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
+                                                                 (image_path, username))
+                                                mydb.commit()
+                                                flash('Profile picture scanned and uploaded successfully!', 'success')
+                                            except Exception as e:
+                                                flash(f'Error updating profile picture: {str(e)}', 'error')
+                                            return redirect(url_for('updateProfile'))
+                                        else:
+                                            flash('The file is malicious and has not been saved.', 'error')
+                                            os.remove(temp_filepath)  # Remove the file if it is malicious
+                                            return redirect(url_for('updateProfile'))
+                                else:
+                                    flash('Failed to retrieve scan report.', 'error')
+                                    break
+                                time.sleep(10)  # wait for 10 seconds before retrying
+                            else:
+                                flash('Scan is not yet complete. Try again later.', 'error')
+                                os.remove(temp_filepath)  # Clean up temporary file if scan is incomplete
+                        else:
+                            flash('Failed to upload file to VirusTotal for scanning.', 'error')
+                            os.remove(temp_filepath)
                     else:
                         flash('Profile Picture must be less than 32 MB', 'error')
-
-
-                    try:
-                        file_id = scan_file(filepath)
-                    except Exception as e:
-                        flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
-                        os.remove(filepath)
-                        return redirect(url_for('updateProfile'))
-
-                    if file_id:
-                        flash('Give us a moment! We are scanning your file contents', 'info')
-
-                        start_time = time.time()
-                        timeout = 300  # 5 minutes timeout
-                        while time.time() - start_time < timeout:
-                            try:
-                                report = get_scan_report(file_id)
-                            except Exception as e:
-                                flash(f'Error retrieving scan report: {str(e)}', 'error')
-                                break
-
-                            if report:
-                                attributes = report.get('data', {}).get('attributes', {})
-                                if attributes.get('status') == 'completed':
-                                    if any(result['category'] == 'malicious' for result in
-                                           attributes.get('results', {}).values()):
-                                        flash('The file is malicious and has not been saved.', 'error')
-                                        os.remove(filepath)  # Remove the file if it is malicious
-                                        return redirect(url_for('updateProfile'))
-                                    else:
-                                        image_path = f"img/{filename}"
-                                        try:
-                                            mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
-                                                             (image_path, username))
-                                            mydb.commit()
-                                            flash('Profile picture scanned and uploaded successfully!', 'success')
-                                        except Exception as e:
-                                            flash(f'Error updating profile picture: {str(e)}', 'error')
-                                        return redirect(url_for('updateProfile'))
-                            else:
-                                flash('Failed to retrieve scan report.', 'error')
-                                break
-                            time.sleep(10)  # wait for 10 seconds before retrying
-                        else:
-                            flash('Scan is not yet complete. Try again later.', 'error')
-                    else:
-                        flash('Failed to upload file to VirusTotal for scanning.', 'error')
                 else:
                     flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
 
