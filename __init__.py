@@ -357,7 +357,6 @@ def teacherHome():
 
 
 @app.route('/store')
-@limiter.limit("5 per minute")
 def store():
     mycursor = mydb.cursor()
     mycursor.execute("SELECT * FROM storeproducts")

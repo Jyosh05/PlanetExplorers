@@ -4,7 +4,6 @@ import urllib.parse
 
 
 @app.route('/')
-@limiter.limit("10 per minute")
 def home():
     return render_template("home.html")  # need to create template
 
@@ -37,7 +36,6 @@ def learnerHome():
 
 
 @app.route('/login', methods=["GET", "POST"])
-@limiter.limit("5 per second")
 def login():
     if request.method == "POST":
         try:
