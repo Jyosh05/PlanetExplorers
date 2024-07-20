@@ -4,6 +4,91 @@
     <meta charset="UTF-8">
     <title>Audit_logs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+       body {
+           font-family: Arial, sans-serif;
+           background-color: #f4f4f4;
+           margin: 0;
+           padding: 0;
+       }
+       .container {
+           width: 80%;
+           margin: 0 auto;
+           padding: 20px;
+           background-color: #fff;
+           box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+       }
+       h1 {
+           text-align: center;
+           margin-bottom: 20px;
+       }
+       .filter-section {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           padding: 20px;
+           background-color: #f8f9fa;
+           border: 1px solid #ced4da;
+           border-radius: 5px;
+           margin-bottom: 20px;
+       }
+       .filter-item {
+           display: flex;
+           flex-direction: column;
+           margin: 0 10px;
+       }
+       .filter-item label {
+           margin-bottom: 5px;
+           font-weight: bold;
+       }
+       .filter-item select,
+       .filter-item input {
+           padding: 10px;
+           font-size: 16px;
+           border: 1px solid #ced4da;
+           border-radius: 4px;
+       }
+       .filter-item button {
+           padding: 10px 20px;
+           font-size: 16px;
+           background-color: #007bff;
+           color: white;
+           border: none;
+           border-radius: 4px;
+           cursor: pointer;
+           align-self: flex-start;
+           margin-top: 20px;
+       }
+       .reset-item button {
+           padding: 10px 20px;
+           font-size: 16px;
+           background-color: #007bff;
+           color: white;
+           border: none;
+           border-radius: 4px;
+           cursor: pointer;
+           align-self: flex-start;
+           margin-top: 20px;
+       }
+       .filter-item button:hover {
+           background-color: #0056b3;
+       }
+       .reset-item button:hover {
+           background-color: #0056b3;
+       }
+       .message {
+           display: none;
+           padding: 10px;
+           margin-top: 20px;
+           border: 1px solid #ced4da;
+           border-radius: 4px;
+           background-color: #f8f9fa;
+       }
+       .message.error {
+           color: red;
+           border-color: red;
+       }
+   </style>
 </head>
 <body>
 {% include 'adminBase.html' %}
@@ -21,17 +106,12 @@
             </select>
         </div>
         <div class="filter-item">
-            <label for="users">Select Users:</label>
-            <select id="users">
-                <option value="user">User</option>
-                <option value="1">1</option>
-                <option value="unknown">Unknown</option>
-                <!-- Additional options can be added here -->
-            </select>
+            <label for="users">User ID:</label>
+            <input type="text" id="users" placeholder="Enter user ID">
         </div>
         <div class="filter-item">
             <label for="date">Select Date:</label>
-            <input type="date" id="date">
+            <input type="date" id="date" min="2024-02-23" max="2099-12-31">
         </div>
         <div class="filter-item">
             <button type="button" onclick="applyFilters()">Apply</button>
@@ -40,97 +120,145 @@
             <button type="button" onclick="resetFilters()">Reset</button>
         </div>
     </div>
-
-    <table class="table table-dark table-hover" id="logTable">
-        <thead>
-            <tr>
-                <th>log ID</th>
-                <th>Action</th>
-                <th>Timestamp</th>
-                <th>user ID</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in data %}
+    <div class="message error" id="noResultsMessage">No action happened on this date.</div>
+    <div class="message error" id="invalidUserMessage">User ID must be a number.</div>
+    <div class="message error" id="userNotFoundMessage">This user ID does not exist.</div>
+    <div class="container mt-3">
+        <table class="table table-hover" id="logTable">
+            <thead>
                 <tr>
-                    <td>{{row[0]}}</td>
-                    <td>{{row[1]}}</td>
-                    <td>{{row[2]}}</td>
-                    <td>{{row[3]}}</td>
+                    <th>log ID</th>
+                    <th>Action</th>
+                    <th>Timestamp</th>
+                    <th>user ID</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                    <tr>
+                        <td>{{row[0]}}</td>
+                        <td>{{row[1]}}</td>
+                        <td>{{row[2]}}</td>
+                        <td>{{row[3]}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal for invalid date -->
+<div class="modal fade" id="invalidDateModal" tabindex="-1" aria-labelledby="invalidDateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="invalidDateModalLabel">Invalid Date</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        The selected date is invalid. Please choose a date between 2024 and 2099.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-
-
-
 function applyFilters() {
-   const actionFilter = document.getElementById('action').value.trim().toLowerCase();
-   const dateFilter = document.getElementById('date').value;
-   const userFilter = document.getElementById('users').value.toLowerCase();
+    const actionFilter = document.getElementById('action').value.trim().toLowerCase();
+    const dateFilter = document.getElementById('date').value;
+    const userFilter = document.getElementById('users').value.trim();
+    const dateInput = document.getElementById('date');
+    const minDate = new Date(dateInput.min);
+    const maxDate = new Date(dateInput.max);
+    const selectedDate = new Date(dateInput.value);
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const invalidUserMessage = document.getElementById('invalidUserMessage');
+    const userNotFoundMessage = document.getElementById('userNotFoundMessage');
 
+    noResultsMessage.style.display = 'none';
+    invalidUserMessage.style.display = 'none';
+    userNotFoundMessage.style.display = 'none';
 
-   const rows = document.getElementById('logTable').querySelectorAll('tbody tr');
+    if (selectedDate < minDate || selectedDate > maxDate) {
+        const modal = new bootstrap.Modal(document.getElementById('invalidDateModal'));
+        modal.show();
+        return;
+    }
 
+    if (userFilter && isNaN(userFilter)) {
+        invalidUserMessage.style.display = 'block';
+        return;
+    }
 
-   rows.forEach(row => {
-       const cells = row.getElementsByTagName('td');
-       const actionText = cells[1] ? (cells[1].textContent || cells[1].innerText).trim().toLowerCase() : '';
-       const dateText = cells[2] ? (cells[2].textContent || cells[2].innerText) : '';
-       const userText = cells[3] ? (cells[3].textContent || cells[3].innerText).trim().toLowerCase() : '';
+    const rows = document.getElementById('logTable').querySelectorAll('tbody tr');
+    let hasResults = false;
+    let userExists = false;
 
+    rows.forEach(row => {
+        const cells = row.getElementsByTagName('td');
+        const actionText = cells[1] ? (cells[1].textContent || cells[1].innerText).trim().toLowerCase() : '';
+        const dateText = cells[2] ? (cells[2].textContent || cells[2].innerText) : '';
+        const userText = cells[3] ? (cells[3].textContent || cells[3].innerText).trim() : '';
 
-       let display = true;
+        let display = true;
 
+        if (actionFilter !== 'all' && actionText !== actionFilter) {
+            display = false;
+        }
 
-       if (actionFilter !== 'all' && actionText !== actionFilter) {
-           display = false;
-       }
+        if (dateFilter && !dateText.startsWith(dateFilter)) {
+            display = false;
+        }
 
+        if (userFilter && userText !== userFilter) {
+            display = false;
+        }
 
-       if (dateFilter && !dateText.startsWith(dateFilter)) {
-           display = false;
-       }
+        if (display) {
+            hasResults = true;
+        }
 
+        if (userText === userFilter) {
+            userExists = true;
+        }
 
-       if (userFilter !== 'user' && userText !== userFilter) {
-           display = false;
-       }
+        row.style.display = display ? '' : 'none';
+    });
 
+    if (!hasResults && dateFilter) {
+        noResultsMessage.style.display = 'block';
+    }
 
-       row.style.display = display ? '' : 'none';
-   });
+    if (userFilter && !userExists) {
+        userNotFoundMessage.style.display = 'block';
+    }
 }
-
 
 function resetFilters() {
-   const actionSelect = document.getElementById('action');
-   const dateInput = document.getElementById('date');
-   const userSelect = document.getElementById('users');
-   const rows = document.getElementById('logTable').querySelectorAll('tbody tr');
+    const actionSelect = document.getElementById('action');
+    const dateInput = document.getElementById('date');
+    const userSearch = document.getElementById('users');
+    const rows = document.getElementById('logTable').querySelectorAll('tbody tr');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const invalidUserMessage = document.getElementById('invalidUserMessage');
+    const userNotFoundMessage = document.getElementById('userNotFoundMessage');
 
+    actionSelect.value = 'all';
+    userSearch.value = '';
+    dateInput.value = '';
+    noResultsMessage.style.display = 'none';
+    invalidUserMessage.style.display = 'none';
+    userNotFoundMessage.style.display = 'none';
 
-   // Reset filter values to default
-   actionSelect.value = 'all';
-   userSelect.value = 'user';
-
-
-   // Set the date input to the current date
-   //const today = new Date().toISOString().split('T')[0];
-   //dateInput.value = today;
-
-
-   // Display all rows
-   rows.forEach(row => {
-       row.style.display = '';
-   });
+    rows.forEach(row => {
+        row.style.display = '';
+    });
 }
-
-
-
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
