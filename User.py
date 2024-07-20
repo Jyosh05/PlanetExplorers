@@ -74,9 +74,10 @@ def login():
                     lockout_duration = 0
 
                     if failed_login_attempts == 3:
-                        lockout_duration = 15  # 15 minutes for 3 failed attempts
+                        lockout_duration = 2  # 2 minutes for 3 failed attempts
                     elif failed_login_attempts > 3:
-                        lockout_duration = 15 * (failed_login_attempts - 2)  # 15 minutes for each attempt after the third
+                        lockout_duration = 2 * (
+                                failed_login_attempts - 2)  # 2 minutes for each attempt after the third
 
                     locked_until = datetime.now() + timedelta(minutes=lockout_duration) if lockout_duration else None
                     unlock_token = generate_unlock_token()
@@ -106,10 +107,10 @@ def login():
                         lockout_duration = 0
 
                         if failed_login_attempts == 3:
-                            lockout_duration = 15  # 15 minutes for 3 failed attempts
+                            lockout_duration = 2  # 2 minutes for 3 failed attempts
                         elif failed_login_attempts > 3:
-                            lockout_duration = 15 * (
-                                        failed_login_attempts - 2)  # 15 minutes for each attempt after the third
+                            lockout_duration = 2 * (
+                                        failed_login_attempts - 2)  # 2 minutes for each attempt after the third
 
                         locked_until = datetime.now() + timedelta(
                             minutes=lockout_duration) if lockout_duration else None
