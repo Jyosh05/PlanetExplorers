@@ -155,7 +155,7 @@ def unlock_account(token):
     user = mycursor.fetchone()
 
     if user:
-        mycursor.execute('UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s', (user[0],))
+        mycursor.execute('UPDATE users SET locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s', (user[0],))
         mydb.commit()
         flash('Your account has been unlocked. You can now log in.', 'success')
 
