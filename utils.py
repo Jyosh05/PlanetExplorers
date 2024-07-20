@@ -218,7 +218,6 @@ modules = mycursor.fetchall()
 
 def regenerate_session():  # regenerate session. update session data, ensure security after login or logout.
     session.modified = True
-    session.new = True
 
 
 # Rate limiter to limit rates

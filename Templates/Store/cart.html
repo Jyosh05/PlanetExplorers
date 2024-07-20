@@ -11,28 +11,41 @@
     {% include 'navbar.html' %}
     <div class="container">
         <h1>Shopping Cart</h1>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="card">
             <div class="cart">
-                <ul class="cart-items">
-                    {% for item in cart_items %}
-                    <li class="cart-item" data-id="{{ item[0] }}">
-                        <span class="item-name">{{ item[1] }}</span>
-                        <span class="item-price">${{ item[2] }}</span>
-                        <div class="quantity-controls">
-                            <button class="quantity-btn minus-btn">-</button>
-                            <input type="text" class="quantity-field" value="{{ item[3] }}" readonly>
-                            <button class="quantity-btn plus-btn">+</button>
-                        </div>
-                        <button class="remove-btn">Remove</button>
-                    </li>
-                    {% endfor %}
-                </ul>
-                <p>Total Items: <span id="total-items">{{ total_items }}</span></p>
-                <p>Total Price: $<span id="total-price">{{ total_price }}</span></p>
-                {% if not empty_message %}
-                <form action="{{ url_for('purchase') }}" method="POST">
-                    <button type="submit" class="btn">Purchase</button>
-                </form>
+                {% if 'user' in session and 'id' in session['user'] %}
+                    <ul class="cart-items">
+                        {% for item in cart_items %}
+                            <li class="cart-item" data-id="{{ item[0] }}">
+                                <span class="item-name">{{ item[1] }}</span>
+                                <span class="item-price">${{ item[2] }}</span>
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn minus-btn">-</button>
+                                    <input type="text" class="quantity-field" value="{{ item[3] }}" readonly>
+                                    <button class="quantity-btn plus-btn">+</button>
+                                </div>
+                                <button class="remove-btn">Remove</button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <p>Total Items: <span id="total-items">{{ total_items }}</span></p>
+                    <p>Total Price: $<span id="total-price">{{ total_price }}</span></p>
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        You need to <a href="{{ url_for('login') }}">log in</a> to view your shopping cart.
+                    </div>
                 {% endif %}
             </div>
         </div>
