@@ -3,7 +3,7 @@
 <head>
     <title>Store</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/store.css') }}">
-    <script src="{{ url_for('static', filename='javascript/store.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/store.js') }}" defer></script>
 </head>
 <body>
     {% include 'navbar.html' %}
@@ -11,12 +11,12 @@
         <h1>Store Products</h1>
         <ul class="product-list">
             {% for product in products %}
-            <li class="product-item" data-id="{{ product[0] }}" data-name="{{ product[1] }}" data-description="{{ product[2] }}" data-price="{{ product[3] }}" data-image="{{ url_for('static', filename=product[5]) }}">
+            <li class="product-item" data-id="{{ product[0] }}" data-name="{{ product[1] }}" data-description="{{ product[2] }}" data-price="{{ product[3] }}" data-price_in_points="{{ product[6] }}" data-image="{{ url_for('static', filename=product[5]) }}">
                 <img src="{{ url_for('static', filename=product[5]) }}" alt="{{ product[1] }}" class="product-image">
                 <div class="product-details">
                     <h2 class="product-name">{{ product[1] }}</h2>
                     <p class="product-price">Price: ${{ product[3] }}</p>
-                    <p class="product-price">{{ product[6] }} Explorer Points</p>
+                    <p class="product-price">Explorer Points: {{ product[6] }}</p>
                 </div>
             </li>
             {% endfor %}
@@ -30,6 +30,7 @@
             <h2 id="popup-name"></h2>
             <p id="popup-description"></p>
             <p id="popup-price"></p>
+            <p id="popup-price_in_points"></p>
             <form id="add-to-cart-form" class="add-to-cart-form">
                 <input type="hidden" name="product_id" id="popup-product-id">
                 <div class="quantity-input">

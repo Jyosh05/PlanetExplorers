@@ -10,7 +10,7 @@
 <body>
     {% include 'navbar.html' %}
     <div class="container">
-        <h1>Shopping Cart</h1>
+        <h1 class="cart-title">Shopping Cart</h1>
 
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -23,25 +23,44 @@
             {% endif %}
         {% endwith %}
 
-        <div class="card">
+        <div class="card cart-card">
             <div class="cart">
                 {% if 'user' in session and 'id' in session['user'] %}
                     <ul class="cart-items">
                         {% for item in cart_items %}
                             <li class="cart-item" data-id="{{ item[0] }}">
                                 <span class="item-name">{{ item[1] }}</span>
-                                <span class="item-price">${{ item[2] }}</span>
+                                <span class="item-price">Price: ${{ item[2] }}</span>
+                                <span class="item-price_in_points">Explorer Points: {{ item[3] }}</span>
                                 <div class="quantity-controls">
                                     <button class="quantity-btn minus-btn">-</button>
-                                    <input type="text" class="quantity-field" value="{{ item[3] }}" readonly>
+                                    <input type="text" class="quantity-field" value="{{ item[4] }}" readonly>
                                     <button class="quantity-btn plus-btn">+</button>
                                 </div>
-                                <button class="remove-btn">Remove</button>
+                                <button class="remove-btn btn btn-danger">Remove</button>
                             </li>
                         {% endfor %}
                     </ul>
-                    <p>Total Items: <span id="total-items">{{ total_items }}</span></p>
-                    <p>Total Price: $<span id="total-price">{{ total_price }}</span></p>
+                    <div class="totals">
+                        <p>Total Items: <span id="total-items">{{ total_items }}</span></p>
+                        <p>Total Price: $<span id="total-price">{{ total_price }}</span></p>
+                        <p>Total Points: <span id="total-price-in-points">{{ total_price_in_points }}</span></p>
+                    </div>
+                    <div class="payment-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="payWithPoints" value="tokens">
+                            <label class="form-check-label" for="payWithPoints">
+                                Pay with Points
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="payWithCard" value="card" checked>
+                            <label class="form-check-label" for="payWithCard">
+                                Pay with Card
+                            </label>
+                        </div>
+                    </div>
+                    <button id="checkout-button" class="btn btn-primary checkout-btn">Checkout</button>
                 {% else %}
                     <div class="alert alert-warning" role="alert">
                         You need to <a href="{{ url_for('login') }}">log in</a> to view your shopping cart.

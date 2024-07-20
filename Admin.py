@@ -548,6 +548,7 @@ def adminstoreadd():
     name = request.form['name']
     description = request.form['description']
     price = request.form['price']
+    price_in_points = request.form['price_in_points']
     quantity = request.form['quantity']
 
     # Handle image upload
@@ -560,8 +561,8 @@ def adminstoreadd():
         image_path = f"img/{filename}"  # Store relative path
 
         mycursor.execute(
-            "INSERT INTO storeproducts (name, description, price, quantity, image_path) VALUES (%s, %s, %s, %s, %s)",
-            (name, description, price, quantity, image_path))
+            "INSERT INTO storeproducts (name, description, price, quantity, image_path, price_in_points) VALUES (%s, %s, %s, %s, %s, %s)",
+            (name, description, price, quantity, image_path, price_in_points))
         mydb.commit()
         mycursor.close()
         return redirect(url_for('adminstore'))
@@ -587,6 +588,7 @@ def adminstoreupdate():
     name = request.form['name']
     description = request.form['description']
     price = request.form['price']
+    price_in_points = request.form['price_in_points']
     quantity = request.form['quantity']
 
     # Handle image upload
@@ -599,13 +601,13 @@ def adminstoreupdate():
 
         # Update the product with a new image
         mycursor.execute(
-            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s, image_path = %s WHERE id = %s",
-            (name, description, price, quantity, image_path, product_id))
+            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s, image_path = %s, price_in_points = %s WHERE id = %s",
+            (name, description, price, quantity, image_path, price_in_points, product_id))
     else:
         # Update the product without changing the image
         mycursor.execute(
-            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s WHERE id = %s",
-            (name, description, price, quantity, product_id))
+            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s, price_in_points = %s WHERE id = %s",
+            (name, description, price, quantity, price_in_points, product_id))
 
     mydb.commit()
     mycursor.close()

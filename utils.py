@@ -89,7 +89,7 @@ for a in tableCheck:
                         unlock_token VARCHAR(255),
                         failed_login_attempts INT DEFAULT 0,
                         lockout_time DATETIME,
-                        explorer_tokens INT DEFAULT 0
+                        explorer_points INT DEFAULT 0
                     )
                     """)
         print(f"Table 'users' Created")
@@ -130,23 +130,21 @@ for a in tableCheck:
 
     if not tableExist:
         mycursor.execute("""
-        CREATE TABLE `storeproducts` (
-             `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-             `name` VARCHAR(255) NOT NULL,
-             `description` VARCHAR(600),
-             `price` DECIMAL(10,2) NOT NULL,
-            `quantity` INT NOT NULL,
-            `image_path` VARCHAR(255) NOT NULL
-
+            CREATE TABLE `storeproducts` (
+                id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description VARCHAR(600),
+                price DECIMAL(10,2) NOT NULL,
+                quantity INT NOT NULL,
+                image_path VARCHAR(255) NOT NULL,
+                price_in_points INT NOT NULL
             )
         """)
 
     print(f"Table 'storeproducts' Created")
 
-
 mycursor.execute('SELECT * FROM storeproducts')
 print(f"Using Table 'storeproducts'")
-
 storeproducts = mycursor.fetchall()
 
 
@@ -162,7 +160,8 @@ for a in tableCheck:
                 user_id INT NOT NULL,
                 product_id INT NOT NULL,
                 quantity INT NOT NULL,
-                total_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+                total_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                total_points INT NOT NULL DEFAULT 0,
                 FOREIGN KEY (user_id) REFERENCES users(id),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )
