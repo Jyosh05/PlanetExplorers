@@ -85,11 +85,11 @@ for a in tableCheck:
                         phone INT NOT NULL,
                         profilePic VARCHAR(600) NULL,
                         role ENUM('student','teacher','admin') NOT NULL,
-                        explorer_tokens INT DEFAULT 0,
                         locked BOOLEAN DEFAULT FALSE,
                         unlock_token VARCHAR(255),
                         failed_login_attempts INT DEFAULT 0,
                         lockout_time DATETIME
+                        explorer_tokens INT DEFAULT 0,
                     )
                     """)
         print(f"Table 'users' Created")
