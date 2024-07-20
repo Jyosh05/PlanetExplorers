@@ -37,7 +37,7 @@ def learnerHome():
 
 
 @app.route('/login', methods=["GET", "POST"])
-@limiter.limit("5 per minute")
+@limiter.limit("5 per second")
 def login():
     if request.method == "POST":
         try:
