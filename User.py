@@ -181,3 +181,11 @@ def send_unlock_email(email, token):
 @roles_required("teacher")
 def create_module():
     return render_template("Teacher/module.html")
+
+@app.route('/logout')
+def logout():
+    print(session)
+    session.pop('user',None)
+    print("Logged out successfully")
+    print(session)
+    return redirect(url_for('login'))
