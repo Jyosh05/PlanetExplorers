@@ -1,13 +1,16 @@
 from utils import *
-from flask import render_template, flash, request, redirect,url_for
+from flask import render_template, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 import time
 import os
+
+
 @app.route('/adminHome')
 @roles_required('admin')
 def adminHome():
 
     return render_template('Admin/adminHome.html')
+
 
 @app.route('/adminProfile')
 @roles_required('admin')
@@ -20,10 +23,11 @@ def adminProfile():
             return render_template("Admin/adminProfile.html", user=user)
         else:
             flash("User not found in database")
-            return redirect(url_for('login'))  # Redirect to login if user not found
+            return redirect(url_for('login'))  # Redirect to log in if user not found
     else:
         flash("User session not found")
-        return redirect(url_for('login'))  # Redirect to login if session not found
+        return redirect(url_for('login'))  # Redirect to log in if session not found
+
 
 @app.route('/adminUpdateProfile', methods=['GET', 'POST'])
 @roles_required('admin')
@@ -54,13 +58,12 @@ def adminUpdateProfile():
                 if file.filename == '':
                     flash('No profile picture selected', 'error')
                 elif file and allowed_file(file.filename):
-                    if file.content_length < 32* 1024 *1024: # check if files size is less than 32 MB
+                    if file.content_length < 32 * 1024 * 1024:  # check if files size is less than 32 MB
                         filename = secure_filename(file.filename)
                         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                         file.save(filepath)
                     else:
                         flash('Profile Picture must be less than 32 MB', 'error')
-
 
                     try:
                         file_id = scan_file(filepath)
@@ -113,11 +116,11 @@ def adminUpdateProfile():
             # Fetch updated user data
             user = userSession(new_username if new_username else username)
             if user:
-                session['user']['username'] = new_username if new_username else username # Update session with new username if changed
+                session['user']['username'] = new_username if new_username else username  # Update session with new username if changed
                 return render_template("Admin/adminProfile.html", user=user)
             else:
                 flash("User not found in database after update")
-                return redirect(url_for('login'))  # Redirect to login if user not found after update
+                return redirect(url_for('login'))  # Redirect to log in if user not found after update
         else:
             # GET request handling
             user = userSession(username)
@@ -125,6 +128,7 @@ def adminUpdateProfile():
     else:
         flash("User session not found")
         return redirect(url_for('login'))
+
 
 @app.route('/adminUpdatePassword', methods=['POST', 'GET'])
 @roles_required('admin')
@@ -197,8 +201,6 @@ def adminUpdatePassword():
         return redirect(url_for('login'))
 
     return render_template("Admin/adminUpdatePassword.html")
-
-
 
 
 @app.route('/adminCreateTeacher', methods=['GET', 'POST'])
@@ -310,7 +312,6 @@ def adminTeacherUpdate(id):
             role = request.form.get('role')
             lock_account = request.form.get('lock_account')
             unlock_account = request.form.get('unlock_account')
-
 
             # Fetch existing teacher details from the database
             select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
@@ -539,6 +540,7 @@ def adminstore():
 def adminstoreaddpage():
     return render_template("Store/addProduct.html")
 
+
 @app.route('/adminstoreadd', methods=['POST'])
 @roles_required('admin')
 def adminstoreadd():
@@ -566,6 +568,7 @@ def adminstoreadd():
 
     return "File not allowed or not provided", 400
 
+
 @app.route('/adminstoreupdatepage/<int:product_id>', methods=['GET'])
 @roles_required('admin')
 def adminstoreupdatepage(product_id):
@@ -574,6 +577,7 @@ def adminstoreupdatepage(product_id):
     product = mycursor.fetchone()
     mycursor.close()
     return render_template("Store/updateProduct.html", product=product)
+
 
 @app.route('/adminstoreupdate', methods=['POST'])
 @roles_required('admin')
@@ -606,7 +610,6 @@ def adminstoreupdate():
     mydb.commit()
     mycursor.close()
     return redirect(url_for('adminstore'))
-
 
 
 @app.route('/adminstoredelete', methods=['POST'])

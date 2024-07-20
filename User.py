@@ -1,10 +1,13 @@
 from utils import *
-from flask import render_template, redirect,url_for, request, flash
+from flask import render_template, redirect, url_for, request, flash
 import urllib.parse
+
+
 @app.route('/')
 @limiter.limit("10 per minute")
 def home():
     return render_template("home.html")  # need to create template
+
 
 @app.route('/learnerHome')
 @roles_required('student')
@@ -27,10 +30,10 @@ def learnerHome():
             return render_template("User/profile.html", user=user, profile_pic_url=profile_pic_url)
         else:
             flash("User not found in database")
-            return redirect(url_for('login'))  # Redirect to login if user not found
+            return redirect(url_for('login'))  # Redirect to log in if user not found
     else:
         flash("User session not found")
-        return redirect(url_for('login'))  # Redirect to login if session not found
+        return redirect(url_for('login'))  # Redirect to log in if session not found
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -131,7 +134,6 @@ def login():
 
                         return redirect(url_for('login'))
 
-
         except ValueError as e:
             print(f"Error: {e}")
             log_this(f"Runtime error during login: {e}")
@@ -146,6 +148,7 @@ def login():
         return redirect(encoded_url)
 
     return render_template("User/login.html")
+
 
 @app.route('/unlock_account/<token>')
 def unlock_account(token):
@@ -162,6 +165,7 @@ def unlock_account(token):
 
     return redirect(url_for('login'))
 
+
 def send_unlock_email(email, token):
     subject = 'Unlock Your Account'
     unlock_url = url_for('unlock_account', token=token, _external=True)
@@ -171,6 +175,7 @@ def send_unlock_email(email, token):
                f'<p>If you did not request this, please ignore this email.</p>' \
                f'<p>Best regards,<br>PlanetExplorers Team</p>'
     send_reset_link_email(email, subject, template)
+
 
 @app.route('/teacher/create_module')
 @roles_required("teacher")

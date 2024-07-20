@@ -1,10 +1,9 @@
-from flask import Flask,session, abort, flash
+from flask import Flask, session, abort, flash
 import mysql.connector
 
 
 # Configuration is a file containing sensitive information
 from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api
-import re
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -16,6 +15,7 @@ from datetime import timedelta, datetime
 import requests
 import secrets
 import stripe
+import re
 
 
 app = Flask(__name__)
@@ -44,16 +44,16 @@ mycursor = mydb.cursor(buffered=True)
 
 # Caleb's entire rate limiting, secure session management, https enforcement
 # Session Management
-app.config['SECRET_KEY'] = secret_key # cryptographic signing, prevent session tampering and various attacks
-app.config['SESSION_COOKIE_HTTPONLY'] = True # prevent client side JS access to s.cookie. prevent XSS
-app.config['SESSION_COOKIE_SECURE'] = True # restrict to only HTTPS
+app.config['SECRET_KEY'] = secret_key  # cryptographic signing, prevent session tampering and various attacks
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # prevent client side JS access to s.cookie. prevent XSS
+app.config['SESSION_COOKIE_SECURE'] = True  # restrict to only HTTPS
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # prevent CSRF
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=3600)  # session duration
-app.config['SESSION_REFRESH_EACH_REQUEST'] = True # refreshed on request, if user active :)
-app.config['SESSION_PROTECTION'] = 'strong' # detect IP address during a sessioon
-app.config['SESSION_TYPE'] = 'filesystem' # session data stored on mah server files
-app.config['SESSION_PERMANENT'] = False # browser closed? NO MORE SESSION!
-app.config['SESSION_USE_SIGNER'] = True # digitally signing the cookie sessions. no tampering by clients
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True  # refreshed on request, if user active :)
+app.config['SESSION_PROTECTION'] = 'strong'  # detect IP address during a session
+app.config['SESSION_TYPE'] = 'filesystem'  # session data stored on my server files
+app.config['SESSION_PERMANENT'] = False  # browser closed? NO MORE SESSION!
+app.config['SESSION_USE_SIGNER'] = True  # digitally signing the cookie sessions. no tampering by clients
 Session(app)
 
 
@@ -85,6 +85,7 @@ for a in tableCheck:
                         phone INT NOT NULL,
                         profilePic VARCHAR(600) NULL,
                         role ENUM('student','teacher','admin') NOT NULL,
+                        explorer_tokens INT DEFAULT 0
                         locked BOOLEAN DEFAULT FALSE,
                         unlock_token VARCHAR(255),
                         failed_login_attempts INT DEFAULT 0,
@@ -228,8 +229,6 @@ limiter = Limiter(
 )
 
 
-import re
-
 def input_validation(*input_strings):
     # Patterns for detecting harmful content
     sql_injection_patterns = [
@@ -253,7 +252,6 @@ def input_validation(*input_strings):
         log_this("Input validated: No harmful content detected")
 
     return True
-
 
 
 def age_validation(age):
@@ -295,7 +293,7 @@ def check_existing_credentials(username=None, email=None):
 def add_info(username, password, email, name, age, address, phone):
     try:
         # Checking the inputs from the add_info function
-        input_validation(username, password,email,name,address)
+        input_validation(username, password, email, name, address)
         age_validation(int(age))
         validate_phone_number(phone)
         # Checking if the user is in the db or not
@@ -326,7 +324,7 @@ def add_info(username, password, email, name, age, address, phone):
 
 def delete_info(username, password):
     try:
-        input_validation(username,password)
+        input_validation(username, password)
         query = "SELECT password FROM users WHERE username = %s"
         mycursor.execute(query, (username,))
         user = mycursor.fetchone()
@@ -369,7 +367,7 @@ def generate_confirm_token(email):
     return token
 
 
-# the salt parameter adds an additional layer of security
+# the salt parameter adds a layer of security
 # Using the secret key as the salt ensures that the token cannot be tampered with or replicated without the secret key.
 
 def confirm_token(token):
@@ -472,8 +470,10 @@ def userSession(username):
     user = mycursor.fetchone()
     return user
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif', 'zip'}
+
 
 def generate_unlock_token():
     token = secrets.token_urlsafe(32)  # Generate a URL-safe token with 32 bytes of randomness
@@ -497,6 +497,7 @@ def scan_file(file_path):
         else:
             print(f"Error uploading file: {response.text}")
             return None
+
 
 def get_scan_report(file_id):
     url = f"https://www.virustotal.com/api/v3/analyses/{file_id}"

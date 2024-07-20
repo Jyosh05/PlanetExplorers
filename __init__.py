@@ -31,7 +31,7 @@ def forget_password():
         email = request.form['email']
         recaptcha = request.form['g-recaptcha-response']
 
-        #verify recaptcha
+        # verify recaptcha
         valid = verify_response(recaptcha)
         if valid:
             # generate reset token
@@ -47,7 +47,6 @@ def forget_password():
         return redirect(url_for('forget_password'))
 
     return render_template("User/forget_password.html", site_key=RECAPTCHA_SITE_KEY)
-
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
@@ -100,7 +99,6 @@ def reset_password(token):
                 print("Error updating password:", e)
                 return False  # Indicate failure due to error
 
-
     return render_template('User/reset_password.html', token=token)
 
 
@@ -132,6 +130,7 @@ def register():
         add_info(username, password, email, name, age, address, phone)
         return redirect(url_for('home'))
     return render_template('User/register.html')
+
 
 # need to test virus total with malicious file
 @app.route('/updateProfile', methods=['GET', 'POST'])
@@ -231,11 +230,11 @@ def updateProfile():
             # Fetch updated user data
             user = userSession(new_username if new_username else username)
             if user:
-                session['user']['username'] = new_username if new_username else username # Update session with new username if changed
+                session['user']['username'] = new_username if new_username else username  # Update session with new username if changed
                 return render_template("User/profile.html", user=user)
             else:
                 flash("User not found in database after update")
-                return redirect(url_for('login'))  # Redirect to login if user not found after update
+                return redirect(url_for('login'))  # Redirect to log in if user not found after update
         else:
             # GET request handling
             user = userSession(username)
@@ -243,6 +242,7 @@ def updateProfile():
     else:
         flash("User session not found")
         return redirect(url_for('login'))
+
 
 @app.route('/updatePassword', methods=['POST', 'GET'])
 @roles_required('student', 'teacher')
@@ -317,7 +317,6 @@ def updatePassword():
     return render_template("User/updatePassword.html")
 
 
-
 @app.route('/deleteAccount', methods=['POST'])
 @roles_required('student', 'teacher')
 def deleteAccount():
@@ -351,10 +350,10 @@ def teacherHome():
             return render_template("Teacher/teacherHome.html", user=user)
         else:
             flash("User not found in database")
-            return redirect(url_for('login'))  # Redirect to login if user not found
+            return redirect(url_for('login'))  # Redirect to log in if user not found
     else:
         flash("User session not found")
-        return redirect(url_for('login'))  # Redirect to login if session not found
+        return redirect(url_for('login'))  # Redirect to log in if session not found
 
 
 @app.route('/store')
@@ -469,7 +468,5 @@ def remove_from_cart(product_id):
 
 
 if __name__ == '__main__':
-    # calling create table function
-    # Call the function when the application starts
     create_admin_user()
     app.run(debug=True)
