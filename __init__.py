@@ -469,4 +469,6 @@ def remove_from_cart(product_id):
 
 if __name__ == '__main__':
     create_admin_user()
+    with app.app_context():
+        print(app.url_map)
     app.run(debug=True)
