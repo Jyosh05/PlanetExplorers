@@ -88,8 +88,8 @@ for a in tableCheck:
                         locked BOOLEAN DEFAULT FALSE,
                         unlock_token VARCHAR(255),
                         failed_login_attempts INT DEFAULT 0,
-                        lockout_time DATETIME
-                        explorer_tokens INT DEFAULT 0,
+                        lockout_time DATETIME,
+                        explorer_tokens INT DEFAULT 0
                     )
                     """)
         print(f"Table 'users' Created")
