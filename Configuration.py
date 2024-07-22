@@ -36,3 +36,6 @@ virusTotal_api = '78f01c22afe0a0839aa33bff147d32ed2133c82034f595404108f0469523a9
 CLIENTID = '609157549209-5u4o1tsujk8vcijf6vp9651s35aqtqkd.apps.googleusercontent.com'
 CLIENTSECRET = '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'
 
+
+yes = 'yes'
+
