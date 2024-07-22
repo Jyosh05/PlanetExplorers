@@ -37,5 +37,5 @@ CLIENTID = '609157549209-5u4o1tsujk8vcijf6vp9651s35aqtqkd.apps.googleusercontent
 CLIENTSECRET = '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'
 
 
-yes = 'yes'
+yes = 'reeee'
 
