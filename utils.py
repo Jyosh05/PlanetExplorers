@@ -3,7 +3,7 @@ import mysql.connector
 
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api
+from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api,CLIENTID,CLIENTSECRET
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -16,6 +16,8 @@ import requests
 import secrets
 import stripe
 import re
+
+from authlib.integrations.flask_client import OAuth
 
 
 app = Flask(__name__)
@@ -56,6 +58,22 @@ app.config['SESSION_PERMANENT'] = False  # browser closed? NO MORE SESSION!
 app.config['SESSION_USE_SIGNER'] = True  # digitally signing the cookie sessions. no tampering by clients
 Session(app)
 
+app.config['GOOGLE_CLIENT_ID'] = CLIENTID
+app.config['GOOGLE_CLIENT_SECRET'] = CLIENTSECRET
+
+oauth = OAuth(app)
+google = oauth.register(
+    name = 'google',
+    client_id = app.config['GOOGLE_CLIENT_ID'],
+    client_secret = app.config['GOOGLE_CLIENT_SECRET'],
+    authorize_url = 'https://accounts.google.com/o/oauth2/auth',
+    authorize_params = None,
+    access_token_url = 'https://accounts.google.com/o/oauth2/token',
+    access_token_params = None,
+    refresh_token_url = None,
+    redirect_url = 'http://127.0.0.1:5000/auth/callback',
+    client_kwargs = {'scope':'email profile'}
+)
 
 UPLOAD_FOLDER = 'static/img'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER

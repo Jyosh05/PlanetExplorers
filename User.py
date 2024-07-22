@@ -148,6 +148,21 @@ def login():
 
     return render_template("User/login.html")
 
+@app.route('/login/google')
+def login_with_google():
+    redirect_uri = url_for('authorize', _external= True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/auth/callback')
+def authorize():
+    token = google.authorize_access_token()
+    resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
+    print(resp)
+    user_info = resp.json()
+    session['user'] = user_info
+    return render_template('User/profile.html', user='student')
+
+
 
 @app.route('/unlock_account/<token>')
 def unlock_account(token):
