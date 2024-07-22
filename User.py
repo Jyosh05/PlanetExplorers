@@ -151,7 +151,7 @@ def login():
 @app.route('/login/google')
 def login_with_google():
     redirect_uri = url_for('authorize', _external= True)
-    return google.authorize_redirect(redirect_uri)
+    return google.authorize_redirect(redirect_uri,prompt='consent')
 
 @app.route('/auth/callback')
 def authorize():
