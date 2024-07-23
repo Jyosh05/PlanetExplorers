@@ -93,11 +93,10 @@ for a in tableCheck:
     if not tableExist:
         mycursor.execute("""
                     CREATE TABLE IF NOT EXISTS users(
-                        userid INT AUTO_INCREMENT PRIMARY KEY,
+                        id INT AUTO_INCREMENT PRIMARY KEY,
                         username VARCHAR(255) NOT NULL,
                         password VARCHAR(255) NOT NULL,
                         email VARCHAR(255) NOT NULL,
-                        email_verified BOOLEAN,
                         name VARCHAR(255) NOT NULL,
                         age INT NOT NULL,
                         address VARCHAR(255),
@@ -108,7 +107,8 @@ for a in tableCheck:
                         unlock_token VARCHAR(255),
                         failed_login_attempts INT DEFAULT 0,
                         lockout_time DATETIME,
-                        explorer_points INT DEFAULT 0
+                        explorer_points INT DEFAULT 0,
+                        email_verified BOOLEAN
                     )
                     """)
         print(f"Table 'users' Created")
@@ -197,7 +197,7 @@ for a in tableCheck:
                 quantity INT NOT NULL,
                 total_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
                 total_points INT NOT NULL DEFAULT 0,
-                FOREIGN KEY (user_id) REFERENCES users(userid),
+                FOREIGN KEY (user_id) REFERENCES users(id),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )
         """)
