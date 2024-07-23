@@ -51,26 +51,26 @@ def login():
             user = mycursor.fetchone()
 
             if user:
-                lockout_time = user[14]
+                lockout_time = user[13]
                 if lockout_time and datetime.now() < lockout_time:
                     remaining_time = (lockout_time - datetime.now()).seconds // 60
                     flash(f'Your account is locked. Please try again later in {remaining_time} minutes or contact admin.', 'error')
                     return redirect(url_for('login'))
 
                 if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
-                    session['user'] = {'id': user[0], 'username': user[1], 'role': user[10]}
+                    session['user'] = {'id': user[0], 'username': user[1], 'role': user[9]}
                     mycursor.execute(
-                        'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE userid = %s',
+                        'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
                         (user[0],))
                     mydb.commit()
                     regenerate_session()
                     log_this("login successful", user[0])
 
-                    role = user[10]
+                    role = user[9]
                     print(f"Logged in user role: {role}")
                     return redirect(url_for(role_redirects.get(role, 'home')))
                 else:
-                    failed_login_attempts = user[13] + 1
+                    failed_login_attempts = user[12] + 1
                     lockout_duration = 0
 
                     if failed_login_attempts == 3:
@@ -82,7 +82,7 @@ def login():
                     locked_until = datetime.now() + timedelta(minutes=lockout_duration) if lockout_duration else None
                     unlock_token = generate_unlock_token()
                     mycursor.execute(
-                        'UPDATE users SET failed_login_attempts = %s, locked = TRUE, lockout_time = %s, unlock_token = %s WHERE userid = %s',
+                        'UPDATE users SET failed_login_attempts = %s, locked = TRUE, lockout_time = %s, unlock_token = %s WHERE id = %s',
                         (failed_login_attempts, locked_until, unlock_token, user[0]))
                     mydb.commit()
 
@@ -95,7 +95,7 @@ def login():
                     return redirect(url_for('login'))
             else:
                 # Query all users from the database
-                query = "SELECT userid, password, failed_login_attempts, email FROM users"
+                query = "SELECT id, password, failed_login_attempts, email FROM users"
                 mycursor.execute(query)
                 users = mycursor.fetchall()
 
@@ -117,7 +117,7 @@ def login():
                         unlock_token = generate_unlock_token()
 
                         mycursor.execute(
-                            'UPDATE users SET failed_login_attempts = %s, locked = TRUE, lockout_time = %s, unlock_token = %s WHERE userid = %s',
+                            'UPDATE users SET failed_login_attempts = %s, locked = TRUE, lockout_time = %s, unlock_token = %s WHERE id = %s',
                             (failed_login_attempts, locked_until, unlock_token, user_id)
                         )
                         mydb.commit()
@@ -179,7 +179,7 @@ def unlock_account(token):
     user = mycursor.fetchone()
 
     if user:
-        mycursor.execute('UPDATE users SET locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE userid = %s', (user[0],))
+        mycursor.execute('UPDATE users SET locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s', (user[0],))
         mydb.commit()
         flash('Your account has been unlocked. You can now log in.', 'success')
 
