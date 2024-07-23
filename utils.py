@@ -126,11 +126,11 @@ for a in tableCheck:
     if not tableExist:
         mycursor.execute("""
             CREATE TABLE IF NOT EXISTS oauth(
-                googleid INT PRIMARY KEY,
+                googleid VARCHAR(255) PRIMARY KEY,
                 email VARCHAR(255) NOT NULL,
-                email_verified BOOLEAN 
-                name VARCHAR(255)
-                profilePic VAR  CHAR(600) NULL
+                email_verified BOOLEAN, 
+                name VARCHAR(255),
+                profilePic VARCHAR(600) NULL
             )
         """)
 
@@ -197,7 +197,7 @@ for a in tableCheck:
                 quantity INT NOT NULL,
                 total_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
                 total_points INT NOT NULL DEFAULT 0,
-                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (user_id) REFERENCES users(userid),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )
         """)
