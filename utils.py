@@ -93,10 +93,11 @@ for a in tableCheck:
     if not tableExist:
         mycursor.execute("""
                     CREATE TABLE IF NOT EXISTS users(
-                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        userid INT AUTO_INCREMENT PRIMARY KEY,
                         username VARCHAR(255) NOT NULL,
                         password VARCHAR(255) NOT NULL,
                         email VARCHAR(255) NOT NULL,
+                        email_verified BOOLEAN,
                         name VARCHAR(255) NOT NULL,
                         age INT NOT NULL,
                         address VARCHAR(255),
@@ -116,6 +117,22 @@ mycursor.execute('SELECT * FROM users')
 print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
+
+tableCheck = ['oauth']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'oauth'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+            CREATE TABLE IF NOT EXISTS oauth(
+                googleid INT PRIMARY KEY,
+                email VARCHAR(255) NOT NULL,
+                email_verified BOOLEAN 
+                name VARCHAR(255)
+                profilePic VAR  CHAR(600) NULL
+            )
+        """)
 
 
 tableCheck = ['audit_logs']
