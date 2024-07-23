@@ -89,6 +89,9 @@ def reset_password(token):
                     hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                     update_query = "UPDATE users SET password = %s WHERE email = %s"
                     mycursor.execute(update_query, (hashed_password, email))
+                    expire_token = "UPDATE token_validation SET used = %s WHERE token = %s"
+                    used = True
+                    mycursor.execute(expire_token,(used,token))
                     mydb.commit()
 
                     print("Password updated successfully")

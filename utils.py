@@ -408,11 +408,13 @@ def confirm_token(token):
     # a URLSafeTimedSerializer object is created using the same secret key.
     # This ensures that the token can be verified against the same key and salt used to create it.
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-    retrieve_token = 'SELECT email, expiration FROM token_validation WHERE token = %s'
+    retrieve_token = 'SELECT email, expiration,used FROM token_validation WHERE token = %s'
     mycursor.execute(retrieve_token, (token,))
     row = mycursor.fetchone()
 
     if not row or row[1] < datetime.utcnow():
+        return False
+    if row[2] == 1:
         return False
 
     email = row[0]
