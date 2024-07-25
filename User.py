@@ -171,7 +171,7 @@ def authorize():
         mydb.commit()
     session['user'] = user_info
     session['login_method'] = 'google'
-    return render_template('User/profile.html', user='student')
+    return render_template('User/google_profile.html', user='student')
 
 
 
@@ -224,6 +224,19 @@ def user_orders():
     """, (user_id,))
     orders = mycursor.fetchall()
     return render_template('User/order_history.html', orders=orders)
+
+
+# @app.route('/email_verification')
+# def email_verification():
+#     if request.method == "POST":
+#         email = request.form['email']
+#         recaptcha = request.form['g-recaptcha-response']
+#
+#         # verify recaptcha
+#         valid = verify_response(recaptcha)
+#         if valid:
+#             token = generate_confirm_token(email)
+
 
 
 @app.route('/logout')
