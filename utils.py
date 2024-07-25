@@ -3,7 +3,7 @@ import mysql.connector
 
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api
+from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api,CLIENTID,CLIENTSECRET
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -16,6 +16,8 @@ import requests
 import secrets
 import stripe
 import re
+
+from authlib.integrations.flask_client import OAuth
 
 
 app = Flask(__name__)
@@ -56,6 +58,22 @@ app.config['SESSION_PERMANENT'] = False  # browser closed? NO MORE SESSION!
 app.config['SESSION_USE_SIGNER'] = True  # digitally signing the cookie sessions. no tampering by clients
 Session(app)
 
+app.config['GOOGLE_CLIENT_ID'] = CLIENTID
+app.config['GOOGLE_CLIENT_SECRET'] = CLIENTSECRET
+
+oauth = OAuth(app)
+google = oauth.register(
+    name = 'google',
+    client_id = app.config['GOOGLE_CLIENT_ID'],
+    client_secret = app.config['GOOGLE_CLIENT_SECRET'],
+    authorize_url = 'https://accounts.google.com/o/oauth2/auth',
+    authorize_params = None,
+    access_token_url = 'https://accounts.google.com/o/oauth2/token',
+    access_token_params = None,
+    refresh_token_url = None,
+    redirect_url = 'http://127.0.0.1:5000/auth/callback',
+    client_kwargs = {'scope':'email profile'}
+)
 
 UPLOAD_FOLDER = 'static/img'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -89,7 +107,8 @@ for a in tableCheck:
                         unlock_token VARCHAR(255),
                         failed_login_attempts INT DEFAULT 0,
                         lockout_time DATETIME,
-                        explorer_points INT DEFAULT 0
+                        explorer_points INT DEFAULT 0,
+                        email_verified BOOLEAN
                     )
                     """)
         print(f"Table 'users' Created")
@@ -98,6 +117,22 @@ mycursor.execute('SELECT * FROM users')
 print(f"Using table 'users' ")
 
 users = mycursor.fetchall()
+
+tableCheck = ['oauth']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'oauth'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+            CREATE TABLE IF NOT EXISTS oauth(
+                googleid VARCHAR(255) PRIMARY KEY,
+                email VARCHAR(255) NOT NULL,
+                email_verified BOOLEAN, 
+                name VARCHAR(255),
+                profilePic VARCHAR(600) NULL
+            )
+        """)
 
 
 tableCheck = ['audit_logs']
@@ -423,11 +458,13 @@ def confirm_token(token):
     # a URLSafeTimedSerializer object is created using the same secret key.
     # This ensures that the token can be verified against the same key and salt used to create it.
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-    retrieve_token = 'SELECT email, expiration FROM token_validation WHERE token = %s'
+    retrieve_token = 'SELECT email, expiration,used FROM token_validation WHERE token = %s'
     mycursor.execute(retrieve_token, (token,))
     row = mycursor.fetchone()
 
     if not row or row[1] < datetime.utcnow():
+        return False
+    if row[2] == 1:
         return False
 
     email = row[0]

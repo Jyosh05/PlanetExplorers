@@ -148,6 +148,30 @@ def login():
 
     return render_template("User/login.html")
 
+@app.route('/login/google')
+def login_with_google():
+    redirect_uri = url_for('authorize', _external= True)
+    return google.authorize_redirect(redirect_uri,prompt='consent')
+
+@app.route('/auth/callback')
+def authorize():
+    token = google.authorize_access_token()
+    resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
+    print(resp)
+    user_info = resp.json()
+    mycursor.execute("SELECT * FROM oauth WHERE googleid = %s",(user_info['id'],))
+    user = mycursor.fetchone()
+    print(user_info['id'])
+    if not user:
+        mycursor.execute("""
+            INSERT INTO oauth(googleid, email, email_verified,name, profilePic)
+            VALUES(%s,%s,%s,%s,%s)
+        """,(str(user_info['id']), user_info['email'], user_info['verified_email'], user_info.get('name'), user_info.get('picture')))
+        mydb.commit()
+    session['user'] = user_info
+    return render_template('User/profile.html', user='student')
+
+
 
 @app.route('/unlock_account/<token>')
 def unlock_account(token):
