@@ -171,7 +171,7 @@ def authorize():
         mydb.commit()
     session['user'] = user_info
     session['login_method'] = 'google'
-    return render_template('User/google_profile.html', user='student')
+    return render_template('User/studentHome.html', user='student')
 
 
 
