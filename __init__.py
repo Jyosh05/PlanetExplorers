@@ -131,7 +131,7 @@ def register():
         age_validation(age)
         validate_phone_number(phone)
         add_info(username, password, email, name, age, address, phone)
-        return redirect(url_for('home'))
+        return redirect(url_for('login'))
     return render_template('User/register.html')
 
 

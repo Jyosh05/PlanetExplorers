@@ -206,6 +206,19 @@ def create_module():
     return render_template("Teacher/module.html")
 
 
+@app.route('/user/orders')
+@roles_required('student', 'teacher')
+def user_orders():
+    user_id = session['user']['id']
+    mycursor.execute("""
+        SELECT o.id, o.total_price, o.status
+        FROM orders o
+        WHERE o.user_id = %s
+    """, (user_id,))
+    orders = mycursor.fetchall()
+    return render_template('User/order_history.html', orders=orders)
+
+
 @app.route('/logout')
 def logout():
     print(session)

@@ -14,7 +14,7 @@
         align-items: center;
         padding: 2px; /* Further reduced padding to make the navbar height even smaller */
         background-color: #FFFFFF;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);x`
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
     }
 
     .navbar-logo {
@@ -55,10 +55,10 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <!-- Bootstrap 5 navbar-nav component for navbar menu -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a href="#" class="nav-link"> <i class="fa-solid fa-trophy"></i>Daily Challenge</a></li>
-                <li class="nav-item"><a href="#" class="nav-link"> <i class="fa-solid fa-earth-oceania"></i>Explorer's Points</a></li>
-                <li class="nav-item"><a href="{{ url_for('store') }}" class="nav-link"> <i class="fa-solid fa-cart-shopping"></i>Store</a></li>
-                <li class="nav-item"><a href="{{ url_for('view_cart')}}" class="nav-link"><i class="fa-solid fa-basket-shopping"></i>Cart</a></li>
+                <li class="nav-item"><a href="#" class="nav-link"> <i class="fa-solid fa-trophy"></i> Daily Challenge</a></li>
+                <li class="nav-item"><a href="#" class="nav-link"> <i class="fa-solid fa-earth-oceania"></i> Explorer's Points</a></li>
+                <li class="nav-item"><a href="{{ url_for('store') }}" class="nav-link"> <i class="fa-solid fa-cart-shopping"></i> Store</a></li>
+                <li class="nav-item"><a href="{{ url_for('view_cart')}}" class="nav-link"><i class="fa-solid fa-basket-shopping"></i> Cart</a></li>
 
                 {% if 'user' in session %}
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 profile-menu">
