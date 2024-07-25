@@ -137,7 +137,7 @@ def register():
 
 # need to test virus total with malicious file
 @app.route('/updateProfile', methods=['GET', 'POST'])
-@roles_required('student', 'teacher')
+@roles_required('student')
 def updateProfile():
     if 'user' in session and 'username' in session['user']:
         username = session['user']['username']

@@ -31,8 +31,7 @@
         <p>You cannot lock or unlock your own account</p>
 
         {% else %}
-        <label for="locked">Account Status:</label>
-        <input type="text" id="locked" name="locked" value="{{ 'Locked' if teacher_details[10]  else 'Not locked' }}" readonly><br>
+
         <label for="lock_account">Lock Account:</label>
         <input type="checkbox" id="lock_account" name="lock_account">
 

@@ -10,7 +10,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
-    {% include 'navbar.html' %}
+    {% include 'Teacher/teacherNav.html' %}
     <div class="container">
 
         {% if 'user' in session %}
@@ -55,10 +55,10 @@
 
             <br>
                     <!-- Update Profile Button -->
-                    <a href="{{ url_for('updateProfile') }}" class="btn btn-primary">Update Profile</a>
+                    <a href="{{ url_for('updateTeacherProfile') }}" class="btn btn-primary">Update Profile</a>
 
             <br>
-                                <a href="{{ url_for('updatePassword') }}" class="btn btn-primary">Update Password</a>
+                                <a href="{{ url_for('updateTeacherPassword') }}" class="btn btn-primary">Update Password</a>
 
                 </div>
 

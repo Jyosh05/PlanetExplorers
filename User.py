@@ -1,7 +1,10 @@
+import time
+
 from utils import *
 from flask import render_template, redirect, url_for, request, flash
 import urllib.parse
-
+from werkzeug.utils import secure_filename
+import os
 
 @app.route('/')
 def home():
@@ -67,7 +70,7 @@ def login():
                 lockout_time = user[13]
                 if lockout_time and datetime.now() < lockout_time:
                     remaining_time = (lockout_time - datetime.now()).seconds // 60
-                    flash(f'Your account is locked. Please try again later in {remaining_time} minutes or contact admin.', 'error')
+                    flash(f'Your account is locked. Please try again later in {remaining_time} minutes or contact admin.', 'danger')
                     return redirect(url_for('login'))
 
                 if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
@@ -219,6 +222,210 @@ def send_unlock_email(email, token):
 @roles_required("teacher")
 def create_module():
     return render_template("Teacher/module.html")
+
+@app.route('/teacherProfile')
+@roles_required('teacher')
+def teacherProfile():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        user = userSession(username)
+        if user:
+            print(f'user {username} is logged in')
+            mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
+            profile_pic = mycursor.fetchone()
+
+            if profile_pic and profile_pic[0]:
+                profile_pic_url = url_for('static', filename=profile_pic[0])
+            else:
+                profile_pic_url = url_for('static', filename='img/default_profile_pic.png')
+
+            # You can store the profile_pic_url in the session or pass it to the template
+            session['profile_pic_url'] = profile_pic_url
+    return render_template('Teacher/teacherProfile.html', user=user, profile_pic_url=profile_pic_url)
+
+@app.route('/updateTeacherProfile', methods=['GET', 'POST'])
+@roles_required('teacher')
+def updateTeacherProfile():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        if request.method == 'POST':
+            new_username = request.form.get('username')
+            name = request.form.get('name')
+            email = request.form.get('email')
+            age = request.form.get('age')
+            address = request.form.get('address')
+            phone = request.form.get('phone')
+            if new_username or name or email or age or address or phone:
+                try:
+                    mycursor.execute(
+                        "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
+                        (new_username, name, email, age, address, phone, username))
+                    mydb.commit()
+                    flash('Teacher information updated successfully', 'success')
+                except Exception as e:
+                    flash(f'Error updating user information: {str(e)}', 'error')
+                    return redirect(url_for('updateTeacherProfile'))
+
+            # Handle profile picture upload
+            if 'image' in request.files:
+                file = request.files['image']
+                if file.filename == '':
+                    flash('No profile picture selected', 'error')
+                elif file and allowed_file(file.filename):
+                    if file.content_length < 32 * 1024 * 1024:  # Check if file size is less than 32 MB
+                        # Save the file to a temporary location first
+                        filename = secure_filename(file.filename)
+                        temp_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f'temp_{filename}')
+                        file.save(temp_filepath)
+
+                        try:
+                            file_id = scan_file(temp_filepath)
+                        except Exception as e:
+                            flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
+                            os.remove(temp_filepath)
+                            return redirect(url_for('updateTeacherProfile'))
+
+                        if file_id:
+                            flash('Give us a moment! We are scanning your file contents', 'info')
+
+                            start_time = time.time()
+                            timeout = 300  # 5 minutes timeout
+                            while time.time() - start_time < timeout:
+                                try:
+                                    report = get_scan_report(file_id)
+                                except Exception as e:
+                                    flash(f'Error retrieving scan report: {str(e)}', 'error')
+                                    break
+
+                                if report:
+                                    attributes = report.get('data', {}).get('attributes', {})
+                                    if attributes.get('status') == 'completed':
+                                        scan_results = attributes.get('results', {})
+                                        is_non_malicious = all(
+                                            result.get('category') != 'malicious' for result in scan_results.values()
+                                        )
+
+                                        if is_non_malicious:
+                                            # Rename and move the file to its final location
+                                            final_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                                            os.rename(temp_filepath, final_filepath)
+                                            image_path = f"img/{filename}"
+                                            try:
+                                                mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
+                                                                 (image_path, username))
+                                                mydb.commit()
+                                                flash('Profile picture scanned and uploaded successfully!', 'success')
+                                            except Exception as e:
+                                                flash(f'Error updating profile picture: {str(e)}', 'error')
+                                            return redirect(url_for('updateTeacherProfile'))
+                                        else:
+                                            flash('The file is malicious and has not been saved.', 'error')
+                                            os.remove(temp_filepath)  # Remove the file if it is malicious
+                                            return redirect(url_for('updateTeacherProfile'))
+                                else:
+                                    flash('Failed to retrieve scan report.', 'error')
+                                    break
+                                time.sleep(10)  # wait for 10 seconds before retrying
+                            else:
+                                flash('Scan is not yet complete. Try again later.', 'error')
+                                os.remove(temp_filepath)  # Clean up temporary file if scan is incomplete
+                        else:
+                            flash('Failed to upload file to VirusTotal for scanning.', 'error')
+                            os.remove(temp_filepath)
+                    else:
+                        flash('Profile Picture must be less than 32 MB', 'error')
+                else:
+                    flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
+
+            # Fetch updated user data
+            user = userSession(new_username if new_username else username)
+            if user:
+                session['user']['username'] = new_username if new_username else username  # Update session with new username if changed
+                return render_template("Teacher/teacherProfile.html", user=user)
+            else:
+                flash("User not found in database after update")
+                return redirect(url_for('login'))  # Redirect to log in if user not found after update
+        else:
+            # GET request handling
+            user = userSession(username)
+            return render_template("Teacher/updateTeacherProfile.html", user=user)  # Render form with current user data prepopulated
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))
+
+
+@app.route('/updateTeacherPassword', methods=['POST', 'GET'])
+@roles_required('teacher')
+def updateTeacherPassword():
+    if 'user' in session:
+        if 'username' in session['user']:
+            username = session['user']['username']
+            print("Session data:", session['user'])  # Debug statement
+            print("Username from session:", username)  # Debug statement
+
+            if request.method == 'POST':
+                new_password = request.form.get('new_password')
+                confirm_password = request.form.get('confirm_password')
+
+                if new_password and confirm_password:
+                    if new_password == confirm_password:
+                        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                        try:
+                            # Check if the new hashed password already exists in the database
+                            print("Checking if the new hashed password already exists in the database.")  # Debug statement
+                            mycursor.execute("SELECT password FROM users")
+                            all_passwords = mycursor.fetchall()
+
+                            # Check if the new password matches any existing password
+                            password_exists = False
+                            for stored_password in all_passwords:
+                                if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
+                                    password_exists = True
+                                    break
+
+                            if password_exists:
+                                flash('Password already exists. Please create another password', 'danger')
+                                return redirect(url_for('updateTeacherPassword'))
+                            else:
+                                try:
+                                    print(f"Updating password for username: {username}")  # Debug statement
+                                    print(f"Hashed password: {hashed_password}")  # Debug statement
+                                    mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
+                                    mydb.commit()
+                                    flash('Password updated successfully', 'success')
+                                    print('Password updated successfully')  # Debug statement
+
+                                    # # Refresh session user data
+                                    # user = userSession(username)
+                                    # if user:
+                                    #     session['user'] = user  # Update session with refreshed user data
+                                    # else:
+                                    #     flash('User not found in database after update', 'error')
+                                    #     return redirect(url_for('login'))
+
+                                except Exception as e:
+                                    flash(f'Error updating password: {str(e)}', 'danger')
+                                    print(f'SQL Update Error: {str(e)}')  # Debug statement
+                                    return redirect(url_for('updateTeacherPassword'))
+                        except Exception as e:
+                            flash(f'Error checking existing password: {str(e)}', 'danger')
+                            print(f'SQL Select Error: {str(e)}')  # Debug statement
+                            return redirect(url_for('updateTeacherPassword'))
+                    else:
+                        flash('Passwords do not match.', 'danger')
+                        return redirect(url_for('updateTeacherPassword'))
+                else:
+                    flash('Please provide both password fields.', 'danger')
+                    return redirect(url_for('updateTeacherPassword'))
+        else:
+            flash("Username not found in session")
+            return redirect(url_for('login'))
+    else:
+        flash("User session not found")
+        return redirect(url_for('login'))
+
+    return render_template("Teacher/updateTeacherPassword.html")
+
 
 
 @app.route('/user/orders')
