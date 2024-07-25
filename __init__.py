@@ -572,7 +572,8 @@ def payment_tokens():
 @app.route('/order_complete')
 @roles_required('student', 'teacher')
 def order_complete():
-    return redirect(url_for('store'))
+    return redirect(url_for('user_orders'))
+
 
 
 if __name__ == '__main__':

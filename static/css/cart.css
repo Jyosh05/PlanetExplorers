@@ -1,20 +1,127 @@
-.cart {
-    margin-top: 20px;
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+
+.cart-title {
+    text-align: center;
+    margin: 2rem 0;
+    font-size: 2.5rem;
+    color: #343a40;
+    text-shadow: 2px 2px #ccc;
+}
+
+.cart-card {
+    background-color: #fff;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.cart-items {
+    list-style: none;
+    padding: 0;
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.3s;
+}
+
+.cart-item:hover {
+    background-color: #f1f3f5;
+}
+
+.item-name {
+    flex: 2;
+    font-size: 1.2rem;
+    color: #495057;
+}
+
+.item-price {
+    flex: 1;
+    text-align: right;
+    font-size: 1.2rem;
+    color: #28a745;
 }
 
 .quantity-controls {
     display: flex;
     align-items: center;
+    flex: 1;
+    justify-content: center;
 }
 
 .quantity-btn {
-    margin: 0 5px;
+    background-color: #007bff;
+    border: none;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
-.item-details {
-    flex-grow: 1;
+.quantity-btn:hover {
+    background-color: #0056b3;
+}
+
+.quantity-field {
+    width: 3rem;
+    text-align: center;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    margin: 0 0.5rem;
+    padding: 0.5rem;
 }
 
 .remove-btn {
-    margin-left: auto;
+    flex: 0 0 auto;
+    margin-left: 1rem;
+}
+
+.totals {
+    text-align: right;
+    margin-top: 1.5rem;
+    font-size: 1.25rem;
+    color: #495057;
+}
+
+.payment-options {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.checkout-btn {
+    display: block;
+    width: 100%;
+    background-color: #28a745;
+    border: none;
+    padding: 1rem;
+    font-size: 1.25rem;
+    color: #fff;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.checkout-btn:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-label {
+    font-size: 1rem;
+    color: #495057;
 }

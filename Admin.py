@@ -625,6 +625,36 @@ def adminstoredelete():
     return redirect(url_for('adminstore'))
 
 
+@app.route('/admin/orders')
+@roles_required('admin')
+def admin_orders():
+    mycursor.execute("""
+        SELECT o.id, o.user_id, o.total_price, o.status, u.username
+        FROM orders o
+        INNER JOIN users u ON o.user_id = u.id
+    """)
+    orders = mycursor.fetchall()
+    return render_template('Admin/order_backlog.html', orders=orders)
+
+
+@app.route('/admin/orders/update/<int:order_id>', methods=['POST'])
+@roles_required('admin')
+def update_order_status(order_id):
+    new_status = request.form.get('status')
+    if new_status not in ['Pending', 'Completed']:
+        flash('Invalid status.', 'danger')
+        return redirect(url_for('admin_orders'))
+
+    try:
+        mycursor.execute("UPDATE orders SET status = %s WHERE id = %s", (new_status, order_id))
+        mydb.commit()
+        flash('Order status updated successfully.', 'success')
+    except Exception as e:
+        mydb.rollback()
+        flash('Error updating order status: ' + str(e), 'danger')
+    return redirect(url_for('admin_orders'))
+
+
 @app.route('/blogs')
 @roles_required('admin')
 def blogs():

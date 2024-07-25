@@ -173,6 +173,56 @@ print(f"Using Table 'cart'")
 cart = mycursor.fetchall()
 
 
+tableCheck = ['orders']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'orders'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+            CREATE TABLE `orders` (
+                id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                user_id INT,
+                total_price DECIMAL(10, 2),
+                total_points INT,
+                shipping_option VARCHAR(255),
+                order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status VARCHAR(255) DEFAULT 'Pending',
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """)
+        print(f"Table 'orders' created")
+
+mycursor.execute('SELECT * FROM orders')
+print(f"Using Table 'orders'")
+orders = mycursor.fetchall()
+
+
+tableCheck = ['order_items']
+for a in tableCheck:
+    mycursor.execute(f"SHOW TABLES LIKE 'order_items'")
+    tableExist = mycursor.fetchone()
+
+    if not tableExist:
+        mycursor.execute("""
+            CREATE TABLE `order_items` (
+                id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                order_id INT,
+                product_id INT,
+                quantity INT,
+                price DECIMAL(10, 2),
+                price_in_points INT,
+                FOREIGN KEY (order_id) REFERENCES orders(id),
+                FOREIGN KEY (product_id) REFERENCES storeproducts(id)
+            )
+        """)
+        print(f"Table 'order_items' created")
+
+mycursor.execute('SELECT * FROM order_items')
+print(f"Using Table 'order_items'")
+order_items = mycursor.fetchall()
+
+
 tableCheck = ['token_validation']
 for a in tableCheck:
     mycursor.execute(f"SHOW TABLES LIKE 'token_validation'")
