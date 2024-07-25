@@ -7,7 +7,7 @@ import urllib.parse
 def home():
     return render_template("home.html")  # need to create template
 
-
+#NEED TO MOD THIS TO CHANGE IT TO PROFILE ROUTE FOR GOOGLE AND NORMAL ACCOUNTS
 @app.route('/learnerHome')
 @roles_required('student')
 def learnerHome():
@@ -59,6 +59,7 @@ def login():
 
                 if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                     session['user'] = {'id': user[0], 'username': user[1], 'role': user[9]}
+                    session['login_method'] = 'login'
                     mycursor.execute(
                         'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
                         (user[0],))
@@ -169,7 +170,13 @@ def authorize():
         """,(str(user_info['id']), user_info['email'], user_info['verified_email'], user_info.get('name'), user_info.get('picture')))
         mydb.commit()
     session['user'] = user_info
+    session['login_method'] = 'google'
     return render_template('User/profile.html', user='student')
+
+
+
+
+
 
 
 
