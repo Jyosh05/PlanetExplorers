@@ -547,7 +547,6 @@ def adminstoreadd():
     mycursor = mydb.cursor()
     name = request.form['name']
     description = request.form['description']
-    price = request.form['price']
     price_in_points = request.form['price_in_points']
     quantity = request.form['quantity']
 
@@ -561,8 +560,8 @@ def adminstoreadd():
         image_path = f"img/{filename}"  # Store relative path
 
         mycursor.execute(
-            "INSERT INTO storeproducts (name, description, price, quantity, image_path, price_in_points) VALUES (%s, %s, %s, %s, %s, %s)",
-            (name, description, price, quantity, image_path, price_in_points))
+            "INSERT INTO storeproducts (name, description, quantity, image_path, price_in_points) VALUES (%s, %s, %s, %s, %s)",
+            (name, description, quantity, image_path, price_in_points))
         mydb.commit()
         mycursor.close()
         return redirect(url_for('adminstore'))
@@ -587,7 +586,6 @@ def adminstoreupdate():
     product_id = request.form['product_id']
     name = request.form['name']
     description = request.form['description']
-    price = request.form['price']
     price_in_points = request.form['price_in_points']
     quantity = request.form['quantity']
 
@@ -601,13 +599,13 @@ def adminstoreupdate():
 
         # Update the product with a new image
         mycursor.execute(
-            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s, image_path = %s, price_in_points = %s WHERE id = %s",
-            (name, description, price, quantity, image_path, price_in_points, product_id))
+            "UPDATE storeproducts SET name = %s, description = %s, quantity = %s, image_path = %s, price_in_points = %s WHERE id = %s",
+            (name, description, quantity, image_path, price_in_points, product_id))
     else:
         # Update the product without changing the image
         mycursor.execute(
-            "UPDATE storeproducts SET name = %s, description = %s, price = %s, quantity = %s, price_in_points = %s WHERE id = %s",
-            (name, description, price, quantity, price_in_points, product_id))
+            "UPDATE storeproducts SET name = %s, description = %s, quantity = %s, price_in_points = %s WHERE id = %s",
+            (name, description, quantity, price_in_points, product_id))
 
     mydb.commit()
     mycursor.close()
@@ -623,36 +621,6 @@ def adminstoredelete():
     mydb.commit()
     mycursor.close()
     return redirect(url_for('adminstore'))
-
-
-@app.route('/admin/orders')
-@roles_required('admin')
-def admin_orders():
-    mycursor.execute("""
-        SELECT o.id, o.user_id, o.total_price, o.status, u.username
-        FROM orders o
-        INNER JOIN users u ON o.user_id = u.id
-    """)
-    orders = mycursor.fetchall()
-    return render_template('Admin/order_backlog.html', orders=orders)
-
-
-@app.route('/admin/orders/update/<int:order_id>', methods=['POST'])
-@roles_required('admin')
-def update_order_status(order_id):
-    new_status = request.form.get('status')
-    if new_status not in ['Pending', 'Completed']:
-        flash('Invalid status.', 'danger')
-        return redirect(url_for('admin_orders'))
-
-    try:
-        mycursor.execute("UPDATE orders SET status = %s WHERE id = %s", (new_status, order_id))
-        mydb.commit()
-        flash('Order status updated successfully.', 'success')
-    except Exception as e:
-        mydb.rollback()
-        flash('Error updating order status: ' + str(e), 'danger')
-    return redirect(url_for('admin_orders'))
 
 
 @app.route('/blogs')

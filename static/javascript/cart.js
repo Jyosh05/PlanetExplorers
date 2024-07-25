@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
     const cartItems = document.querySelectorAll('.cart-item');
     const totalItemsElement = document.getElementById('total-items');
-    const totalPriceElement = document.getElementById('total-price');
     const totalPriceInPointsElement = document.getElementById('total-price-in-points');
     const checkoutButton = document.getElementById('checkout-button');
     const paymentMethodElements = document.getElementsByName('paymentMethod');
@@ -42,10 +41,8 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(data => {
                 if (data.success) {
                     item.querySelector('.quantity-field').value = newQuantity;
-                    item.querySelector('.item-price').textContent = `Price: $${data.item_price}`;
                     item.querySelector('.item-price_in_points').textContent = `Explorer Points: ${data.item_price_in_points}`;
                     totalItemsElement.textContent = data.total_items;
-                    totalPriceElement.textContent = data.total_price.toFixed(2);
                     totalPriceInPointsElement.textContent = data.total_price_in_points;
                 }
             });
@@ -66,7 +63,6 @@ document.addEventListener("DOMContentLoaded", function() {
             if (data.success) {
                 item.remove();
                 totalItemsElement.textContent = data.total_items;
-                totalPriceElement.textContent = data.total_price.toFixed(2);
                 totalPriceInPointsElement.textContent = data.total_price_in_points;
             }
         });
@@ -82,8 +78,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (selectedPaymentMethod === 'tokens') {
             window.location.href = '/payment_points';
-        } else {
-            window.location.href = '/payment_card';
         }
     });
 });

@@ -376,18 +376,17 @@ def view_cart():
 
         # Fetch items in the cart for the current user with total price calculation
         mycursor.execute("""
-            SELECT sp.id, sp.name, sp.price, sp.price_in_points, c.quantity, sp.price * c.quantity AS total_price, sp.price_in_points * c.quantity AS total_price_in_points
+            SELECT sp.id, sp.name, sp.price_in_points, c.quantity, sp.price_in_points * c.quantity AS total_price_in_points
             FROM cart c
             INNER JOIN storeproducts sp ON c.product_id = sp.id
             WHERE c.user_id = %s
         """, (user_id,))
         cart_items = mycursor.fetchall()
 
-        total_items = sum(item[4] for item in cart_items)
-        total_price = sum(item[5] for item in cart_items)
-        total_price_in_points = sum(item[6] for item in cart_items)
+        total_items = sum(item[3] for item in cart_items)
+        total_price_in_points = sum(item[4] for item in cart_items)
 
-        return render_template("Store/cart.html", cart_items=cart_items, total_items=total_items, total_price=total_price, total_price_in_points=total_price_in_points, empty_message=False)
+        return render_template("Store/cart.html", cart_items=cart_items, total_items=total_items, total_price_in_points=total_price_in_points, empty_message=False)
     else:
         flash("You need to log in to view your shopping cart.", 'warning')
         return redirect(url_for('login'))
@@ -405,23 +404,25 @@ def add_to_cart(product_id):
             mycursor.execute("START TRANSACTION")
 
             # Lock the row and check if the product exists and get its details
-            mycursor.execute("SELECT quantity FROM storeproducts WHERE id = %s FOR UPDATE", (product_id,))
+            mycursor.execute("SELECT quantity, price_in_points FROM storeproducts WHERE id = %s FOR UPDATE", (product_id,))
             product = mycursor.fetchone()
 
             if product:
                 available_quantity = product[0]
+                price_in_points = product[1]
+
                 # Check if the requested quantity is available
                 if quantity <= available_quantity:
                     # Check if the product is already in the cart
-                    mycursor.execute("SELECT quantity FROM cart WHERE user_id = %s AND product_id = %s", (user_id, product_id))
+                    mycursor.execute("SELECT quantity, total_points FROM cart WHERE user_id = %s AND product_id = %s", (user_id, product_id))
                     cart_item = mycursor.fetchone()
 
                     if cart_item:
-                        # Update the quantity in the cart
+                        # Update the quantity and total points in the cart
                         new_quantity = cart_item[0] + quantity
+                        new_total_points = new_quantity * price_in_points
                         if new_quantity <= available_quantity:
-                            mycursor.execute("UPDATE cart SET quantity = %s WHERE user_id = %s AND product_id = %s", (new_quantity, user_id, product_id))
-                            # Removed stock update line here
+                            mycursor.execute("UPDATE cart SET quantity = %s, total_points = %s WHERE user_id = %s AND product_id = %s", (new_quantity, new_total_points, user_id, product_id))
                             mydb.commit()
                             return jsonify(success=True, message='Item added to cart successfully.')
                         else:
@@ -429,8 +430,8 @@ def add_to_cart(product_id):
                             return jsonify(success=False, error='Not enough stock available.')
                     else:
                         # Insert the new item into the cart
-                        mycursor.execute("INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)", (user_id, product_id, quantity))
-                        # Removed stock update line here
+                        total_points = quantity * price_in_points
+                        mycursor.execute("INSERT INTO cart (user_id, product_id, quantity, total_points) VALUES (%s, %s, %s, %s)", (user_id, product_id, quantity, total_points))
                         mydb.commit()
                         return jsonify(success=True, message='Item added to cart successfully.')
                 else:
@@ -445,7 +446,6 @@ def add_to_cart(product_id):
     return jsonify(success=False, error='You need to log in to add items to your cart.')
 
 
-
 @app.route('/update_cart/<int:product_id>', methods=['POST'])
 @roles_required('student', 'teacher')
 def update_cart(product_id):
@@ -454,29 +454,37 @@ def update_cart(product_id):
         data = request.get_json()
         new_quantity = data['quantity']
 
-        # Update the cart with the new quantity
-        mycursor.execute("""
-            UPDATE cart
-            SET quantity = %s
-            WHERE user_id = %s AND product_id = %s
-        """, (new_quantity, user_id, product_id))
-        mydb.commit()
+        # Get the price of the product
+        mycursor.execute("SELECT price_in_points FROM storeproducts WHERE id = %s", (product_id,))
+        product = mycursor.fetchone()
+        if product:
+            price_in_points = product[0]
+            new_total_points = new_quantity * price_in_points
 
-        # Fetch updated cart data
-        mycursor.execute("""
-            SELECT sp.id, sp.name, sp.price, sp.price_in_points, c.quantity, sp.price * c.quantity AS total_price, sp.price_in_points * c.quantity AS total_price_in_points
-            FROM cart c
-            INNER JOIN storeproducts sp ON c.product_id = sp.id
-            WHERE c.user_id = %s
-        """, (user_id,))
-        cart_items = mycursor.fetchall()
+            # Update the cart with the new quantity and total points
+            mycursor.execute("""
+                UPDATE cart
+                SET quantity = %s, total_points = %s
+                WHERE user_id = %s AND product_id = %s
+            """, (new_quantity, new_total_points, user_id, product_id))
+            mydb.commit()
 
-        total_items = sum(item[4] for item in cart_items)
-        total_price = sum(item[5] for item in cart_items)
-        total_price_in_points = sum(item[6] for item in cart_items)
+            # Fetch updated cart data
+            mycursor.execute("""
+                SELECT sp.id, sp.name, sp.price_in_points, c.quantity, c.total_points
+                FROM cart c
+                INNER JOIN storeproducts sp ON c.product_id = sp.id
+                WHERE c.user_id = %s
+            """, (user_id,))
+            cart_items = mycursor.fetchall()
 
-        return jsonify({
-            'success': True,'item_price': cart_items[0][2], 'item_price_in_points': cart_items[0][3], 'total_items': total_items, 'total_price': total_price, 'total_price_in_points': total_price_in_points})
+            total_items = sum(item[3] for item in cart_items)
+            total_price_in_points = sum(item[4] for item in cart_items)
+
+            return jsonify({
+                'success': True, 'item_price_in_points': cart_items[0][4], 'total_items': total_items, 'total_price_in_points': total_price_in_points})
+        else:
+            return jsonify({'success': False, 'error': 'Product not found'}), 404
     else:
         return jsonify({'success': False}), 403
 
@@ -494,10 +502,10 @@ def remove_from_cart(product_id):
         mycursor.execute("SELECT SUM(quantity) FROM cart WHERE user_id = %s", (user_id,))
         total_items = mycursor.fetchone()[0] or 0
 
-        mycursor.execute("SELECT SUM(c.quantity * p.price) FROM cart c JOIN storeproducts p ON c.product_id = p.id WHERE c.user_id = %s", (user_id,))
-        total_price = mycursor.fetchone()[0] or 0.0
+        mycursor.execute("SELECT SUM(c.quantity * p.price_in_points) FROM cart c JOIN storeproducts p ON c.product_id = p.id WHERE c.user_id = %s", (user_id,))
+        total_price_in_points = mycursor.fetchone()[0] or 0.0
 
-        return jsonify(success=True, total_items=total_items, total_price=total_price)
+        return jsonify(success=True, total_items=total_items, total_price=total_price_in_points)
     else:
         return jsonify(success=False), 403
 
@@ -524,6 +532,18 @@ def payment_tokens():
                 """, (user_id,))
                 cart_items = mycursor.fetchall()
 
+                # Calculate total cost in points
+                total_points = sum(item[2] * item[3] for item in cart_items)
+
+                # Check if user has enough explorer points
+                mycursor.execute("SELECT explorer_points FROM users WHERE id = %s", (user_id,))
+                user_points = mycursor.fetchone()[0]
+
+                if user_points < total_points:
+                    mydb.rollback()
+                    flash("You do not have enough explorer points.", 'danger')
+                    return redirect(url_for('view_cart'))
+
                 # Deduct points from user account and update stock
                 for item in cart_items:
                     product_id, available_quantity, price_in_points, ordered_quantity = item
@@ -537,9 +557,7 @@ def payment_tokens():
                     # Update stock in storeproducts
                     mycursor.execute("UPDATE storeproducts SET quantity = quantity - %s WHERE id = %s", (ordered_quantity, product_id))
 
-                # Calculate total cost in points
-                total_points = sum(item[2] * item[3] for item in cart_items)
-                # Deduct points from user account (ensure user points are sufficient)
+                # Deduct points from user account
                 mycursor.execute("UPDATE users SET explorer_points = explorer_points - %s WHERE id = %s", (total_points, user_id))
 
                 # Clear cart after successful payment
@@ -555,7 +573,7 @@ def payment_tokens():
 
         # Fetch cart items for display on the payment page
         mycursor.execute("""
-            SELECT sp.name, sp.price, sp.price_in_points, c.quantity, sp.price * c.quantity AS total_price
+            SELECT sp.name, sp.price_in_points, c.quantity
             FROM cart c
             INNER JOIN storeproducts sp ON c.product_id = sp.id
             WHERE c.user_id = %s
@@ -563,20 +581,19 @@ def payment_tokens():
         cart_items = mycursor.fetchall()
 
         # Calculate total price
-        total_price = sum(item[4] for item in cart_items)
-        total_points = sum(item[2] * item[3] for item in cart_items)  # Total in points
+        total_points = sum(item[1] * item[2] for item in cart_items)  # Total in points
 
-        return render_template('Store/payment_points.html', cart_items=cart_items, total_price=total_price, total_points=total_points)
+        return render_template('Store/payment_points.html', cart_items=cart_items, total_points=total_points)
     else:
         flash("You need to log in to complete your purchase.", 'warning')
         return redirect(url_for('login'))
 
 
+
 @app.route('/order_complete')
 @roles_required('student', 'teacher')
 def order_complete():
-    return redirect(url_for('user_orders'))
-
+    return redirect(url_for('store'))
 
 
 if __name__ == '__main__':

@@ -169,7 +169,6 @@ for a in tableCheck:
                 id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 description VARCHAR(600),
-                price DECIMAL(10,2) NOT NULL,
                 quantity INT NOT NULL,
                 image_path VARCHAR(255) NOT NULL,
                 price_in_points INT NOT NULL
@@ -195,7 +194,6 @@ for a in tableCheck:
                 user_id INT NOT NULL,
                 product_id INT NOT NULL,
                 quantity INT NOT NULL,
-                total_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
                 total_points INT NOT NULL DEFAULT 0,
                 FOREIGN KEY (user_id) REFERENCES users(id),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
@@ -218,7 +216,6 @@ for a in tableCheck:
             CREATE TABLE `orders` (
                 id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 user_id INT,
-                total_price DECIMAL(10, 2),
                 total_points INT,
                 shipping_option VARCHAR(255),
                 order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -245,7 +242,6 @@ for a in tableCheck:
                 order_id INT,
                 product_id INT,
                 quantity INT,
-                price DECIMAL(10, 2),
                 price_in_points INT,
                 FOREIGN KEY (order_id) REFERENCES orders(id),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
