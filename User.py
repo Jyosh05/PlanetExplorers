@@ -11,28 +11,41 @@ def home():
 @app.route('/learnerHome')
 @roles_required('student')
 def learnerHome():
-    if 'user' in session and 'username' in session['user']:
-        username = session['user']['username']
-        user = userSession(username)
-        if user:
-            print(f'user {username} is logged in')
-            mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
-            profile_pic = mycursor.fetchone()
+    return render_template("User/studentHome.html")
 
-            if profile_pic and profile_pic[0]:
-                profile_pic_url = url_for('static', filename=profile_pic[0])
-            else:
-                profile_pic_url = url_for('static', filename='img/default_profile_pic.png')
+@app.route('/profile')
+def profile():
+    user = session.get('user')
+    login_method = session.get('login_method')
 
-            # You can store the profile_pic_url in the session or pass it to the template
-            session['profile_pic_url'] = profile_pic_url
-            return render_template("User/profile.html", user=user, profile_pic_url=profile_pic_url)
-        else:
-            flash("User not found in database")
-            return redirect(url_for('login'))  # Redirect to log in if user not found
+    if not user or not login_method:
+        flash('Please log in to access your profile', 'danger')
+        return redirect(url_for('login'))
+
+    if login_method == 'login':
+        if 'user' in session and 'username' in session['user']:
+            username = session['user']['username']
+            user = userSession(username)
+            if user:
+                print(f'user {username} is logged in')
+                mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
+                profile_pic = mycursor.fetchone()
+
+                if profile_pic and profile_pic[0]:
+                    profile_pic_url = url_for('static', filename=profile_pic[0])
+                else:
+                    profile_pic_url = url_for('static', filename='img/default_profile_pic.png')
+
+                # You can store the profile_pic_url in the session or pass it to the template
+                session['profile_pic_url'] = profile_pic_url
+        return render_template('User/profile.html', user=user, profile_pic_url=profile_pic_url)
+
+    elif login_method == 'google':
+        return render_template('User/google_profile.html', user=user)
+
     else:
-        flash("User session not found")
-        return redirect(url_for('login'))  # Redirect to log in if session not found
+        flash('Unknown login method', 'danger')
+        return redirect(url_for('login'))
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -59,6 +72,7 @@ def login():
 
                 if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                     session['user'] = {'id': user[0], 'username': user[1], 'role': user[9]}
+                    session['login_method'] = 'login'
                     mycursor.execute(
                         'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
                         (user[0],))
@@ -169,7 +183,8 @@ def authorize():
         """,(str(user_info['id']), user_info['email'], user_info['verified_email'], user_info.get('name'), user_info.get('picture')))
         mydb.commit()
     session['user'] = user_info
-    return render_template('User/profile.html', user='student')
+    session['login_method'] = 'google'
+    return render_template('User/studentHome.html', user='student')
 
 
 
