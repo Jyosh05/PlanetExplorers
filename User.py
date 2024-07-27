@@ -1,10 +1,13 @@
 import time
 
+import mysql.connector
+
 from utils import *
 from flask import render_template, redirect, url_for, request, flash
 import urllib.parse
 from werkzeug.utils import secure_filename
 import os
+from flask import jsonify
 
 @app.route('/')
 def home():
@@ -218,10 +221,70 @@ def send_unlock_email(email, token):
     send_reset_link_email(email, subject, template)
 
 
-@app.route('/teacher/create_module')
+@app.route('/teacher/create_module', methods=['GET', 'POST'])
 @roles_required("teacher")
 def create_module():
-    return render_template("Teacher/module.html")
+    if request.method == 'GET':
+        return render_template("Teacher/module.html")
+
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            module_name = data.get('module_name')
+            questions = data.get('questions')
+            user_id = session['user'].get('id')
+            print(user_id)
+            timestamp = datetime.now()
+            print(timestamp)
+
+            if not module_name or not questions or len(questions) < 1:
+                return jsonify({'error': "Module name and at least 1 question are required"}), 400
+
+            # Your validation function might raise exceptions, so handle them
+            input_validation(module_name)
+            for question in questions:
+                input_validation(
+                    question.get('question'),
+                    question.get('choice_a'),
+                    question.get('choice_b'),
+                    question.get('choice_c'),
+                    question.get('choice_d'),
+                    question.get('answer')
+                )
+
+            cursor = mydb.cursor()
+            cursor.execute("INSERT INTO modules(module_name,teacher_id,created_at) VALUES (%s,%s,%s)", (module_name,user_id,timestamp))
+            module_id = cursor.lastrowid
+
+            for question in questions:
+                question_text = question.get('question')
+                choice_a = question.get('choice_a')
+                choice_b = question.get('choice_b')
+                choice_c = question.get('choice_c')
+                choice_d = question.get('choice_d')
+                answer = question.get('answer')
+                explorer_points = question.get('explorerpoints')
+
+                if not question_text or not choice_a or not choice_b or not choice_c or not choice_d or not answer or explorer_points is None:
+                    return jsonify({ "error": "Each question must have a question text, four choices, a correct answer, and explorerpoints."}), 400
+                print(f"Inserting into questions with values: {module_id}, {question_text}, {choice_a}, {choice_b}, {choice_c}, {choice_d}, {answer}, {explorer_points}")
+
+                cursor.execute(
+                    "INSERT INTO questions(module_id,question,choice_a,choice_b,choice_c,choice_d,answer,explorer_points) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    (module_id, question_text, choice_a, choice_b, choice_c, choice_d, answer, explorer_points)
+                )
+                mydb.commit()
+
+            return jsonify({"message": "Module created successfully!"}), 200
+
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
+        except mysql.connector.Error as err:
+            mydb.rollback()
+            return jsonify({"error": "Database error: " + str(err)}), 500
+        except Exception as e:
+            return jsonify({"error": "An unexpected error has occurred: " + str(e)}), 500
+
 
 @app.route('/teacherProfile')
 @roles_required('teacher')

@@ -2,10 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Module creation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Module</title>
 </head>
 <body>
-    {% include 'Teacher/teacherNav.html' %}
+    <h1>Create Module</h1>
+    <form id="create-module-form">
+        <label>Module Name: <input type="text" name="module_name" required></label><br><br>
+        <div id="questions">
+            <!-- Initial question form fields here -->
+        </div>
+        <button type="button" onclick="addQuestion()">Add Another Question</button><br><br>
+        <button type="submit">Submit</button>
+    </form>
 
+    <script src="../../static/javascript/module.js"></script>
 </body>
 </html>
