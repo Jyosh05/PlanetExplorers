@@ -23,9 +23,21 @@ function submitForm() {
     document.getElementById("password").value = password;
     document.getElementById("email").value = email;
 
+    // Check if the user wants to register as a teacher
+    var registerAsTeacher = document.getElementById("register_as_teacher").checked;
+
+    if (registerAsTeacher) {
+        // Change the form action to the teacher registration endpoint
+        document.getElementById("registrationForm").action = "/teacher_register";
+    } else {
+        // Change the form action to the student registration endpoint
+        document.getElementById("registrationForm").action = "/register";
+    }
+
     // Submit the form
     document.getElementById("registrationForm").submit();
 }
+
 function checkPasswordStrength() {
     var password = document.getElementById("password").value;
     var feedback = document.getElementById("password-feedback");
@@ -100,6 +112,4 @@ function checkPasswordStrength() {
 
     feedback.insertBefore(overallMessage, feedback.firstChild);
 }
-
-
 

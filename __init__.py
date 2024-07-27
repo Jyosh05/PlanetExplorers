@@ -1,5 +1,3 @@
-import time
-
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 
@@ -133,6 +131,90 @@ def register():
         add_info(username, password, email, name, age, address, phone)
         return redirect(url_for('login'))
     return render_template('User/register.html')
+
+
+@app.route('/teacher_register', methods=["GET", "POST"])
+def teacher_register():
+    if request.method == "POST":
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        age = request.form.get('age')
+        address = request.form.get('address')
+        phone = request.form.get('phone')
+        register_as_teacher = request.form.get('register_as_teacher')
+
+        try:
+            input_validation(username, password, email, name, address)
+            age_validation(age)
+            validate_phone_number(phone)
+        except ValueError as e:
+            return str(e), 400
+
+        if check_existing_credentials(username, email):
+            return "Username or email already exists", 400
+
+        # Save registration info temporarily in session
+        session['username'] = username
+        session['password'] = password
+        session['email'] = email
+        session['name'] = name
+        session['age'] = age
+        session['address'] = address
+        session['phone'] = phone
+
+        if register_as_teacher:
+            return redirect(url_for('teacher_payment', username=username))
+        else:
+            add_info_teacher(username, password, email, name, age, address, phone)
+            return redirect(url_for('success'))
+
+    return render_template('User/register.html')
+
+
+@app.route('/payment/<username>', methods=["GET", "POST"])
+def teacher_payment(username):
+    if request.method == "POST":
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        address = request.form.get('address')
+        city = request.form.get('city')
+        state = request.form.get('state')
+        zip_code = request.form.get('zip')
+        card_name = request.form.get('card_name')
+        card_number = request.form.get('card_number').replace(" ", "")  # Remove spaces for validation
+        exp_month = request.form.get('exp_month')
+        exp_year = request.form.get('exp_year')
+        cvv = request.form.get('cvv')
+
+        try:
+            # Validate input for harmful content
+            input_validation(full_name, email, address, city, state, zip_code, card_name, card_number, exp_month,
+                             exp_year, cvv)
+
+            # Process payment
+            if process_payment(card_name, card_number, exp_month, exp_year, cvv):
+                if update_user_role(username, 'teacher'):
+                    # Add the user info to the database
+                    add_info_teacher(session['username'], session['password'], session['email'], session['name'],
+                                     session['age'], session['address'], session['phone'])
+                    session.clear()  # Clear session data after successful registration and payment
+                    return redirect(url_for('login'))
+                else:
+                    return "Failed to update user role", 500
+            else:
+                return "Payment failed", 500
+
+        except ValueError as e:
+            return str(e), 400
+
+    return render_template('Teacher/teacher_payment.html', username=username)
+
+
+@app.route('/success')
+def success():
+    return "Registration successful!"
 
 
 # need to test virus total with malicious file

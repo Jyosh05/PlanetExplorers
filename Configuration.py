@@ -1,7 +1,7 @@
 DB_Config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'JYOSHNA2006!',
+    'password': 'mysql',
     'database': 'planetexplorers',
     'port': 3306
 }
@@ -27,6 +27,7 @@ email_config = {
     'mail_username': 'jyoshwlitha@gmail.com',
     'mail_password': 'iizr xcth iqld aoep'
 }
+
 
 RECAPTCHA_SITE_KEY = '6Lf4S-wpAAAAAHD-uP1RuhOVDb_VmFD4ZWTKbmOq'
 RECAPTCHA_SECRET_KEY = '6Lf4S-wpAAAAAG7mrVfLQnm_F9CsVnSNtOM1nzzD'

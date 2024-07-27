@@ -1,4 +1,5 @@
-from flask import Flask, session, abort, flash,url_for
+
+from flask import Flask, session, abort, flash, url_for
 import mysql.connector
 
 
@@ -14,7 +15,6 @@ from flask_session import Session
 from datetime import timedelta, datetime
 import requests
 import secrets
-import stripe
 import re
 
 from authlib.integrations.flask_client import OAuth
@@ -74,6 +74,7 @@ google = oauth.register(
     redirect_url = 'http://127.0.0.1:5000/auth/callback',
     client_kwargs = {'scope':'email profile'}
 )
+
 
 UPLOAD_FOLDER = 'static/img'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -400,6 +401,104 @@ def add_info(username, password, email, name, age, address, phone):
     # Input validation error, means there is malicious code
     except ValueError as e:
         print(f"error: {str(e)}")
+
+
+def process_payment(card_name, card_number, exp_month, exp_year, cvv):
+    try:
+        # Validate input for harmful content
+        input_validation(card_name, card_number, exp_month, exp_year, cvv)
+
+        # Debugging statements
+        print(f"Card Name: {card_name}")
+        print(f"Card Number: {card_number}")
+        print(f"Expiry Date: {exp_month}/{exp_year}")
+        print(f"CVV: {cvv}")
+
+        # Validate card details
+        card_name_valid = validate_card_name(card_name)
+        card_number_valid = validate_card_number(card_number)
+        expiry_date_valid = validate_expiry_date(exp_month, exp_year)
+        cvv_valid = validate_cvc(cvv)
+
+        print(f"Card Name Valid: {card_name_valid}")
+        print(f"Card Number Valid: {card_number_valid}")
+        print(f"Expiry Date Valid: {expiry_date_valid}")
+        print(f"CVV Valid: {cvv_valid}")
+
+        if card_name_valid and card_number_valid and expiry_date_valid and cvv_valid:
+            return True
+    except ValueError as e:
+        print(f"Payment validation failed: {e}")
+    return False
+
+
+
+# Validate Card Name
+def validate_card_name(name):
+    return len(name) > 0
+
+# Validate Card Number
+def validate_card_number(number):
+    number = number.replace(" ", "")  # Remove spaces
+    return re.match(r"^\d{16}$", number) is not None
+
+
+# Validate Expiry Date
+def validate_expiry_date(month, year):
+    months = {
+        "01": "January", "02": "February", "03": "March", "04": "April", "05": "May",
+        "06": "June", "07": "July", "08": "August", "09": "September", "10": "October",
+        "11": "November", "12": "December"
+    }
+    return month in months and year.isdigit() and len(year) == 4
+
+
+# Validate CVV
+def validate_cvc(cvc):
+    return re.match(r"^\d{3,4}$", cvc) is not None
+
+# Update User Role Function
+def update_user_role(username, role):
+    try:
+        query = "UPDATE users SET role = %s WHERE username = %s"
+        values = (role, username)
+        mycursor.execute(query, values)
+        mydb.commit()
+        return True
+    except mysql.connector.Error as err:
+        print(f"Database error: {str(err)}")
+        return False
+
+# Add Teacher Information Function
+def add_info_teacher(username, password, email, name, age, address, phone):
+    try:
+        input_validation(username, password, email, name, address)
+        age = int(age)
+        if age < 0:
+            raise ValueError("Invalid age")
+        validate_phone_number(phone)
+
+        if check_existing_credentials(username, email):
+            print("Username or email already in use")
+            return False
+
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        role = 'teacher'
+        query = """
+            INSERT INTO users (username, password, email, name, age, address, phone, role)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (username, hashed_password, email, name, age, address, phone, role)
+        mycursor.execute(query, values)
+        mydb.commit()
+        print("Teacher added successfully")
+        return True
+    except mysql.connector.Error as err:
+        print(f"Database error: {str(err)}")
+        return False
+    except ValueError as e:
+        print(f"Validation error: {str(e)}")
+        return False
 
 
 def delete_info(username, password):
