@@ -284,8 +284,6 @@ for a in tableCheck:
             CREATE TABLE IF NOT EXISTS modules(
                 module_id INT AUTO_INCREMENT PRIMARY KEY,
                 module_name VARCHAR(255) NOT NULL,
-                module_type ENUM('MCQ', 'Open-ended') NOT NULL,
-                is_public BOOLEAN DEFAULT FALSE,
                 teacher_id INT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -295,6 +293,35 @@ for a in tableCheck:
 mycursor.execute('SELECT * FROM modules')
 print(f"Using table 'modules'")
 modules = mycursor.fetchall()
+
+# Check if the 'questions' table exists, and create it if not
+mycursor.execute("SHOW TABLES LIKE 'questions'")
+tableExist = mycursor.fetchone()
+
+if not tableExist:
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS questions (
+            question_id INT AUTO_INCREMENT PRIMARY KEY,
+            module_id INT,
+            question VARCHAR(1024) NOT NULL,
+            choice_a VARCHAR(255) NOT NULL,
+            choice_b VARCHAR(255) NOT NULL,
+            choice_c VARCHAR(255) NOT NULL,
+            choice_d VARCHAR(255) NOT NULL,
+            answer CHAR(1) NOT NULL,
+            explorer_points INT NOT NULL,
+            FOREIGN KEY (module_id) REFERENCES modules(module_id)
+        )
+    """)
+    print("Table 'questions' created")
+else:
+    print("Table 'questions' already exists")
+
+# Verify if the 'questions' table has been created
+mycursor.execute('SELECT * FROM questions LIMIT 1')
+print("Using table 'questions'")
+questions = mycursor.fetchall()
+print(questions)
 
 
 def regenerate_session():  # regenerate session. update session data, ensure security after login or logout.
@@ -335,10 +362,16 @@ def input_validation(*input_strings):
 
 
 def age_validation(age):
-    age = int(age)
-    if not isinstance(age, int) or age <= 0:
+    try:
+        age = int(age)
+    except ValueError:
         raise ValueError("Invalid input: Age must be a positive integer")
+
+    if age <= 0:
+        raise ValueError("Invalid input: Age must be a positive integer")
+
     return True
+
 
 
 def validate_phone_number(phone_number):
