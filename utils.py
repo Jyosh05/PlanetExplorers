@@ -473,6 +473,7 @@ def validate_card_name(name):
 # Validate Card Number
 def validate_card_number(number):
     number = number.replace(" ", "")  # Remove spaces
+    number = number.replace("-", "")  # removes hyphen
     return re.match(r"^\d{16}$", number) is not None
 
 
