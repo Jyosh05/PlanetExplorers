@@ -50,6 +50,7 @@ def adminUpdateProfile():
                     flash('User information updated successfully', 'success')
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
+                    log_this('Admin Profile information updated successfully', user_id=1)
                     return redirect(url_for('adminUpdateProfile'))
 
             # Handle profile picture upload
@@ -70,6 +71,7 @@ def adminUpdateProfile():
                     except Exception as e:
                         flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
                         os.remove(filepath)
+                        log_this(f'Error uploading file to VirusTotal: {str(e)}', user_id=1)
                         return redirect(url_for('adminUpdateProfile'))
 
                     if file_id:
@@ -91,6 +93,7 @@ def adminUpdateProfile():
                                            attributes.get('results', {}).values()):
                                         flash('The file is malicious and has not been saved.', 'error')
                                         os.remove(filepath)  # Remove the file if it is malicious
+                                        log_this("Malicious file that has not been saved while updating profile", user_id=1)
                                         return redirect(url_for('adminUpdateProfile'))
                                     else:
                                         image_path = f"img/{filename}"
@@ -101,6 +104,7 @@ def adminUpdateProfile():
                                             flash('Profile picture scanned and uploaded successfully!', 'success')
                                         except Exception as e:
                                             flash(f'Error updating profile picture: {str(e)}', 'error')
+                                        log_this('Profile picture scanned and uploaded successfully!', user_id=1)
                                         return redirect(url_for('adminUpdateProfile'))
                             else:
                                 flash('Failed to retrieve scan report.', 'error')
@@ -120,6 +124,7 @@ def adminUpdateProfile():
                 return render_template("Admin/adminProfile.html", user=user)
             else:
                 flash("User not found in database after update")
+                log_this("User not found in database after update", user_id=1)
                 return redirect(url_for('login'))  # Redirect to log in if user not found after update
         else:
             # GET request handling
@@ -127,6 +132,7 @@ def adminUpdateProfile():
             return render_template("Admin/adminUpdateProfile.html", user=user)  # Render form with current user data prepopulated
     else:
         flash("User session not found")
+        log_this("User session not found when updating Profile", user_id=1)
         return redirect(url_for('login'))
 
 
@@ -161,6 +167,7 @@ def adminUpdatePassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
+                                log_this("Existing password exists when creating a password", user_id=1)
                                 return redirect(url_for('adminUpdatePassword'))
                             else:
                                 try:
@@ -223,6 +230,7 @@ def adminCreateTeacher():
         # checking for existing teacher username
         if existing_teacher_username:
             flash('User with the same username already exists. Please choose a different username.')
+            log_this("User with the same username is entered but already exists", user_id=1)
             return render_template('Admin/adminCreateTeacher.html')
 
         existing_teacher_email = "SELECT * FROM users WHERE email = %s"
@@ -255,9 +263,11 @@ def adminCreateTeacher():
             mycursor.execute(query, values)
             mydb.commit()
             flash('Teacher created successfully!', 'success')
+            log_this("Teacher account created successfully", user_id=1)
             return redirect(url_for('adminHome'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
+            log_this(f'An error occurred: {str(e)}', user_id=1)
             return render_template('Admin/adminCreateTeacher.html')
 
     return render_template('Admin/adminCreateTeacher.html')
@@ -275,6 +285,7 @@ def adminDeleteTeacher(id):
             delete_query = "DELETE FROM users WHERE id = %s"
             mycursor.execute(delete_query, (id,))
             mydb.commit()
+            log_this(f"Teacher Account with User ID {id} deleted", user_id=1)
 
             return redirect(url_for('adminHome'))
         else:
@@ -283,6 +294,7 @@ def adminDeleteTeacher(id):
     except Exception as e:
         print('Error: ', e)
         mydb.rollback()
+        log_this("Error occurred while deleting teacher",user_id=1)
         return "Error occurred while deleting teacher"
 
 
@@ -340,14 +352,17 @@ def adminTeacherUpdate(id):
                 mydb.commit()
 
                 flash('Teacher details updated successfully', 'success')
+                log_this("Teachers detail updated successfully", user_id=1)
                 return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
 
             else:
+                log_this("Teacher not found while updating account", user_id=1)
                 return "Teacher not found"
 
         except Exception as e:
             print("Error: ", e)
             mydb.rollback()
+            log_this("Error occurred while updating teacher", user_id=1)
             return "Error occurred while updating teacher"
 
     else:
@@ -364,6 +379,7 @@ def adminTeacherUpdate(id):
 
         except Exception as e:
             print('Error:', e)
+            log_this("Error occurred while fetching teacher details", user_id=1)
             return "Error occurred while fetching teacher details"
 
 
@@ -396,6 +412,7 @@ def adminCreateStudent():
         # checking for existing teacher email
         if existing_student_email:
             flash('User with the same email already exists. Please choose a different email.')
+            log_this("User with the same email already exists when creating student", user_id=1)
             return render_template('Admin/adminCreateStudent.html')
 
         try:
@@ -419,9 +436,11 @@ def adminCreateStudent():
             mycursor.execute(query, values)
             mydb.commit()
             flash('Student created successfully!', 'success')
+            log_this("Student created successfully",user_id=1)
             return redirect(url_for('adminHome'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
+            log_this("Error occurred", user_id=1)
             return render_template('Admin/adminCreateStudent.html')
 
     return render_template('Admin/adminCreateStudent.html')
@@ -476,14 +495,17 @@ def adminStudentUpdate(id):
                 mydb.commit()
 
                 flash('Student details updated successfully.', 'success')
+                log_this("Student details updated successfully", user_id=1)
                 return redirect(url_for('adminStudentUpdate', id=student_details[0]))
 
             else:
+                log_this("User not found when updating Student",user_id=1)
                 return "Student not found"
 
         except Exception as e:
             print("Error: ", e)
             mydb.rollback()
+            log_this("Error occurred while updating student",user_id=1)
             return "Error occurred while updating student"
 
     else:
@@ -500,6 +522,7 @@ def adminStudentUpdate(id):
 
         except Exception as e:
             print('Error:', e)
+            log_this("Error occurred while fetching student details",user_id=1)
             return "Error occurred while fetching student details"
 
 
@@ -517,11 +540,13 @@ def adminDeleteStudent(id):
 
             return redirect(url_for('adminHome'))
         else:
+            log_this("User not found when deleting account",id)
             return "Student not found"
 
     except Exception as e:
         print('Error: ', e)
         mydb.rollback()
+        log_this("Error occurred while deleting student", id)
         return "Error occurred while deleting student"
 
 
@@ -609,6 +634,7 @@ def adminstoreupdate():
 
     mydb.commit()
     mycursor.close()
+    log_this("Products in store updated", user_id=1)
     return redirect(url_for('adminstore'))
 
 
@@ -620,6 +646,7 @@ def adminstoredelete():
     mycursor.execute("DELETE FROM storeproducts WHERE id = %s", (product_id,))
     mydb.commit()
     mycursor.close()
+    log_this("Product deleted successfully", user_id=1)
     return redirect(url_for('adminstore'))
 
 

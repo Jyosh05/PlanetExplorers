@@ -232,6 +232,10 @@ def updateProfile():
                         (new_username, name, email, age, address, phone, username))
                     mydb.commit()
                     flash('User information updated successfully', 'success')
+                    global user_id
+                    if 'user' in session and 'id' in session['user']:
+                        user_id = session['user']['id']
+                    log_this("User information updated successfully",user_id)
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
                     return redirect(url_for('updateProfile'))
@@ -363,6 +367,7 @@ def updatePassword():
                                     mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
                                     mydb.commit()
                                     flash('Password updated successfully', 'success')
+                                    log_this("Password Updated Successfully", users[0])
                                     print('Password updated successfully')  # Debug statement
 
                                     # # Refresh session user data
@@ -408,6 +413,9 @@ def deleteAccount():
             mydb.commit()
             session.pop('user', None)
             flash('Your account has been deleted', 'success')
+            if 'user' in session and 'id' in session['user']:
+                user_id = session['user']['id']
+            log_this("User account has been deleted", user_id)
             return redirect(url_for('login'))
         else:
             flash('Account not found', 'error')
