@@ -212,11 +212,6 @@ def teacher_payment(username):
     return render_template('Teacher/teacher_payment.html', username=username)
 
 
-@app.route('/success')
-def success():
-    return "Registration successful!"
-
-
 # need to test virus total with malicious file
 @app.route('/updateProfile', methods=['GET', 'POST'])
 @roles_required('student')

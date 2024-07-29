@@ -441,36 +441,23 @@ def process_payment(card_name, card_number, exp_month, exp_year, cvv):
         # Validate input for harmful content
         input_validation(card_name, card_number, exp_month, exp_year, cvv)
 
-        # Debugging statements
-        print(f"Card Name: {card_name}")
-        print(f"Card Number: {card_number}")
-        print(f"Expiry Date: {exp_month}/{exp_year}")
-        print(f"CVV: {cvv}")
-
         # Validate card details
         card_name_valid = validate_card_name(card_name)
         card_number_valid = validate_card_number(card_number)
         expiry_date_valid = validate_expiry_date(exp_month, exp_year)
         cvv_valid = validate_cvc(cvv)
 
-        print(f"Card Name Valid: {card_name_valid}")
-        print(f"Card Number Valid: {card_number_valid}")
-        print(f"Expiry Date Valid: {expiry_date_valid}")
-        print(f"CVV Valid: {cvv_valid}")
-
         if card_name_valid and card_number_valid and expiry_date_valid and cvv_valid:
+            print("Teacher Added Successfully")
             return True
     except ValueError as e:
         print(f"Payment validation failed: {e}")
     return False
 
 
-
-# Validate Card Name
 def validate_card_name(name):
     return len(name) > 0
 
-# Validate Card Number
 def validate_card_number(number):
     number = number.replace(" ", "")  # Remove spaces
     number = number.replace("-", "")  # removes hyphen
@@ -489,7 +476,7 @@ def validate_expiry_date(month, year):
 
 # Validate CVV
 def validate_cvc(cvc):
-    return re.match(r"^\d{3,4}$", cvc) is not None
+    return re.match(r"^\d{3}$", cvc) is not None
 
 # Update User Role Function
 def update_user_role(username, role):
