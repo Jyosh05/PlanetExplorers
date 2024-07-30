@@ -71,6 +71,7 @@
                 <li class="nav-item"><a href="{{ url_for('view_cart') }}" class="nav-link"><i class="fa-solid fa-basket-shopping"></i> Cart</a></li>
 
                 {% if 'user' in session %}
+                {% if session['role'] == 'student' %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="profile-pic">
@@ -88,6 +89,8 @@
                     <a href="{{ url_for('login') }}" class="nav-link">Login</a>
                 </li>
                 {% endif %}
+                {% endif %}
+
             </ul>
         </div>
     </div>

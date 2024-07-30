@@ -94,6 +94,7 @@ def login():
                     log_this("login successful", user[0])
 
                     role = user[9]
+                    session['role'] = role
                     print(f"Logged in user role: {role}")
                     return redirect(url_for(role_redirects.get(role, 'home')))
                 else:
