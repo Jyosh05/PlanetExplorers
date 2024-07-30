@@ -20,6 +20,7 @@ def learnerHome():
     cursor = mydb.cursor(dictionary=True)
     cursor.execute("SELECT module_id, module_name FROM modules")
     modules = cursor.fetchall()
+    print("Modules:", modules)
     return render_template("User/studentHome.html", modules=modules)
 
 
@@ -188,15 +189,19 @@ def authorize():
     mycursor.execute("SELECT * FROM oauth WHERE googleid = %s",(user_info['id'],))
     user = mycursor.fetchone()
     print(user_info['id'])
+    role = 'student'
     if not user:
         mycursor.execute("""
-            INSERT INTO oauth(googleid, email, email_verified,name, profilePic)
-            VALUES(%s,%s,%s,%s,%s)
-        """,(str(user_info['id']), user_info['email'], user_info['verified_email'], user_info.get('name'), user_info.get('picture')))
+            INSERT INTO oauth(googleid, email, email_verified,name, profilePic,role)
+            VALUES(%s,%s,%s,%s,%s,%s)
+        """,(str(user_info['id']), user_info['email'], user_info['verified_email'], user_info.get('name'), user_info.get('picture'),role))
         mydb.commit()
     session['user'] = user_info
     session['login_method'] = 'google'
-    return render_template('User/studentHome.html', user='student')
+    session['user']['role'] = role
+    print(f"Session Data:{session}")
+
+    return redirect(url_for('learnerHome'))
 
 
 
@@ -331,9 +336,12 @@ def submit_answers(module_id):
                     total_explorer_points += explorer_points
                 else:
                     wrong_questions.append(question_id)  # Collect question_id for wrong answers
+        if session['login_method'] == 'login':
+            cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s", (total_explorer_points, user_id))
+            mydb.commit()
 
-        cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s", (total_explorer_points, user_id))
-        mydb.commit()
+        elif session['login_method'] == 'google':
+            cursor.execute("UPDATE oauth SET explorer_points = explorer_points + %s WHERE googleid = %s", (total_explorer_points, user_id))
 
         return jsonify({
             "redirect": url_for("show_results", module_id=module_id, wrong_questions=','.join(map(str, wrong_questions)))
