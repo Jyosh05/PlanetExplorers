@@ -399,7 +399,7 @@ def updatePassword():
         flash("User session not found")
         return redirect(url_for('login'))
 
-    return render_template("User/updatePassword.html")
+    return render_template("User/updatePasswordx.html")
 
 
 @app.route('/deleteAccount', methods=['POST'])

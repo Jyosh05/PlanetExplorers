@@ -304,9 +304,13 @@ def submit_answers(module_id):
     try:
         answers = request.get_json()
         user_id = session['user'].get('id')
+
+        if not user_id:
+            return jsonify({"error": "User not authenticated."}), 401
+
         cursor = mydb.cursor(dictionary=True)
 
-        cursor.execute("SELECT question_id, answer, explorer_points FROM questions WHERE module_id = %s", (module_id,))
+        cursor.execute("SELECT question_id, question, answer, explorer_points FROM questions WHERE module_id = %s", (module_id,))
         questions = cursor.fetchall()
 
         correct_answers = 0
@@ -315,15 +319,18 @@ def submit_answers(module_id):
 
         for question in questions:
             question_id = question['question_id']
+            question_text = question['question']
             correct_answer = question['answer']
             explorer_points = question['explorer_points']
 
-            user_answer = answers.get(f'question_{question_id}')
-            if user_answer == correct_answer:
-                correct_answers += 1
-                total_explorer_points += explorer_points
-            else:
-                wrong_questions.append(question_id)
+            for user_answer in answers.values():
+                print(user_answer)
+                print(correct_answer)
+                if user_answer == correct_answer:
+                    correct_answers += 1
+                    total_explorer_points += explorer_points
+                else:
+                    wrong_questions.append(question_id)  # Collect question_id for wrong answers
 
         cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s", (total_explorer_points, user_id))
         mydb.commit()
@@ -332,8 +339,15 @@ def submit_answers(module_id):
             "redirect": url_for("show_results", module_id=module_id, wrong_questions=','.join(map(str, wrong_questions)))
         }), 200
 
+    except KeyError as e:
+        return jsonify({"error": f"Missing data: {str(e)}"}), 400
+    except mysql.connector.Error as err:
+        mydb.rollback()
+        return jsonify({"error": "Database error: " + str(err)}), 500
     except Exception as e:
         return jsonify({"error": "An unexpected error has occurred: " + str(e)}), 500
+
+
 
 
 @app.route('/student/module/<int:module_id>/results', methods=['GET'])
