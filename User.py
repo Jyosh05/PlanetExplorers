@@ -17,7 +17,12 @@ def home():
 @app.route('/learnerHome')
 @roles_required('student')
 def learnerHome():
-    return render_template("User/studentHome.html")
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT module_id, module_name FROM modules")
+    modules = cursor.fetchall()
+    return render_template("User/studentHome.html", modules=modules)
+
+
 
 @app.route('/profile')
 def profile():
@@ -234,14 +239,11 @@ def create_module():
             module_name = data.get('module_name')
             questions = data.get('questions')
             user_id = session['user'].get('id')
-            print(user_id)
             timestamp = datetime.now()
-            print(timestamp)
 
             if not module_name or not questions or len(questions) < 1:
                 return jsonify({'error': "Module name and at least 1 question are required"}), 400
 
-            # Your validation function might raise exceptions, so handle them
             input_validation(module_name)
             for question in questions:
                 input_validation(
@@ -254,7 +256,7 @@ def create_module():
                 )
 
             cursor = mydb.cursor()
-            cursor.execute("INSERT INTO modules(module_name,teacher_id,created_at) VALUES (%s,%s,%s)", (module_name,user_id,timestamp))
+            cursor.execute("INSERT INTO modules(module_name,teacher_id,created_at) VALUES (%s,%s,%s)", (module_name, user_id, timestamp))
             module_id = cursor.lastrowid
 
             for question in questions:
@@ -267,16 +269,15 @@ def create_module():
                 explorer_points = question.get('explorerpoints')
 
                 if not question_text or not choice_a or not choice_b or not choice_c or not choice_d or not answer or explorer_points is None:
-                    return jsonify({ "error": "Each question must have a question text, four choices, a correct answer, and explorerpoints."}), 400
-                print(f"Inserting into questions with values: {module_id}, {question_text}, {choice_a}, {choice_b}, {choice_c}, {choice_d}, {answer}, {explorer_points}")
+                    return jsonify({"error": "Each question must have a question text, four choices, a correct answer, and explorerpoints."}), 400
 
                 cursor.execute(
                     "INSERT INTO questions(module_id,question,choice_a,choice_b,choice_c,choice_d,answer,explorer_points) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                     (module_id, question_text, choice_a, choice_b, choice_c, choice_d, answer, explorer_points)
                 )
-                mydb.commit()
+            mydb.commit()
 
-            return jsonify({"message": "Module created successfully!"}), 200
+            return jsonify({"redirect": url_for("teacherHome")}), 200
 
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
@@ -285,6 +286,76 @@ def create_module():
             return jsonify({"error": "Database error: " + str(err)}), 500
         except Exception as e:
             return jsonify({"error": "An unexpected error has occurred: " + str(e)}), 500
+
+
+
+@app.route('/student/module/<int:module_id>', methods=['GET'])
+@roles_required('student')
+def get_module_questions(module_id):
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT module_id, question, choice_a, choice_b, choice_c, choice_d FROM questions WHERE module_id = %s", (module_id,))
+    questions = cursor.fetchall()
+    return render_template('User/student_module_question.html', questions=questions, module_id=module_id)
+
+
+@app.route('/student/module/<int:module_id>/submit', methods=['POST'])
+@roles_required('student')
+def submit_answers(module_id):
+    try:
+        answers = request.get_json()
+        user_id = session['user'].get('id')
+        cursor = mydb.cursor(dictionary=True)
+
+        cursor.execute("SELECT question_id, answer, explorer_points FROM questions WHERE module_id = %s", (module_id,))
+        questions = cursor.fetchall()
+
+        correct_answers = 0
+        total_explorer_points = 0
+        wrong_questions = []
+
+        for question in questions:
+            question_id = question['question_id']
+            correct_answer = question['answer']
+            explorer_points = question['explorer_points']
+
+            user_answer = answers.get(f'question_{question_id}')
+            if user_answer == correct_answer:
+                correct_answers += 1
+                total_explorer_points += explorer_points
+            else:
+                wrong_questions.append(question_id)
+
+        cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s", (total_explorer_points, user_id))
+        mydb.commit()
+
+        return jsonify({
+            "redirect": url_for("show_results", module_id=module_id, wrong_questions=','.join(map(str, wrong_questions)))
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": "An unexpected error has occurred: " + str(e)}), 500
+
+
+@app.route('/student/module/<int:module_id>/results', methods=['GET'])
+@roles_required('student')
+def show_results(module_id):
+    wrong_questions = request.args.get('wrong_questions', '')
+
+    if wrong_questions:
+        wrong_questions = list(map(int, wrong_questions.split(',')))  # Convert to list
+
+    cursor = mydb.cursor(dictionary=True)
+    if wrong_questions:
+        # Use 'question_id' if that is the correct column name in your schema
+        cursor.execute("SELECT question, answer FROM questions WHERE question_id IN (%s)" % ','.join(
+            ['%s'] * len(wrong_questions)), tuple(wrong_questions))
+    else:
+        # No wrong questions, return empty
+        cursor.execute("SELECT question, answer FROM questions WHERE module_id = %s AND 1=0", (module_id,))
+
+    wrong_questions_details = cursor.fetchall()
+
+    return render_template('User/student_results.html', wrong_questions=wrong_questions_details)
 
 
 @app.route('/teacherProfile')

@@ -7,5 +7,10 @@
 <body>
     {% include 'navbar.html' %}
     <h1>Welcome Student!</h1>
+    {% for module in modules %}
+    <div class="module-box" onclick="location.href='/student/module/{{ module.module_id }}'">
+        <h3>{{ module.module_name }}</h3>
+    </div>
+    {% endfor %}
 </body>
 </html>

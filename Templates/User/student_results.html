@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Results</title>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <h1>Your Results</h1>
+    <h2>Wrong Questions</h2>
+    <ul>
+        {% for question in wrong_questions %}
+        <li>
+            <p>{{ question.question }}</p>
+            <p>Correct Answer: {{ question.answer }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

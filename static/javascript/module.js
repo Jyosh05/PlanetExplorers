@@ -53,7 +53,7 @@ document.getElementById('create-module-form').addEventListener('submit', async f
 
     try {
         const response = await fetch('/teacher/create_module', {
-            method: 'POST',
+            method: 'POST', // Ensure the method is POST
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -61,7 +61,9 @@ document.getElementById('create-module-form').addEventListener('submit', async f
         });
 
         if (response.ok) {
+            const result = await response.json();
             alert('Module and questions added successfully!');
+            window.location.href = result.redirect; // Use the redirect URL from the response
         } else {
             const error = await response.json();
             alert(`Error: ${error.error}`);
@@ -70,3 +72,4 @@ document.getElementById('create-module-form').addEventListener('submit', async f
         alert(`Error: ${error.message}`);
     }
 });
+
