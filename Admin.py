@@ -94,10 +94,12 @@ def adminUpdateProfile():
                                         flash('The file is malicious and has not been saved.', 'error')
                                         os.remove(filepath)  # Remove the file if it is malicious
                                         log_this("Malicious file that has not been saved while updating profile", user_id=1)
+                                        session['user']['profile_picture'] = 'default_pp.png'
                                         return redirect(url_for('adminUpdateProfile'))
                                     else:
                                         image_path = f"img/{filename}"
                                         try:
+                                            session['user']['profile_picture'] = filename
                                             mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
                                                              (image_path, username))
                                             mydb.commit()
@@ -264,7 +266,7 @@ def adminCreateTeacher():
             mydb.commit()
             flash('Teacher created successfully!', 'success')
             log_this("Teacher account created successfully", user_id=1)
-            return redirect(url_for('adminHome'))
+            return redirect(url_for('blogs'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
             log_this(f'An error occurred: {str(e)}', user_id=1)
@@ -287,7 +289,7 @@ def adminDeleteTeacher(id):
             mydb.commit()
             log_this(f"Teacher Account with User ID {id} deleted", user_id=1)
 
-            return redirect(url_for('adminHome'))
+            return redirect(url_for('blogs'))
         else:
             return "Teacher not found"
 
@@ -307,7 +309,7 @@ def adminTeachersRetrieve():
     mycursor.execute(select_query, ('teacher', 'admin',))
     rows = mycursor.fetchall()
     count = len(rows)
-    return render_template('Admin/adminTeacherTable.html', nameOfPage='Staff Management System', teachers=rows, count=count, admin_id=admin_id)
+    return render_template('Admin/adminTeacherTable.html', teachers=rows, count=count, admin_id=admin_id)
 
 
 @app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
@@ -437,7 +439,7 @@ def adminCreateStudent():
             mydb.commit()
             flash('Student created successfully!', 'success')
             log_this("Student created successfully",user_id=1)
-            return redirect(url_for('adminHome'))
+            return redirect(url_for('blogs'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
             log_this("Error occurred", user_id=1)
@@ -538,7 +540,7 @@ def adminDeleteStudent(id):
             mycursor.execute(delete_query, (id,))
             mydb.commit()
 
-            return redirect(url_for('adminHome'))
+            return redirect(url_for('blogs'))
         else:
             log_this("User not found when deleting account",id)
             return "Student not found"

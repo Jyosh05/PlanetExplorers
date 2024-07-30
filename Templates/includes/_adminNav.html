@@ -1,89 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: "Lato", sans-serif;
+}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/adminNav.css') }}">
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #91BBA4;
+  overflow: hidden; /* Hide the scrollbar and disable scrolling */
+  transition: 0.5s;
+  display: flex;
+  flex-direction: column;
+  padding-top: 60px; /* Space for the logo */
+  /* Optionally, add the following properties to ensure no overflow: */
+  box-sizing: border-box;
+}
 
 
-<nav style="display: flex;">
-    <a href="adminHome" style="text-decoration: none;">
-    <div class="welcome" style="background: #0D2818; color: #fff; display: flex; width: 280px; align-items: center;">
-        <img src="/static/img/Logo.png" style="width: 90px; height: 80px;">
-        <p class="fw-normal">PlanetExplorers</p>
-    </div>
-        </a>
-    <div class="pageName">
-    <h1>{{ nameOfPage }}</h1>
-        </div>
-</nav>
+.sidenav a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 20px;
+  color: #000;
+  display: block;
+  transition: 0.3s;
+}
+
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+#main {
+  transition: margin-left 0.5s;
+  padding: 16px;
+  color: #1F2E25;
+
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+
+#logo {
+  display: flex;
+  align-items: center;
+  background-color: #1F2E25;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: -70px;
+}
+
+#logo img {
+  width: 90px;
+  height: 76px;
+}
+
+#logo p {
+  margin: 0;
+  padding-left: 10px;
+  color: white;
+
+}
+
+.sidenav-content {
+  flex-grow: 1;
+  padding-top: 20px; /* Space between logo and links */
+}
+
+#logout {
+  background-color: #FF5858;
+  padding: 10px 0;
+  height: 45px;
+  display: flex; /* Use flexbox for alignment */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+}
+
+#logout a {
+  color: white;
+  text-decoration: none;
+  font-size: 20px;
+  text-align: center;
+  margin-left: -30px;
+  font-weight: bold; /* Make the text bold */
+
+}
+
+.user-details {
+  display: flex;
+  align-items: center; /* Align items vertically center */
+  margin-left: 20px;
+}
+
+.user-details img {
+  border-radius: 50%; /* Optional: makes the profile picture round */
+  margin-right: 10px; /* Space between the image and the text */
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column; /* Stack username above role */
+}
+
+.username {
+  font-weight: bold; /* Optional: make username bold */
+  margin: 0; /* Remove default margin */
+}
+
+.role {
+  margin: 0; /* Remove default margin */
+}
+
+.my-line{
+  width: 230px;
+  background-color: #1F2E25;
+  border: none; /* Remove the default border */
+  margin: 20px auto; /* Center the line and add vertical spacing */
+
+}
 
 
 
-<div class="d-flex flex-column flex-shrink-0 p-3 bg-body-tertiary" style="width: 280px;">
-    <div class="welcome-text" style="display: flex;">
-                {% if 'user' in session %}
-          <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture" style="width: 60px; height: 60px;">
-                <div class="user-info" style="flex-direction: column; padding-left: 20px;">
-        <p>{{ session['user']['username'] }}</p>
+</style>
+</head>
+<body>
 
-                <p>{{ session['user']['role'] }}</p>
-                    </div>
-
-                {% endif %}
-            </div>
-    <hr>
-    <ul class="nav nav-pills flex-column mb-auto">
-      <li class="nav-item">
-        <a href="#" class="nav-link link-body-emphasis" aria-current="page">
-          <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#home"></use></svg>
-          Daily Challenge
-        </a>
-      </li>
-      <li>
-        <a href="/adminstore" class="nav-link link-body-emphasis">
-          <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#speedometer2"></use></svg>
-          Products
-        </a>
-      </li>
-      <li>
-        <a href="/adminProfile" class="nav-link link-body-emphasis">
-          <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#table"></use></svg>
-          My Account
-        </a>
-      </li>
-      <li>
-        <a href="/adminTeacherTable" class="nav-link link-body-emphasis">
-          <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#grid"></use></svg>
-          Teachers
-        </a>
-      </li>
-      <li>
-        <a href="/adminStudentTable" class="nav-link link-body-emphasis">
-          <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#people-circle"></use></svg>
-          Students
-        </a>
-      </li>
-
-        <li>
-        <a href="/blogs" class="nav-link link-body-emphasis">
-          <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#people-circle"></use></svg>
-          Logs
-        </a>
-      </li>
-    </ul>
-<!--    <hr>-->
-<!--    <div class="dropdown">-->
-<!--      <a href="#" class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">-->
-<!--        <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2">-->
-<!--        <strong>mdo</strong>-->
-<!--      </a>-->
-<!--      <ul class="dropdown-menu text-small shadow">-->
-<!--        <li><a class="dropdown-item" href="#">New project...</a></li>-->
-<!--        <li><a class="dropdown-item" href="#">Settings</a></li>-->
-<!--        <li><a class="dropdown-item" href="#">Profile</a></li>-->
-<!--        <li><hr class="dropdown-divider"></li>-->
-<!--        <li><a class="dropdown-item" href="#">Sign out</a></li>-->
-<!--      </ul>-->
-<!--    </div>-->
-<!--    <div class="logOutButton" style="position: absolute; left: 0; bottom: 0;">-->
-<!--    <button type="button" class="btn btn-danger btn btn-primary btn-lg btn-block">Log Out</button>-->
-
-<!--        </div>-->
+<div id="mySidenav" class="sidenav">
+  <div id="logo">
+    <img src="static/img/logo.png" alt="Logo">
+    <p>PlanetExplorers</p>
   </div>
+  <div class="sidenav-content">
+    {% if 'user' in session %}
+      <div class="user-details">
+        <img src="{{ url_for('static', filename='img/' ~ (session['user'].get('profile_picture') or 'default_pp.png')) }}" alt="Profile Picture" style="width: 60px; height: 60px;">
+        <div class="user-info">
+          <p class="username">{{ session['user']['username'] }}</p>
+          <p class="role">{{ session['user']['role'] }}</p>
+        </div>
+      </div>
+    {% endif %}
+
+    <hr class="my-line">
+
+    <a href="#">Modules</a>
+    <a href="/adminstore">Products</a>
+    <a href="/adminProfile">My Account</a>
+    <a href="/adminTeacherTable">Teachers</a>
+    <a href="/adminStudentTable">Students</a>
+    <a href="/blogs">Logs</a>
+  </div>
+  <div id="logout">
+    <a href="/logout">Logout</a>
+  </div>
+</div>
+
+<div id="main">
+  <span style="font-size:30px;cursor:pointer" onclick="toggleNav()">&#9776;</span>
+</div>
+
+<script>
+function toggleNav() {
+  var sidenav = document.getElementById("mySidenav");
+  var main = document.getElementById("main");
+
+  if (sidenav.style.width === "250px") {
+    sidenav.style.width = "0";
+    main.style.marginLeft = "0";
+  } else {
+    sidenav.style.width = "250px";
+    main.style.marginLeft = "250px";
+  }
+}
+</script>
+
+</body>
+</html>

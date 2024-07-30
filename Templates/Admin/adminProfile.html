@@ -1,35 +1,37 @@
-{% extends 'adminBase.html' %}
-
-{% block title %} Profile {% endblock %}
-
-{% block head %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My profile</title>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link rel="stylesheet" type="text/css" href="../../static/css/adminProfile.css">
 
-{% endblock %}
+</head>
+<body>
+    {% include 'includes/_adminNav.html' %}
 
-{% block content %}
+
 <div class="container">
 
         {% if 'user' in session %}
+        <h1 class="heading">Profile</h1>
 
     <div class="profile-container">
         <div class="profile-pic-div">
-        <div class="profile-picture">
-
-            {% set profile_pic = user[8] %}
+            <div class="profile-picture">
                 {% if user[8] %}
-                <img src="{{ url_for('static', filename=user[8]) }}" class="profile-img">
+                    <img src="{{ url_for('static', filename=user[8]) }}" class="profile-img">
                 {% else %}
-                <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture"
-                     style="max-width: 200px; max-height: 200px;">
+                    <img src="{{ url_for('static', filename='img/default_pp.png') }}" class="profile-img"
+                    style="max-width: 200px; max-height: 200px;">
                 {% endif %}
+            </div>
+        </div>
 
-            </div>
-            </div>
 
         <div class="profile-card">
                 <h4>Username: {{ user[1] }}</h4>
@@ -50,14 +52,17 @@
                 {% endif %}
 
             <br>
+            <div class="buttons">
                     <!-- Update Profile Button -->
                     <a href="{{ url_for('adminUpdateProfile') }}" class="btn btn-primary">Update Profile</a>
 
             <br>
+
             <a href="{{ url_for('adminUpdatePassword') }}" class="btn btn-primary">Change Password</a>
+                </div>
+
         </div>
               </div>
-            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
 
     {% endif %}
 
@@ -65,4 +70,5 @@
 
 
 
-{% endblock %}
+</body>
+</html>

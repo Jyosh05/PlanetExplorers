@@ -80,7 +80,7 @@ UPLOAD_FOLDER = 'static/img'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 role_redirects = {
-    'admin': 'adminHome',
+    'admin': 'blogs',
     'teacher': 'teacherHome',
     'student': 'learnerHome'
 }
