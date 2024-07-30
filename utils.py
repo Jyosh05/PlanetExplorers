@@ -4,7 +4,7 @@ import mysql.connector
 
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api,CLIENTID,CLIENTSECRET
+from Configuration import DB_Config, secret_key, abuse_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api, CLIENTID, CLIENTSECRET
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -58,8 +58,18 @@ app.config['SESSION_PERMANENT'] = False  # browser closed? NO MORE SESSION!
 app.config['SESSION_USE_SIGNER'] = True  # digitally signing the cookie sessions. no tampering by clients
 Session(app)
 
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["500 per day", "100 per hour"]
+)
+
+
+app.config['ABUSE_IPDB_API_KEY'] = abuse_key
 app.config['GOOGLE_CLIENT_ID'] = CLIENTID
 app.config['GOOGLE_CLIENT_SECRET'] = CLIENTSECRET
+
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -327,18 +337,6 @@ questions = mycursor.fetchall()
 print(questions)
 
 
-def regenerate_session():  # regenerate session. update session data, ensure security after login or logout.
-    session.modified = True
-
-
-# Rate limiter to limit rates
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["500 per day", "100 per hour"]
-)
-
-
 def input_validation(*input_strings):
     # Patterns for detecting harmful content
     sql_injection_patterns = [
@@ -547,6 +545,32 @@ def delete_info(username, password):
     except ValueError as e:
         print(f"Error: {str(e)}")
 
+
+
+def regenerate_session():
+    session.modified = True
+
+
+def is_ip_blacklisted(ip_address, api_key):
+    url = 'https://api.abuseipdb.com/api/v2/check'
+    headers = {
+        'Key': api_key,
+        'Accept': 'application/json'
+    }
+    params = {
+        'ipAddress': ip_address,
+        'maxAgeInDays': 90  # Adjust as needed
+    }
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()  # Raises HTTPError for bad responses
+        data = response.json()
+        # Check if the abuse confidence score is greater than 0
+        return data['data']['abuseConfidenceScore'] > 0
+    except requests.RequestException as e:
+        # Log or handle the error appropriately
+        print(f"Error checking IP: {e}")
+        return False
 
 def get_info():
     pass
