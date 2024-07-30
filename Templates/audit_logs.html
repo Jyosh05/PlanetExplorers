@@ -99,9 +99,10 @@
             <label for="action">Action:</label>
             <select id="action">
                 <option value="all">All</option>
-                <option value="login_successful">login successful</option>
-                <option value="login_unsuccessful">login unsuccessful</option>
+                <option value="login successful">login successful</option>
+                <option value="login unsuccessful">login unsuccessful</option>
                 <option value="Invalid username or password">Invalid username or password</option>
+                <option value="User logged out successfully">User logged out successfully</option>
                 <!-- Additional options can be added here -->
             </select>
         </div>
@@ -121,7 +122,7 @@
         </div>
     </div>
     <div class="message error" id="noResultsMessage">No action happened on this date.</div>
-    <div class="message error" id="invalidUserMessage">User ID must be a number.</div>
+    <div class="message error" id="invalidUserMessage">User ID must be a number. Only word 'unknown' is allowed</div>
     <div class="message error" id="userNotFoundMessage">This user ID does not exist.</div>
     <div class="container mt-3">
         <table class="table table-hover" id="logTable">
@@ -169,7 +170,7 @@
 function applyFilters() {
     const actionFilter = document.getElementById('action').value.trim().toLowerCase();
     const dateFilter = document.getElementById('date').value;
-    const userFilter = document.getElementById('users').value.trim();
+    const userFilter = document.getElementById('users').value.trim().toLowerCase();
     const dateInput = document.getElementById('date');
     const minDate = new Date(dateInput.min);
     const maxDate = new Date(dateInput.max);
@@ -188,7 +189,7 @@ function applyFilters() {
         return;
     }
 
-    if (userFilter && isNaN(userFilter)) {
+    if (userFilter && userFilter !== 'unknown' && isNaN(userFilter)) {
         invalidUserMessage.style.display = 'block';
         return;
     }
@@ -200,8 +201,8 @@ function applyFilters() {
     rows.forEach(row => {
         const cells = row.getElementsByTagName('td');
         const actionText = cells[1] ? (cells[1].textContent || cells[1].innerText).trim().toLowerCase() : '';
-        const dateText = cells[2] ? (cells[2].textContent || cells[2].innerText) : '';
-        const userText = cells[3] ? (cells[3].textContent || cells[3].innerText).trim() : '';
+        const dateText = cells[2] ? (cells[2].textContent || cells[2].innerText).split(' ')[0] : '';
+        const userText = cells[3] ? (cells[3].textContent || cells[3].innerText).trim().toLowerCase() : '';
 
         let display = true;
 
@@ -209,7 +210,7 @@ function applyFilters() {
             display = false;
         }
 
-        if (dateFilter && !dateText.startsWith(dateFilter)) {
+        if (dateFilter && dateText !== dateFilter) {
             display = false;
         }
 
@@ -228,14 +229,15 @@ function applyFilters() {
         row.style.display = display ? '' : 'none';
     });
 
-    if (!hasResults && dateFilter) {
+    if (!hasResults) {
         noResultsMessage.style.display = 'block';
     }
 
-    if (userFilter && !userExists) {
+    if (userFilter && userFilter !== 'unknown' && !userExists) {
         userNotFoundMessage.style.display = 'block';
     }
 }
+
 
 function resetFilters() {
     const actionSelect = document.getElementById('action');
