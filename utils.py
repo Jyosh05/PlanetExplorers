@@ -131,7 +131,9 @@ for a in tableCheck:
                 email VARCHAR(255) NOT NULL,
                 email_verified BOOLEAN, 
                 name VARCHAR(255),
-                profilePic VARCHAR(600) NULL
+                profilePic VARCHAR(600) NULL,
+                role ENUM('student','teacher','admin') NOT NULL,
+                explorer_points INT
             )
         """)
 
