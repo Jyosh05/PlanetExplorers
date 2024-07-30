@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, session, flash, j
 from werkzeug.utils import secure_filename
 
 # Configuration is a file containing sensitive information
-from Configuration import RECAPTCHA_SITE_KEY
+from Configuration import RECAPTCHA_SITE_KEY, abuse_key
 import bcrypt
 import urllib.parse
 import os
@@ -19,6 +19,12 @@ from Admin import *
 
 @app.before_request
 def before_request():
+    # Check IP Blacklisting
+    user_ip = request.remote_addr
+    if is_ip_blacklisted(user_ip, abuse_key):
+        abort(403)  # Forbidden access
+
+    # Ensure session is modified if user is logged in
     if 'user' in session:
         session.modified = True
 
