@@ -421,7 +421,7 @@ def deleteAccount():
             flash('Your account has been deleted', 'success')
             if 'user' in session and 'id' in session['user']:
                 user_id = session['user']['id']
-            log_this("User account has been deleted", user_id)
+                log_this("User account has been deleted", user_id)
             return redirect(url_for('login'))
         else:
             flash('Account not found', 'error')

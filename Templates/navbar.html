@@ -71,25 +71,30 @@
                 <li class="nav-item"><a href="{{ url_for('view_cart') }}" class="nav-link"><i class="fa-solid fa-basket-shopping"></i> Cart</a></li>
 
                 {% if 'user' in session %}
-                {% if session['role'] == 'student' %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <div class="profile-pic">
-                            <img src="{{ session['profile_pic_url'] }}" alt="Profile Picture">
-                        </div>
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-sliders-h fa-fw"></i> Account</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt fa-fw"></i> Log Out</a></li>
-                    </ul>
-                </li>
+                        {% if 'role' in session and session['role'] == 'student' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="profile-pic">
+                                <img src="{{ session['profile_pic_url'] }}" alt="Profile Picture">
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-sliders-h fa-fw"></i> Account</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt fa-fw"></i> Log Out</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+                    </li>
+                    {% endif %}
                 {% else %}
                 <li class="nav-item">
                     <a href="{{ url_for('login') }}" class="nav-link">Login</a>
                 </li>
                 {% endif %}
-                {% endif %}
+
 
             </ul>
         </div>
