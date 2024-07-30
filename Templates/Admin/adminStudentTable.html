@@ -1,86 +1,108 @@
-{% extends 'adminBase.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students Management System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../static/css/adminStudentTable.css">
+</head>
+<body>
+    {% include 'includes/_adminNav.html' %}
 
-{% block title %} Student Users {% endblock %}
+    <h1 class="heading">Student Management System</h1>
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/adminStudentTable.css') }}">
+    <div class="container-fluid">
+        <div class="count mb-3" style="font-weight: bolder; margin-top: 50px;">
+            {% if count == 0 %}
+            <p>There are no students.</p>
+            {% elif count == 1 %}
+            <p>There is 1 student.</p>
+            {% else %}
+            <p>There are {{ count }} students.</p>
+            {% endif %}
+        </div>
 
-<h1>Students Management System</h1>
+        <a href="/adminCreateStudent" class="btn btn-primary mb-3">Create Student</a>
 
-<div class="count" style="font-weight: bolder;">
-  {% if count == 0 %}
-  <p>There are no students.</p>
-  {% elif count == 1 %}
-  <p>There is 1 student.</p>
-  {% else %}
-  <p>There are {{ count }} students.</p>
-  {% endif %}
-</div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-<a href="/adminCreateStudent" class="btn btn-primary">Create Student</a>
+        <div class="table-responsive">
+            <table class="table table-striped w-100">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Account Status</th>
+                        <th>Actions</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student[0] }}</td>
+                        <td>{{ student[1] }}</td>
+                        <td>{{ student[4] }}</td>
+                        <td>{{ student[3] }}</td>
+                        <td>{{ student[9] }}</td>
+                        <td>{{ 'Locked' if student[10] else 'Not locked' }}</td>
+                        <td>
+                            <a href="{{ url_for('adminStudentUpdate', id=student[0]) }}" class="btn btn-warning btn-sm">Update</a>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#myModal_{{ student[0] }}">
+                                Delete
+                            </button>
 
-<table class="table table-striped">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-          <th>Name</th>
-        <th>Email</th>
-          <th>Role</th>
-          <th>Actions</th>
-          <th>Account Status</th>
-
-
-      </tr>
-    </thead>
-   <tbody>
-    {% for student in students %}
-        <tr>
-            <td>{{ student[0] }}</td>
-            <td>{{ student[1] }}</td>
-            <td>{{ student[4] }}</td>
-            <td>{{ student[3] }}</td>
-            <td>{{ student[9] }}</td>
-            <td><a href="{{ url_for('adminStudentUpdate', id=student[0]) }}" class="btn btn-warning">Update</a></td>
-<td>
-            <form action="{{url_for('adminDeleteStudent', id=student[0]) }}" method="POST">
-
-                <!-- Button to Open the Modal -->
-<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#myModal_{{ student[0] }}">
-  Delete
-</button>
-
-<!-- The Modal -->
-<div class="modal" id="myModal_{{ student[0] }}">
-  <div class="modal-dialog">
-    <div class="modal-content">
-
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <h4 class="modal-title">Delete Confirmation</h4>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <!-- Modal body -->
-      <div class="modal-body">
-        Are you sure you want to delete {{ student[1] }}?
-      </div>
-
-      <!-- Modal footer -->
-      <div class="modal-footer">
-        <input type="submit" value="Delete" class="btn btn-danger">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-      </div>
-
+                            <!-- Modal -->
+                            <div class="modal fade" id="myModal_{{ student[0] }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <!-- Modal Header -->
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Delete Confirmation</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <!-- Modal Body -->
+                                        <div class="modal-body">
+                                            Are you sure you want to delete {{ student[1] }}?
+                                        </div>
+                                        <!-- Modal Footer -->
+                                        <div class="modal-footer">
+                                            <form action="{{ url_for('adminDeleteStudent', id=student[0]) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
-</div>
-          </form>
-            </td>
-
-            <td>{{ 'Locked' if student[10] else 'Not locked' }}</td>
-   {% endfor %}
-            </tbody>
-        </table>
-
-{% endblock %}
+</body>
+</html>

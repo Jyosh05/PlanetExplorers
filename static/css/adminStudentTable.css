@@ -1,12 +1,31 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Khula', sans-serif;
-  }
 
-.user-manage {
-            background-color: #093E1F;
-            color: #fff;
-            text-align: center;
-        }
+
+
+.heading{
+    text-align: center;
+    background-color: #324F3E;
+    color: #fff;
+    margin-top: -80px;
+    height: 30px;
+    font-size: 28px;
+
+}
+
+
+
+.container-fluid {
+            margin-top: 20px; /* Add some margin to the container */
+}
+
+.table th,
+.table td {
+    vertical-align: middle;
+
+}
+
+.modal-header,
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

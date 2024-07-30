@@ -1,46 +1,105 @@
-{% extends 'adminBase.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Teacher</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        .heading{
+            text-align: center;
+            background-color: #324F3E;
+            color: #fff;
+            margin-top: -80px;
+            height: 30px;
+            font-size: 28px;
 
-{% block title %} Update Teacher {% endblock %}
+        }
+        .form-container h2 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/_adminNav.html' %}
 
-{% block content %}
-<form method="POST" action="">
-    <input type="hidden" id="id" name="id" value="{{ teacher_details[0] }}">
-    <div class="form-inputs">
-        {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
-        {% if teacher_details %}
-        <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" class="form-control" id="username" name="username" value="{{ teacher_details[1] }}" required>
+    <h1 class="heading">Staff Management System</h1>
+
+    <h2 style="text-align: left; font-weight: bolder; margin-top: 30px; margin-left: 115px;">Update Staff Details</h2>
+
+    <div class="container">
+        <div class="form-container">
+        <form method="POST" action="">
+
+            <input type="hidden" id="id" name="id" value="{{ teacher_details[0] }}">
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% if teacher_details %}
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="username">Username:</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ teacher_details[1] }}" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="password">Password:</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="email">Email:</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ teacher_details[2] }}" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="role">Role:</label>
+                        <input type="text" class="form-control" id="role" name="role" value="{{ teacher_details[3] }}" required>
+                    </div>
+                </div>
+
+                {% if admin_id != teacher_details[0] %}
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="lock_account">Lock Account:</label>
+                        <input type="checkbox" id="lock_account" name="lock_account">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="unlock_account">Unlock Account:</label>
+                        <input type="checkbox" id="unlock_account" name="unlock_account">
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-danger">You cannot lock or unlock your own account</p>
+                {% endif %}
+
+                <div class="form-row">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <a href="/adminTeacherTable" class="btn btn-danger">Cancel</a>
+                    </div>
+                </div>
+
+                {% endif %}
+                </form>
+
         </div>
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
-        </div>
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ teacher_details[2] }}" required>
-        </div>
-        <div class="form-group">
-            <label for="role">Role:</label>
-            <input type="text" class="form-control" id="role" name="role" value="{{ teacher_details[3] }}" required>
-        </div>
-
-        {% if admin_id == teacher_details[0] %}
-        <p>You cannot lock or unlock your own account</p>
-
-        {% else %}
-
-        <label for="lock_account">Lock Account:</label>
-        <input type="checkbox" id="lock_account" name="lock_account">
-
-        <label for="unlock_account">Unlock Account:</label>
-        <input type="checkbox" id="unlock_account" name="unlock_account"><br>
-        {% endif %}
-
-        <button type="submit" class="btn btn-primary">Update</button>
-        {% endif %}
     </div>
-</form>
-{% endblock %}
+
+
+</body>
+</html>

@@ -241,7 +241,7 @@ def adminCreateTeacher():
 
         # checking for existing teacher email
         if existing_teacher_email_check:
-            flash('User with the same email already exists. Please choose a different email.')
+            flash('User with the same email already exists. Please choose a different email.', 'danger')
             return render_template('Admin/adminCreateTeacher.html')
 
         try:
