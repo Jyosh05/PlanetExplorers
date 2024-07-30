@@ -7,11 +7,21 @@
 </head>
 <body>
     <img src="../static/img/logo.png" width="151" height="113">
+
     <form id="registrationForm" method="POST" action="">
         <div id="part1">
             <label for="username">Username:</label>
             <br>
             <input type="text" id="username" name="username" required><br>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} color">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
             <label for="password">Password:</label>
             <br>
             <input type="password" id="password" name="password" oninput="checkPasswordStrength()" required><br>

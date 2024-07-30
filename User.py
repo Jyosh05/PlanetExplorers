@@ -350,6 +350,8 @@ def submit_answers(module_id):
 
 
 
+
+
 @app.route('/student/module/<int:module_id>/results', methods=['GET'])
 @roles_required('student')
 def show_results(module_id):

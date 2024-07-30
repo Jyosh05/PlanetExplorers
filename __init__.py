@@ -110,7 +110,7 @@ def register():
         password = request.form.get('password')
         email = request.form.get('email')
         if check_existing_credentials(username, email):
-            print("Username or email already in use")
+            flash("Username or email already in use",'danger')
             return redirect(url_for('register'))
 
         name = request.form.get('name')
