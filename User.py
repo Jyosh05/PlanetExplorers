@@ -83,7 +83,9 @@ def login():
                 if lockout_time and datetime.now() < lockout_time:
                     remaining_time = (lockout_time - datetime.now()).seconds // 60
                     flash(f'Your account is locked. Please try again later in {remaining_time} minutes or contact admin.', 'danger')
-                    log_this("Account locked")
+                    if 'user' in session and 'id' in session['user']:
+                        user_id = session['user']['id']
+                        log_this("Account locked")
                     return redirect(url_for('login'))
 
                 if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
@@ -94,6 +96,7 @@ def login():
                         (user[0],))
                     mydb.commit()
                     regenerate_session()
+
                     log_this("login successful")
 
                     role = user[9]
@@ -652,11 +655,9 @@ def user_orders():
 
 @app.route('/logout')
 def logout():
-
-    print(session)
-
     session.pop('user',None)
     print("Logged out successfully")
     print(session)
+
     log_this("User logged out successfully")
     return redirect(url_for('login'))

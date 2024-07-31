@@ -355,6 +355,7 @@ def input_validation(*input_strings):
     for input_string in input_strings:
         if combined_regex.search(input_string):
             raise ValueError("Invalid input: Harmful input detected")
+
         # Log harmless input
         log_this("Input validated: No harmful content detected")
 
@@ -649,9 +650,9 @@ def roles_required(*roles):
 
 user_id="unknown"
 def log_this(event):
+    global user_id
     # We do a select max to get the last log_id in the table
     # the fetchone returns the field in a tuple format
-    global user_id
     if 'user' in session and 'id' in session['user']:
         user_id = session['user']['id']
     mycursor.execute("SELECT MAX(log_id) FROM audit_logs")

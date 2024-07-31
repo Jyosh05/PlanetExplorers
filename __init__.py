@@ -389,6 +389,7 @@ def updatePassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
+                                log_this("Existing password exists when creating a password")
                                 return redirect(url_for('updatePassword'))
                             else:
                                 try:
@@ -418,6 +419,7 @@ def updatePassword():
                             return redirect(url_for('updatePassword'))
                     else:
                         flash('Passwords do not match.', 'danger')
+                        log_this("Password does not match when making new password")
                         return redirect(url_for('updatePassword'))
                 else:
                     flash('Please provide both password fields.', 'danger')
@@ -443,9 +445,8 @@ def deleteAccount():
             mydb.commit()
             session.pop('user', None)
             flash('Your account has been deleted', 'success')
-            if 'user' in session and 'id' in session['user']:
-                user_id = session['user']['id']
-                log_this("User account has been deleted", user_id)
+
+            log_this("User account has been deleted")
             return redirect(url_for('login'))
         else:
             flash('Account not found', 'error')
@@ -465,6 +466,7 @@ def teacherHome():
         user = userSession(username)
         if user:
             print(f'user {username} is logged in')
+            log_this("login successful")
             return render_template("Teacher/teacherHome.html", user=user)
         else:
             flash("User not found in database")
