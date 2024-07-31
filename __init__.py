@@ -363,9 +363,6 @@ def updatePassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
-                                global user_id, actual_user_id
-                                if 'user' in session and 'id' in session['user']:
-                                    user_id = session['user']['id']
                                 log_this("Existing password exists when creating a password")
                                 return redirect(url_for('updatePassword'))
                             else:
