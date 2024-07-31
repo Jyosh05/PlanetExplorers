@@ -28,8 +28,8 @@
                     {% for item in cart_items %}
                         <li class="list-group-item">
                             <strong>{{ item[0] }}</strong><br>
-                            Explorer Points: {{ item[2] }}<br>
-                            Quantity: {{ item[3] }}<br>
+                            Explorer Points: {{ item[1] }}<br>
+                            Quantity: {{ item[2] }}<br>
                             Item Points Subtotal: {{ item[1] * item[2] }}
                         </li>
                     {% endfor %}
@@ -39,18 +39,20 @@
             <div class="form-group">
                 <label for="shippingOption">Shipping Option:</label>
                 <select class="form-control" id="shippingOption" name="shippingOption" required>
-                    <option value="free_collection">Free Collection</option>
-                    <option value="home_delivery">Home Delivery (10 points)</option>
-                    <option value="next_day_delivery">Next Day Delivery (50 points)</option>
+                    <option value="free_collection" data-price="0">Free Collection</option>
+                    <option value="home_delivery" data-price="10">Home Delivery (10 points)</option>
+                    <option value="next_day_delivery" data-price="50">Next Day Delivery (50 points)</option>
                 </select>
             </div>
 
             <div class="totals">
-                <p>Total Points: <span id="total-points">{{ total_points }}</span></p>
+                <p>Total Points: <span id="total-points" data-initial-total-points="{{ total_points }}">{{ total_points }}</span></p>
             </div>
 
-            <button type="submit" class="btn btn-primary">Place Order</button>
+            <button type="submit" class="btn btn-primary" id="checkout-button">Place Order</button>
         </form>
+
+        <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
     </div>
 </body>
 </html>

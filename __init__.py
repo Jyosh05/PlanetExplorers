@@ -633,8 +633,22 @@ def payment_tokens():
     if 'user' in session and 'id' in session['user']:
         user_id = session['user']['id']
 
+        # Define shipping costs
+        shipping_costs = {
+            'free_collection': 0,
+            'home_delivery': 10,
+            'next_day_delivery': 50
+        }
+
         if request.method == 'POST':
             shipping_option = request.form.get('shippingOption')
+
+            # Ensure shipping option is valid
+            if shipping_option not in shipping_costs:
+                flash("Invalid shipping option.", 'danger')
+                return redirect(url_for('view_cart'))
+
+            shipping_cost = shipping_costs[shipping_option]
 
             try:
                 # Start transaction
@@ -650,7 +664,7 @@ def payment_tokens():
                 cart_items = mycursor.fetchall()
 
                 # Calculate total cost in points
-                total_points = sum(item[2] * item[3] for item in cart_items)
+                total_points = sum(item[2] * item[3] for item in cart_items) + shipping_cost
 
                 # Check if user has enough explorer points
                 mycursor.execute("SELECT explorer_points FROM users WHERE id = %s", (user_id,))
@@ -707,18 +721,20 @@ def payment_tokens():
         """, (user_id,))
         cart_items = mycursor.fetchall()
 
-        # Calculate total price
+        # Calculate total price without shipping cost
         total_points = sum(item[1] * item[2] for item in cart_items)  # Total in points
 
-        return render_template('Store/payment_points.html', cart_items=cart_items, total_points=total_points)
+        return render_template('Store/payment_points.html', cart_items=cart_items, total_points=total_points, shipping_costs=shipping_costs)
     else:
         flash("You need to log in to complete your purchase.", 'warning')
         return redirect(url_for('login'))
 
 
+
 @app.route('/order_complete')
 @roles_required('student', 'teacher')
 def order_complete():
+    flash("Payment successful! Your order has been placed.", 'success')
     return redirect(url_for('store'))
 
 
