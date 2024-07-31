@@ -238,10 +238,8 @@ def updateProfile():
                         (new_username, name, email, age, address, phone, username))
                     mydb.commit()
                     flash('User information updated successfully', 'success')
-                    global user_id
-                    if 'user' in session and 'id' in session['user']:
-                        user_id = session['user']['id']
-                    log_this("User information updated successfully",user_id)
+
+                    log_this("User information updated successfully")
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
                     return redirect(url_for('updateProfile'))
@@ -365,10 +363,10 @@ def updatePassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
-                                global user_id
+                                global user_id, actual_user_id
                                 if 'user' in session and 'id' in session['user']:
                                     user_id = session['user']['id']
-                                log_this("Existing password exists when creating a password",user_id)
+                                log_this("Existing password exists when creating a password")
                                 return redirect(url_for('updatePassword'))
                             else:
                                 try:
@@ -377,7 +375,7 @@ def updatePassword():
                                     mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
                                     mydb.commit()
                                     flash('Password updated successfully', 'success')
-                                    log_this("Password Updated Successfully", users[0])
+                                    log_this("Password Updated Successfully")
                                     print('Password updated successfully')  # Debug statement
 
                                     # # Refresh session user data
@@ -398,17 +396,10 @@ def updatePassword():
                             return redirect(url_for('updatePassword'))
                     else:
                         flash('Passwords do not match.', 'danger')
-                        global user_id
-                        if 'user' in session and 'id' in session['user']:
-                            user_id = session['user']['id']
-                        log_this("Password does not match when making new password", user_id)
+                        log_this("Password does not match when making new password")
                         return redirect(url_for('updatePassword'))
                 else:
                     flash('Please provide both password fields.', 'danger')
-                    global user_id
-                    if 'user' in session and 'id' in session['user']:
-                        user_id = session['user']['id']
-                    log_this("User did not provide both password fields", user_id)
                     return redirect(url_for('updatePassword'))
         else:
             flash("Username not found in session")
@@ -431,9 +422,8 @@ def deleteAccount():
             mydb.commit()
             session.pop('user', None)
             flash('Your account has been deleted', 'success')
-            if 'user' in session and 'id' in session['user']:
-                user_id = session['user']['id']
-                log_this("User account has been deleted", user_id)
+
+            log_this("User account has been deleted")
             return redirect(url_for('login'))
         else:
             flash('Account not found', 'error')
@@ -442,9 +432,8 @@ def deleteAccount():
         print('Error: ', e)
         mydb.rollback()
         flash('Error occurred while deleting account', 'error')
-        if 'user' in session and 'id' in session['user']:
-            user_id = session['user']['id']
-            log_this("Error while deleting account", user_id)
+
+        log_this("Error while deleting account")
         return redirect(url_for('profile'))
 
 
@@ -456,9 +445,7 @@ def teacherHome():
         user = userSession(username)
         if user:
             print(f'user {username} is logged in')
-            if 'user' in session and 'id' in session['user']:
-                user_id = session['user']['id']
-                log_this("login successful", user_id)
+            log_this("login successful")
             return render_template("Teacher/teacherHome.html", user=user)
         else:
             flash("User not found in database")

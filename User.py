@@ -80,10 +80,7 @@ def login():
                 if lockout_time and datetime.now() < lockout_time:
                     remaining_time = (lockout_time - datetime.now()).seconds // 60
                     flash(f'Your account is locked. Please try again later in {remaining_time} minutes or contact admin.', 'danger')
-                    global user_id
-                    if 'user' in session and 'id' in session['user']:
-                        user_id = session['user']['id']
-                    log_this("Account locked", user_id)
+                    log_this("Account locked")
                     return redirect(url_for('login'))
 
                 if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
@@ -94,7 +91,7 @@ def login():
                         (user[0],))
                     mydb.commit()
                     regenerate_session()
-                    log_this("login successful", user[0])
+                    log_this("login successful")
 
                     role = user[9]
                     session['role'] = role
@@ -119,10 +116,7 @@ def login():
 
                     if lockout_duration:
                         flash(f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.', 'danger')
-                        global user_id
-                        if 'user' in session and 'id' in session['user']:
-                            user_id = session['user']['id']
-                        log_this(f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.', user_id)
+                        log_this(f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.')
                         send_unlock_email(user[3], unlock_token)
                     else:
                         flash('Invalid credentials. Please try again.', 'danger')
@@ -161,12 +155,10 @@ def login():
                             flash(
                                 f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.',
                                 'danger')
-                            global user_id
-                            if 'user' in session and 'id' in session['user']:
-                                user_id = session['user']['id']
+
                             log_this(
                                 f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.',
-                                user_id)
+                                )
                             send_unlock_email(user[3], unlock_token)
                         else:
                             flash('Invalid credentials. Please try again.', 'danger')
@@ -228,17 +220,11 @@ def unlock_account(token):
         mycursor.execute('UPDATE users SET locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s', (user[0],))
         mydb.commit()
         flash('Your account has been unlocked. You can now log in.', 'success')
-        global user_id
-        if 'user' in session and 'id' in session['user']:
-            user_id = session['user']['id']
-        log_this("User account has been unlocked", user_id)
+        log_this("User account has been unlocked")
 
     else:
         flash('Invalid or expired unlock token', 'danger')
-        global user_id
-        if 'user' in session and 'id' in session['user']:
-            user_id = session['user']['id']
-        log_this("User gave invalid or expired unlock token", user_id)
+        log_this("User gave invalid or expired unlock token")
 
     return redirect(url_for('login'))
 
@@ -443,10 +429,7 @@ def updateTeacherProfile():
                         (new_username, name, email, age, address, phone, username))
                     mydb.commit()
                     flash('Teacher information updated successfully', 'success')
-                    global user_id
-                    if 'user' in session and 'id' in session['user']:
-                        user_id = session['user']['id']
-                    log_this("Teachers detail updated successfully", user_id)
+                    log_this("Teachers detail updated successfully")
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
                     return redirect(url_for('updateTeacherProfile'))
@@ -468,10 +451,7 @@ def updateTeacherProfile():
                         except Exception as e:
                             flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
                             os.remove(temp_filepath)
-                            global user_id
-                            if 'user' in session and 'id' in session['user']:
-                                user_id = session['user']['id']
-                            log_this(f'Error uploading file to VirusTotal: {str(e)}', user_id)
+                            log_this(f'Error uploading file to VirusTotal: {str(e)}')
                             return redirect(url_for('updateTeacherProfile'))
 
                         if file_id:
@@ -574,10 +554,8 @@ def updateTeacherPassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
-                                global user_id
-                                if 'user' in session and 'id' in session['user']:
-                                    user_id = session['user']['id']
-                                log_this("Existing password exists when creating a password", user_id)
+
+                                log_this("Existing password exists when creating a password")
                                 return redirect(url_for('updateTeacherPassword'))
                             else:
                                 try:
@@ -598,10 +576,7 @@ def updateTeacherPassword():
 
                                 except Exception as e:
                                     flash(f'Error updating password: {str(e)}', 'danger')
-                                    global user_id
-                                    if 'user' in session and 'id' in session['user']:
-                                        user_id = session['user']['id']
-                                    log_this("Error updating password", user_id)
+                                    log_this("Error updating password")
                                     print(f'SQL Update Error: {str(e)}')  # Debug statement
                                     return redirect(url_for('updateTeacherPassword'))
                         except Exception as e:
@@ -656,12 +631,11 @@ def user_orders():
 
 @app.route('/logout')
 def logout():
-    global user_id
+
     print(session)
-    if 'user' in session and 'id' in session['user']:
-        user_id = session['user']['id']
+
     session.pop('user',None)
     print("Logged out successfully")
     print(session)
-    log_this("User logged out successfully", user_id)
+    log_this("User logged out successfully")
     return redirect(url_for('login'))
