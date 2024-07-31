@@ -287,6 +287,7 @@ def adminDeleteTeacher(id):
             delete_query = "DELETE FROM users WHERE id = %s"
             mycursor.execute(delete_query, (id,))
             mydb.commit()
+            flash('Teacher deleted successfully', 'success')
             log_this(f"Teacher Account with User ID {id} deleted", user_id=1)
 
             return redirect(url_for('blogs'))
@@ -404,8 +405,8 @@ def adminCreateStudent():
 
         # checking for existing teacher username
         if existing_student_check_username:
-            flash('User with the same username already exists. Please choose a different username.')
-            return render_template('adminCreateStudent.html')
+            flash('User with the same username already exists. Please choose a different username.', 'danger')
+            return render_template('Admin/adminCreateStudent.html')
 
         existing_student_email = "SELECT * FROM users WHERE email = %s"
         mycursor.execute(existing_student_email, (email,))
@@ -413,7 +414,7 @@ def adminCreateStudent():
 
         # checking for existing teacher email
         if existing_student_email:
-            flash('User with the same email already exists. Please choose a different email.')
+            flash('User with the same email already exists. Please choose a different email.', 'danger')
             log_this("User with the same email already exists when creating student", user_id=1)
             return render_template('Admin/adminCreateStudent.html')
 
@@ -455,7 +456,7 @@ def adminUsersRetrieve():
     mycursor.execute(select_query, ('student',))
     rows = mycursor.fetchall()
     count = len(rows)
-    return render_template('Admin/adminStudentTable.html', nameOfPage='User Management System', students=rows, count=count)
+    return render_template('Admin/adminStudentTable.html', students=rows, count=count)
 
 
 @app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
@@ -539,6 +540,9 @@ def adminDeleteStudent(id):
             delete_query = "DELETE FROM users WHERE id = %s"
             mycursor.execute(delete_query, (id,))
             mydb.commit()
+
+            flash('Student deleted successfully', 'success')
+            log_this(f"Student Account with User ID {id} deleted", user_id=1)
 
             return redirect(url_for('blogs'))
         else:
