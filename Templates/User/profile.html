@@ -3,71 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My profile</title>
+    <title>My Profile</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
     <link rel="stylesheet" type="text/css" href="../../static/css/profile.css">
-
 </head>
 <body>
     {% include 'navbar.html' %}
     <div class="container">
-
         {% if 'user' in session %}
-
-    <div class="profile-container">
-        <div class="profile-pic-div">
-        <div class="profile-picture">
-
-            {% set profile_pic = user[8] %}
-                {% if user[8] %}
-                <img src="{{ url_for('static', filename=user[8]) }}" class="profile-img">
-                {% else %}
-                <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture"
-                     style="max-width: 200px; max-height: 200px;">
-                {% endif %}
-
-            </div>
+        <div class="profile-container">
+            <div class="profile-pic-div">
+                <div class="profile-picture">
+                    {% set profile_pic = user[8] %}
+                    {% if user[8] %}
+                    <img src="{{ url_for('static', filename=user[8]) }}" class="profile-img">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture" style="max-width: 200px; max-height: 200px;">
+                    {% endif %}
+                </div>
             </div>
 
-        <div class="profile-card">
-            {% set name = user[4] %}
-            {% if name %}
+            <div class="profile-card">
+                {% set name = user[4] %}
+                {% if name %}
                 <h3>Welcome, Student {{ user[4] }}</h3>
-            {% else %}
-            <h3>Welcome, {{ user[1] }}</h3>
-
-            {% endif %}
+                {% else %}
+                <h3>Welcome, {{ user[1] }}</h3>
+                {% endif %}
                 <br>
                 <h4>Username: {{ user[1] }}</h4>
-                <h4>Explorer Points: {{user[14] }}</h4>
+                <h4>Explorer Points: {{ user[14] }}</h4>
                 <h4>Email: {{ user[3] }}</h4>
-                <h4>Age: {{ user[5] }} </h4>
-            {% set address =  user[6] %}
+                <h4>Age: {{ user[5] }}</h4>
+                {% set address = user[6] %}
                 {% if address %}
-            <h4>Address: {{ address }}</h4>
-            {% else %}
-            <h4>Address: -</h4>
-            {% endif %}
-            {% set hp = user[7] %}
-                {% if hp %}
-                    <h4>Phone: {{ hp }}</h4>
+                <h4>Address: {{ address }}</h4>
                 {% else %}
-                    <h4>Phone: -</h4>
+                <h4>Address: -</h4>
                 {% endif %}
-
-            <br>
-                    <!-- Update Profile Button -->
-                    <a href="{{ url_for('updateProfile') }}" class="btn btn-primary">Update Profile</a>
-
-            <br>
-            <a href="{{ url_for('updatePassword') }}" class="btn btn-primary">Change Password</a>
-        </div>
-
-         <!-- Button to Open the Modal -->
+                {% set hp = user[7] %}
+                {% if hp %}
+                <h4>Phone: {{ hp }}</h4>
+                {% else %}
+                <h4>Phone: -</h4>
+                {% endif %}
+                <br>
+                <!-- Update Profile Button -->
+                <a href="{{ url_for('updateProfile') }}" class="btn btn-primary">Update Profile</a>
+                <br>
+                <a href="{{ url_for('updatePassword') }}" class="btn btn-primary">Change Password</a>
+                <br>
+                <!-- Button to View Purchase History -->
+                <a href="{{ url_for('user_orders') }}" class="btn btn-primary">View Purchase History</a>
+                <br>
+                <!-- Button to Open the Modal -->
                 <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
                     Delete
                 </button>
@@ -83,9 +75,6 @@
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
-
-
-                        <div>
                             <!-- Modal Body -->
                             <div class="modal-body">
                                 Are you sure you want to delete your account?
@@ -95,26 +84,14 @@
                                 <form action="{{ url_for('deleteAccount') }}" method="POST">
                                     <button type="submit" class="btn btn-danger">Delete</button>
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-
                                 </form>
-
                             </div>
-                            </div>
-
                         </div>
                     </div>
                 </div>
+            </div>
         </div>
-
-
-
-
-                    {% endif %}
-
-
-        </div>
-
-
-
+        {% endif %}
+    </div>
 </body>
 </html>
