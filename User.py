@@ -30,6 +30,9 @@ def profile():
     user = session.get('user')
     login_method = session.get('login_method')
 
+    # profile_pic = url_for('static', filename='img/default_profile_pic.png')
+
+
     if not user or not login_method:
         flash('Please log in to access your profile', 'danger')
         return redirect(url_for('login'))
@@ -41,16 +44,16 @@ def profile():
             if user:
                 print(f'user {username} is logged in')
                 mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
-                profile_pic = mycursor.fetchone()
+                profile_pic_url = mycursor.fetchone()
 
-                if profile_pic and profile_pic[0]:
-                    profile_pic_url = url_for('static', filename=profile_pic[0])
+                if profile_pic_url and profile_pic_url[0]:
+                    profile_pic = url_for('static', filename=profile_pic_url[0])
                 else:
-                    profile_pic_url = url_for('static', filename='img/default_profile_pic.png')
+                    profile_pic = url_for('static', filename='img/default_pp.png')
 
                 # You can store the profile_pic_url in the session or pass it to the template
-                session['profile_pic_url'] = profile_pic_url
-        return render_template('User/profile.html', user=user, profile_pic_url=profile_pic_url)
+                session['profile_pic'] = profile_pic
+            return render_template('User/profile.html', user=user, profile_pic=profile_pic)
 
     elif login_method == 'google':
         return render_template('User/google_profile.html', user=user)
@@ -80,7 +83,9 @@ def login():
                 if lockout_time and datetime.now() < lockout_time:
                     remaining_time = (lockout_time - datetime.now()).seconds // 60
                     flash(f'Your account is locked. Please try again later in {remaining_time} minutes or contact admin.', 'danger')
-                    log_this("Account locked")
+                    if 'user' in session and 'id' in session['user']:
+                        user_id = session['user']['id']
+                        log_this("Account locked")
                     return redirect(url_for('login'))
 
                 if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
@@ -91,6 +96,7 @@ def login():
                         (user[0],))
                     mydb.commit()
                     regenerate_session()
+
                     log_this("login successful")
 
                     role = user[9]
@@ -404,7 +410,7 @@ def teacherProfile():
             if profile_pic and profile_pic[0]:
                 profile_pic_url = url_for('static', filename=profile_pic[0])
             else:
-                profile_pic_url = url_for('static', filename='img/default_profile_pic.png')
+                profile_pic_url = url_for('static', filename='img/default_pp.png')
 
             # You can store the profile_pic_url in the session or pass it to the template
             session['profile_pic_url'] = profile_pic_url
@@ -414,7 +420,7 @@ def teacherProfile():
 @roles_required('teacher')
 def updateTeacherProfile():
     if 'user' in session and 'username' in session['user']:
-        username = session['user']['username']
+        current_username = session['user']['username']
         if request.method == 'POST':
             new_username = request.form.get('username')
             name = request.form.get('name')
@@ -423,10 +429,28 @@ def updateTeacherProfile():
             address = request.form.get('address')
             phone = request.form.get('phone')
             if new_username or name or email or age or address or phone:
+                if new_username != current_username:
+                    existing_username_check = "SELECT * FROM users WHERE username = %s"
+                    mycursor.execute(existing_username_check, (new_username,))
+                    existing_user_username = mycursor.fetchone()
+                    if existing_user_username:
+                        flash('User with the same username already exists. Please choose a different username.', 'danger')
+                        user = userSession(current_username)
+                        return render_template('Teacher/updateTeacherProfile.html', user=user)
+
+                # Check for existing email
+                if email:
+                    existing_email_check = "SELECT * FROM users WHERE email = %s AND username != %s"
+                    mycursor.execute(existing_email_check, (email, current_username))
+                    existing_user_email = mycursor.fetchone()
+                    if existing_user_email:
+                        flash('User with the same email already exists. Please choose a different email.', 'danger')
+                        user = userSession(current_username)
+                        return render_template('Teacher/updateTeacherProfile.html', user=user)
                 try:
                     mycursor.execute(
                         "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
-                        (new_username, name, email, age, address, phone, username))
+                        (new_username, name, email, age, address, phone, current_username))
                     mydb.commit()
                     flash('Teacher information updated successfully', 'success')
                     log_this("Teachers detail updated successfully")
@@ -481,7 +505,7 @@ def updateTeacherProfile():
                                             image_path = f"img/{filename}"
                                             try:
                                                 mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
-                                                                 (image_path, username))
+                                                                 (image_path, current_username))
                                                 mydb.commit()
                                                 flash('Profile picture scanned and uploaded successfully!', 'success')
                                             except Exception as e:
@@ -507,16 +531,16 @@ def updateTeacherProfile():
                     flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
 
             # Fetch updated user data
-            user = userSession(new_username if new_username else username)
+            user = userSession(new_username if new_username else current_username)
             if user:
-                session['user']['username'] = new_username if new_username else username  # Update session with new username if changed
+                session['user']['username'] = new_username if new_username else current_username  # Update session with new username if changed
                 return render_template("Teacher/teacherProfile.html", user=user)
             else:
                 flash("User not found in database after update")
                 return redirect(url_for('login'))  # Redirect to log in if user not found after update
         else:
             # GET request handling
-            user = userSession(username)
+            user = userSession(current_username)
             return render_template("Teacher/updateTeacherProfile.html", user=user)  # Render form with current user data prepopulated
     else:
         flash("User session not found")
@@ -633,11 +657,9 @@ def user_orders():
 
 @app.route('/logout')
 def logout():
-
-    print(session)
-
     session.pop('user',None)
     print("Logged out successfully")
     print(session)
+
     log_this("User logged out successfully")
     return redirect(url_for('login'))
