@@ -654,27 +654,91 @@ def adminstoredelete():
     return redirect(url_for('adminstore'))
 
 
-@app.route('/adminOrders')
+@app.route('/adminOrders', methods=['GET', 'POST'])
 @roles_required('admin')
 def admin_orders():
+    if request.method == 'POST':
+        # Handle status update
+        order_id = request.form.get('order_id')
+        product_id = request.form.get('product_id')
+        new_status = request.form.get('status')
+
+        try:
+            mycursor.execute("""
+                UPDATE order_items 
+                SET status = %s 
+                WHERE order_id = %s AND product_id = %s
+            """, (new_status, order_id, product_id))
+            mydb.commit()
+            flash("Item status updated successfully.", 'success')
+        except Exception as e:
+            mydb.rollback()
+            flash(f"Error updating status: {e}", 'danger')
+
     mycursor.execute("""
-        SELECT * FROM orders 
-        ORDER BY order_date DESC
+        SELECT o.id, o.user_id, u.username, o.total_points, o.shipping_option, o.order_date, o.status 
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        ORDER BY o.order_date DESC
     """)
     orders = mycursor.fetchall()
 
     order_list = []
     for order in orders:
         mycursor.execute("""
-            SELECT oi.*, sp.name 
+            SELECT oi.product_id, oi.product_name, oi.quantity, oi.status 
             FROM order_items oi 
-            JOIN storeproducts sp ON oi.product_id = sp.id 
-            WHERE order_id = %s
-        """, (order['id'],))
+            WHERE oi.order_id = %s
+        """, (order[0],))
         items = mycursor.fetchall()
-        order_list.append({'order': order, 'items': items})
+        order_list.append({
+            'order': order,
+            'items': items
+        })
 
     return render_template('Store/admin_orders.html', orders=order_list)
+
+
+@app.route('/update_item_status/<int:order_id>/<int:product_id>', methods=['POST'])
+@roles_required('admin')
+def update_item_status(order_id, product_id):
+    new_status = request.form.get('status')
+
+    try:
+        # Update the item status
+        mycursor.execute("""
+            UPDATE order_items 
+            SET status = %s 
+            WHERE order_id = %s AND product_id = %s
+        """, (new_status, order_id, product_id))
+
+        # Check if all items in the order are completed
+        mycursor.execute("""
+            SELECT COUNT(*) 
+            FROM order_items 
+            WHERE order_id = %s AND status != 'Completed'
+        """, (order_id,))
+        incomplete_items = mycursor.fetchone()[0]
+
+        # Update the order status based on item status
+        if incomplete_items == 0:
+            order_status = 'Completed'
+        else:
+            order_status = 'Pending'
+
+        mycursor.execute("""
+            UPDATE orders 
+            SET status = %s 
+            WHERE id = %s
+        """, (order_status, order_id))
+
+        mydb.commit()
+        flash('Item status updated successfully!', 'success')
+    except Exception as e:
+        mydb.rollback()
+        flash(f'An error occurred: {e}', 'danger')
+
+    return redirect(url_for('admin_orders'))
 
 
 @app.route('/blogs')

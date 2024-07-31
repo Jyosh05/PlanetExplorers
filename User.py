@@ -618,15 +618,17 @@ def user_orders():
                 SELECT oi.*, sp.name 
                 FROM order_items oi 
                 JOIN storeproducts sp ON oi.product_id = sp.id 
-                WHERE order_id = %s
-            """, (order['id'],))
+                WHERE oi.order_id = %s
+            """, (order[0],))
             items = mycursor.fetchall()
             order_list.append({'order': order, 'items': items})
 
+        print("Order List:", order_list)  # Debugging output
         return render_template('Store/user_orders.html', orders=order_list)
     else:
         flash("You need to log in to view your orders.", 'warning')
         return redirect(url_for('login'))
+
 
 
 @app.route('/logout')

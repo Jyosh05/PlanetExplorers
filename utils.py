@@ -250,17 +250,18 @@ for a in tableCheck:
 
     if not tableExist:
         mycursor.execute("""
-            CREATE TABLE `order_items` (
-                id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                order_id INT,
-                product_id INT,
-                quantity INT,
-                price_in_points INT,
+            CREATE TABLE IF NOT EXISTS order_items(
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                order_id INT NOT NULL,
+                product_id INT NOT NULL,
+                product_name VARCHAR(255),
+                quantity INT NOT NULL,
+                price_in_points INT NOT NULL,
                 FOREIGN KEY (order_id) REFERENCES orders(id),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )
         """)
-        print(f"Table 'order_items' created")
+        print(f"Table 'order_items' Created")
 
 mycursor.execute('SELECT * FROM order_items')
 print(f"Using Table 'order_items'")
@@ -567,7 +568,6 @@ def is_ip_blacklisted(ip_address, api_key):
         return data['data']['abuseConfidenceScore'] > 0
     except requests.RequestException as e:
         # Log or handle the error appropriately
-        print(f"Error checking IP: {e}")
         return False
 
 def get_info():

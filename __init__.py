@@ -618,7 +618,7 @@ def payment_tokens():
 
                 # Fetch cart items for current user
                 mycursor.execute("""
-                    SELECT sp.id, sp.quantity, sp.price_in_points, c.quantity
+                    SELECT sp.id, sp.quantity, sp.price_in_points, c.quantity, sp.name
                     FROM cart c
                     INNER JOIN storeproducts sp ON c.product_id = sp.id
                     WHERE c.user_id = %s
@@ -639,7 +639,7 @@ def payment_tokens():
 
                 # Deduct points from user account and update stock
                 for item in cart_items:
-                    product_id, available_quantity, price_in_points, ordered_quantity = item
+                    product_id, available_quantity, price_in_points, ordered_quantity, product_name = item
 
                     # Check stock before updating
                     if ordered_quantity > available_quantity:
@@ -652,6 +652,16 @@ def payment_tokens():
 
                 # Deduct points from user account
                 mycursor.execute("UPDATE users SET explorer_points = explorer_points - %s WHERE id = %s", (total_points, user_id))
+
+                # Insert order into orders table
+                mycursor.execute("INSERT INTO orders (user_id, total_points, shipping_option) VALUES (%s, %s, %s)", (user_id, total_points, shipping_option))
+                order_id = mycursor.lastrowid
+
+                # Insert each cart item into order_items table
+                for item in cart_items:
+                    product_id, available_quantity, price_in_points, ordered_quantity, product_name = item
+                    mycursor.execute("INSERT INTO order_items (order_id, product_id, product_name, quantity, price_in_points) VALUES (%s, %s, %s, %s, %s)",
+                                     (order_id, product_id, product_name, ordered_quantity, price_in_points))
 
                 # Clear cart after successful payment
                 mycursor.execute("DELETE FROM cart WHERE user_id = %s", (user_id,))
@@ -680,7 +690,6 @@ def payment_tokens():
     else:
         flash("You need to log in to complete your purchase.", 'warning')
         return redirect(url_for('login'))
-
 
 
 @app.route('/order_complete')

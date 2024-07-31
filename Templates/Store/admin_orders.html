@@ -2,46 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Orders</title>
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/admin_orders.css') }}">
 </head>
 <body>
-    <header>
-        <h1>All Orders</h1>
-    </header>
-    <main>
-        <table>
-            <thead>
+    {% include 'includes/_adminNav.html' %}
+    <h2>Admin Orders</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Order Date</th>
+                <th>Shipping Option</th>
+                <th>Item Status</th>
+                <th>Update Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+                {% for item in order['items'] %}
                 <tr>
-                    <th>Order ID</th>
-                    <th>User ID</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Total Points</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in orders %}
-                <tr>
-                    <td>{{ order.order.id }}</td>
-                    <td>{{ order.order.user_id }}</td>
-                    <td>{{ order.order.order_date }}</td>
-                    <td>{{ order.order.status }}</td>
-                    <td>{{ order.order.total_points }}</td>
+                    <td>{{ order['order'][0] }}</td>  <!-- Order ID -->
+                    <td>{{ order['order'][1] }}</td>  <!-- User ID -->
+                    <td>{{ order['order'][2] }}</td>  <!-- Username -->
+                    <td>{{ item[1] }}</td>  <!-- Product Name -->
+                    <td>{{ item[2] }}</td>  <!-- Quantity -->
+                    <td>{{ order['order'][5] }}</td>  <!-- Order Date -->
+                    <td>{{ order['order'][4] }}</td>  <!-- Shipping Option -->
+                    <td>{{ item[3] }}</td>  <!-- Item Status -->
                     <td>
-                        <ul>
-                            {% for item in order.items %}
-                            <li>{{ item.name }} - {{ item.quantity }} x {{ item.price_in_points }} points</li>
-                            {% endfor %}
-                        </ul>
+                        <form method="POST" action="{{ url_for('update_item_status', order_id=order['order'][0], product_id=item[0]) }}" class="update-form">
+                            <input type="hidden" name="order_id" value="{{ order['order'][0] }}">
+                            <input type="hidden" name="product_id" value="{{ item[0] }}">
+                            <select name="status">
+                                <option value="Pending" {% if item[3] == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Completed" {% if item[3] == 'Completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                            <button type="submit">Update</button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    </main>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
+
+
+
 
