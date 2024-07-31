@@ -91,7 +91,7 @@ def login():
                         (user[0],))
                     mydb.commit()
                     regenerate_session()
-                    log_this("login successful", user[0])
+                    log_this("login successful")
 
                     role = user[9]
                     session['role'] = role
@@ -116,6 +116,7 @@ def login():
 
                     if lockout_duration:
                         flash(f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.', 'danger')
+                        log_this(f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.')
                         send_unlock_email(user[3], unlock_token)
                     else:
                         flash('Invalid credentials. Please try again.', 'danger')
@@ -154,6 +155,10 @@ def login():
                             flash(
                                 f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.',
                                 'danger')
+
+                            log_this(
+                                f'Account is locked for {lockout_duration} minutes due to multiple failed login attempts.',
+                                )
                             send_unlock_email(user[3], unlock_token)
                         else:
                             flash('Invalid credentials. Please try again.', 'danger')
@@ -215,9 +220,11 @@ def unlock_account(token):
         mycursor.execute('UPDATE users SET locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s', (user[0],))
         mydb.commit()
         flash('Your account has been unlocked. You can now log in.', 'success')
+        log_this("User account has been unlocked")
 
     else:
         flash('Invalid or expired unlock token', 'danger')
+        log_this("User gave invalid or expired unlock token")
 
     return redirect(url_for('login'))
 
@@ -440,6 +447,7 @@ def updateTeacherProfile():
                         (new_username, name, email, age, address, phone, current_username))
                     mydb.commit()
                     flash('Teacher information updated successfully', 'success')
+                    log_this("Teachers detail updated successfully")
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
                     return redirect(url_for('updateTeacherProfile'))
@@ -461,6 +469,7 @@ def updateTeacherProfile():
                         except Exception as e:
                             flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
                             os.remove(temp_filepath)
+                            log_this(f'Error uploading file to VirusTotal: {str(e)}')
                             return redirect(url_for('updateTeacherProfile'))
 
                         if file_id:
@@ -563,6 +572,8 @@ def updateTeacherPassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
+
+                                log_this("Existing password exists when creating a password")
                                 return redirect(url_for('updateTeacherPassword'))
                             else:
                                 try:
@@ -583,6 +594,7 @@ def updateTeacherPassword():
 
                                 except Exception as e:
                                     flash(f'Error updating password: {str(e)}', 'danger')
+                                    log_this("Error updating password")
                                     print(f'SQL Update Error: {str(e)}')  # Debug statement
                                     return redirect(url_for('updateTeacherPassword'))
                         except Exception as e:
@@ -605,28 +617,43 @@ def updateTeacherPassword():
     return render_template("Teacher/updateTeacherPassword.html")
 
 
-
-@app.route('/user/orders')
+@app.route('/userOrders')
 @roles_required('student', 'teacher')
 def user_orders():
-    user_id = session['user']['id']
-    mycursor.execute("""
-        SELECT o.id, o.total_price, o.status
-        FROM orders o
-        WHERE o.user_id = %s
-    """, (user_id,))
-    orders = mycursor.fetchall()
-    return render_template('User/order_history.html', orders=orders)
+    if 'user' in session and 'id' in session['user']:
+        user_id = session['user']['id']
+
+        mycursor.execute("""
+            SELECT * FROM orders 
+            WHERE user_id = %s 
+            ORDER BY order_date DESC
+        """, (user_id,))
+        orders = mycursor.fetchall()
+
+        order_list = []
+        for order in orders:
+            mycursor.execute("""
+                SELECT oi.*, sp.name 
+                FROM order_items oi 
+                JOIN storeproducts sp ON oi.product_id = sp.id 
+                WHERE order_id = %s
+            """, (order['id'],))
+            items = mycursor.fetchall()
+            order_list.append({'order': order, 'items': items})
+
+        return render_template('Store/user_orders.html', orders=order_list)
+    else:
+        flash("You need to log in to view your orders.", 'warning')
+        return redirect(url_for('login'))
 
 
 @app.route('/logout')
 def logout():
-    global user_id
+
     print(session)
-    if 'user' in session and 'id' in session['user']:
-        user_id = session['user']['id']
+
     session.pop('user',None)
     print("Logged out successfully")
     print(session)
-    log_this("User logged out successfully", user_id)
+    log_this("User logged out successfully")
     return redirect(url_for('login'))

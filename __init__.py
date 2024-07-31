@@ -42,13 +42,7 @@ def forget_password():
             token = generate_confirm_token(email)
             reset_url = url_for('reset_password', token=token, _external=True)
             subject = 'Password Reset Requested'
-            template = f'''<p>Dear user, <br><br>
-            You requested to change your password. Click the link to reset your password: <a href="{reset_url}">{reset_url}</a>. 
-            The link will be valid for 5 minutes. <br>
-            If you did not request a password change, please ignore this email.<br><br>
-            Yours, <br>
-            PlanetExplorers Team</p>'''
-
+            template = f'<p>Click the link to reset your password: <a href="{reset_url}">{reset_url}</a></p>'
             send_reset_link_email(email, subject, template)
             flash('Password reset link has been sent to your email.', 'success')
         else:
@@ -91,7 +85,7 @@ def reset_password(token):
                         break
 
                 if password_exists:
-                    flash('Password already exists. Please create another password.', 'danger')
+                    flash('Password already exists. Please create another password.')
                     print("Password already exists. Please create another password.")
 
                 else:
@@ -229,7 +223,7 @@ def teacher_payment(username):
 @roles_required('student')
 def updateProfile():
     if 'user' in session and 'username' in session['user']:
-        current_username = session['user']['username']
+        username = session['user']['username']
         if request.method == 'POST':
             new_username = request.form.get('username')
             name = request.form.get('name')
@@ -238,30 +232,10 @@ def updateProfile():
             address = request.form.get('address')
             phone = request.form.get('phone')
             if new_username or name or email or age or address or phone:
-                if new_username != current_username:
-                    existing_username_check = "SELECT * FROM users WHERE username = %s"
-                    mycursor.execute(existing_username_check, (new_username,))
-                    existing_user_username = mycursor.fetchone()
-                    if existing_user_username:
-                        flash('User with the same username already exists. Please choose a different username.', 'danger')
-                        user = userSession(current_username)
-                        return render_template('User/updateProfile.html', user=user)
-
-                # Check for existing email
-                if email:
-                    existing_email_check = "SELECT * FROM users WHERE email = %s AND username != %s"
-                    mycursor.execute(existing_email_check, (email, current_username))
-                    existing_user_email = mycursor.fetchone()
-                    if existing_user_email:
-                        flash('User with the same email already exists. Please choose a different email.', 'danger')
-                        user = userSession(current_username)
-                        return render_template('User/updateProfile.html', user=user)
-
-
                 try:
                     mycursor.execute(
                         "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
-                        (new_username, name, email, age, address, phone, current_username))
+                        (new_username, name, email, age, address, phone, username))
                     mydb.commit()
                     flash('User information updated successfully', 'success')
                     global user_id
@@ -318,7 +292,7 @@ def updateProfile():
                                             image_path = f"img/{filename}"
                                             try:
                                                 mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
-                                                                 (image_path, current_username))
+                                                                 (image_path, username))
                                                 mydb.commit()
                                                 flash('Profile picture scanned and uploaded successfully!', 'success')
                                             except Exception as e:
@@ -344,20 +318,21 @@ def updateProfile():
                     flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
 
             # Fetch updated user data
-            user = userSession(new_username if new_username else current_username)
+            user = userSession(new_username if new_username else username)
             if user:
-                session['user']['username'] = new_username if new_username else current_username  # Update session with new username if changed
+                session['user']['username'] = new_username if new_username else username  # Update session with new username if changed
                 return render_template("User/profile.html", user=user)
             else:
                 flash("User not found in database after update")
                 return redirect(url_for('login'))  # Redirect to log in if user not found after update
         else:
             # GET request handling
-            user = userSession(current_username)
+            user = userSession(username)
             return render_template("User/updateProfile.html", user=user)  # Render form with current user data prepopulated
     else:
         flash("User session not found")
         return redirect(url_for('login'))
+
 
 @app.route('/updatePassword', methods=['POST', 'GET'])
 @roles_required('student', 'teacher')
@@ -398,8 +373,16 @@ def updatePassword():
                                     mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
                                     mydb.commit()
                                     flash('Password updated successfully', 'success')
+                                    log_this("Password Updated Successfully", users[0])
                                     print('Password updated successfully')  # Debug statement
 
+                                    # # Refresh session user data
+                                    # user = userSession(username)
+                                    # if user:
+                                    #     session['user'] = user  # Update session with refreshed user data
+                                    # else:
+                                    #     flash('User not found in database after update', 'error')
+                                    #     return redirect(url_for('login'))
 
                                 except Exception as e:
                                     flash(f'Error updating password: {str(e)}', 'danger')
@@ -422,8 +405,7 @@ def updatePassword():
         flash("User session not found")
         return redirect(url_for('login'))
 
-    return render_template("User/updatePassword.html")
-
+    return render_template("User/updatePasswordx.html")
 
 
 @app.route('/deleteAccount', methods=['POST'])
