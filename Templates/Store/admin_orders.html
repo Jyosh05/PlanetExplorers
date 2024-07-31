@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Orders</title>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</head>
+<body>
+    <header>
+        <h1>All Orders</h1>
+    </header>
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>User ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Total Points</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order.id }}</td>
+                    <td>{{ order.order.user_id }}</td>
+                    <td>{{ order.order.order_date }}</td>
+                    <td>{{ order.order.status }}</td>
+                    <td>{{ order.order.total_points }}</td>
+                    <td>
+                        <ul>
+                            {% for item in order.items %}
+                            <li>{{ item.name }} - {{ item.quantity }} x {{ item.price_in_points }} points</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
+

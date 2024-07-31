@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Store</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/adminStore.css') }}">
 </head>
@@ -29,7 +31,12 @@
         <form action="{{ url_for('adminstoreaddpage') }}" method="get" class="add-product-form">
             <button type="submit">Add New Product</button>
         </form>
+        <h2>Order Backlog</h2>
+        <form action="{{ url_for('adminOrders') }}" method="get" class="order-backlog-form">
+            <button type="submit">View Order Backlog</button>
+        </form>
     </div>
 </body>
 </html>
+
 

@@ -652,6 +652,29 @@ def adminstoredelete():
     return redirect(url_for('adminstore'))
 
 
+@app.route('/adminOrders')
+@roles_required('admin')
+def admin_orders():
+    mycursor.execute("""
+        SELECT * FROM orders 
+        ORDER BY order_date DESC
+    """)
+    orders = mycursor.fetchall()
+
+    order_list = []
+    for order in orders:
+        mycursor.execute("""
+            SELECT oi.*, sp.name 
+            FROM order_items oi 
+            JOIN storeproducts sp ON oi.product_id = sp.id 
+            WHERE order_id = %s
+        """, (order['id'],))
+        items = mycursor.fetchall()
+        order_list.append({'order': order, 'items': items})
+
+    return render_template('Store/admin_orders.html', orders=order_list)
+
+
 @app.route('/blogs')
 @roles_required('admin')
 def blogs():

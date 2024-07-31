@@ -126,8 +126,8 @@ for a in tableCheck:
 
 mycursor.execute('SELECT * FROM users')
 print(f"Using table 'users' ")
-
 users = mycursor.fetchall()
+
 
 tableCheck = ['oauth']
 for a in tableCheck:
@@ -168,8 +168,8 @@ for a in tableCheck:
 
 mycursor.execute('SELECT * FROM audit_logs')
 print(f"Using Table 'audit_logs'")
-
 audit_log = mycursor.fetchall()
+
 
 tableCheck = ['storeproducts']
 for a in tableCheck:
@@ -306,10 +306,10 @@ for a in tableCheck:
 mycursor.execute('SELECT * FROM modules')
 print(f"Using table 'modules'")
 modules = mycursor.fetchall()
-
 # Check if the 'questions' table exists, and create it if not
 mycursor.execute("SHOW TABLES LIKE 'questions'")
 tableExist = mycursor.fetchone()
+
 
 if not tableExist:
     mycursor.execute("""
@@ -329,7 +329,6 @@ if not tableExist:
     print("Table 'questions' created")
 else:
     print("Table 'questions' already exists")
-
 # Verify if the 'questions' table has been created
 mycursor.execute('SELECT * FROM questions LIMIT 1')
 print("Using table 'questions'")
@@ -372,7 +371,6 @@ def age_validation(age):
         raise ValueError("Invalid input: Age must be a positive integer")
 
     return True
-
 
 
 def validate_phone_number(phone_number):

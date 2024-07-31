@@ -624,18 +624,34 @@ def updateTeacherPassword():
     return render_template("Teacher/updateTeacherPassword.html")
 
 
-
-@app.route('/user/orders')
+@app.route('/userOrders')
 @roles_required('student', 'teacher')
 def user_orders():
-    user_id = session['user']['id']
-    mycursor.execute("""
-        SELECT o.id, o.total_price, o.status
-        FROM orders o
-        WHERE o.user_id = %s
-    """, (user_id,))
-    orders = mycursor.fetchall()
-    return render_template('User/order_history.html', orders=orders)
+    if 'user' in session and 'id' in session['user']:
+        user_id = session['user']['id']
+
+        mycursor.execute("""
+            SELECT * FROM orders 
+            WHERE user_id = %s 
+            ORDER BY order_date DESC
+        """, (user_id,))
+        orders = mycursor.fetchall()
+
+        order_list = []
+        for order in orders:
+            mycursor.execute("""
+                SELECT oi.*, sp.name 
+                FROM order_items oi 
+                JOIN storeproducts sp ON oi.product_id = sp.id 
+                WHERE order_id = %s
+            """, (order['id'],))
+            items = mycursor.fetchall()
+            order_list.append({'order': order, 'items': items})
+
+        return render_template('Store/user_orders.html', orders=order_list)
+    else:
+        flash("You need to log in to view your orders.", 'warning')
+        return redirect(url_for('login'))
 
 
 @app.route('/logout')
