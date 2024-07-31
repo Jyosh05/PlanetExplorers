@@ -28,7 +28,7 @@ def adminProfile():
 @roles_required('admin')
 def adminUpdateProfile():
     if 'user' in session and 'username' in session['user']:
-        username = session['user']['username']
+        current_username = session['user']['username']
         if request.method == 'POST':
             new_username = request.form.get('username')
             name = request.form.get('name')
@@ -37,10 +37,28 @@ def adminUpdateProfile():
             address = request.form.get('address')
             phone = request.form.get('phone')
             if new_username or name or email or age or address or phone:
+                if new_username != current_username:
+                    existing_username_check = "SELECT * FROM users WHERE username = %s"
+                    mycursor.execute(existing_username_check, (new_username,))
+                    existing_user_username = mycursor.fetchone()
+                    if existing_user_username:
+                        flash('User with the same username already exists. Please choose a different username.', 'danger')
+                        user = userSession(current_username)
+                        return render_template('Admin/adminUpdateProfile.html', user=user)
+
+                # Check for existing email
+                if email:
+                    existing_email_check = "SELECT * FROM users WHERE email = %s AND username != %s"
+                    mycursor.execute(existing_email_check, (email, current_username))
+                    existing_user_email = mycursor.fetchone()
+                    if existing_user_email:
+                        flash('User with the same email already exists. Please choose a different email.', 'danger')
+                        user = userSession(current_username)
+                        return render_template('Admin/adminUpdateProfile.html', user=user)
                 try:
                     mycursor.execute(
                         "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
-                        (new_username, name, email, age, address, phone, username))
+                        (new_username, name, email, age, address, phone, current_username))
                     mydb.commit()
                     flash('User information updated successfully', 'success')
                 except Exception as e:
@@ -98,7 +116,7 @@ def adminUpdateProfile():
                                         try:
                                             session['user']['profile_picture'] = filename
                                             mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
-                                                             (image_path, username))
+                                                             (image_path, current_username))
                                             mydb.commit()
                                             flash('Profile picture scanned and uploaded successfully!', 'success')
                                         except Exception as e:
@@ -117,9 +135,9 @@ def adminUpdateProfile():
                     flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
 
             # Fetch updated user data
-            user = userSession(new_username if new_username else username)
+            user = userSession(new_username if new_username else current_username)
             if user:
-                session['user']['username'] = new_username if new_username else username  # Update session with new username if changed
+                session['user']['username'] = new_username if new_username else current_username  # Update session with new username if changed
                 return render_template("Admin/adminProfile.html", user=user)
             else:
                 flash("User not found in database after update")
@@ -127,7 +145,7 @@ def adminUpdateProfile():
                 return redirect(url_for('login'))  # Redirect to log in if user not found after update
         else:
             # GET request handling
-            user = userSession(username)
+            user = userSession(current_username)
             return render_template("Admin/adminUpdateProfile.html", user=user)  # Render form with current user data prepopulated
     else:
         flash("User session not found")

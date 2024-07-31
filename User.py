@@ -30,6 +30,9 @@ def profile():
     user = session.get('user')
     login_method = session.get('login_method')
 
+    # profile_pic = url_for('static', filename='img/default_profile_pic.png')
+
+
     if not user or not login_method:
         flash('Please log in to access your profile', 'danger')
         return redirect(url_for('login'))
@@ -46,11 +49,11 @@ def profile():
                 if profile_pic_url and profile_pic_url[0]:
                     profile_pic = url_for('static', filename=profile_pic_url[0])
                 else:
-                    profile_pic = url_for('static', filename='img/default_profile_pic.png')
+                    profile_pic = url_for('static', filename='img/default_pp.png')
 
                 # You can store the profile_pic_url in the session or pass it to the template
                 session['profile_pic'] = profile_pic
-        return render_template('User/profile.html', user=user, profile_pic=profile_pic)
+            return render_template('User/profile.html', user=user, profile_pic=profile_pic)
 
     elif login_method == 'google':
         return render_template('User/google_profile.html', user=user)
@@ -404,7 +407,7 @@ def teacherProfile():
             if profile_pic and profile_pic[0]:
                 profile_pic_url = url_for('static', filename=profile_pic[0])
             else:
-                profile_pic_url = url_for('static', filename='img/default_profile_pic.png')
+                profile_pic_url = url_for('static', filename='img/default_pp.png')
 
             # You can store the profile_pic_url in the session or pass it to the template
             session['profile_pic_url'] = profile_pic_url
