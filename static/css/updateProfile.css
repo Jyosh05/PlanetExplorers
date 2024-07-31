@@ -5,7 +5,7 @@
     height: 150px;
 }
 
-.profile-pic {
+.profile-Pic {
     width: 150px;
     height: 150px;
     border-radius: 50%;
@@ -34,4 +34,24 @@
 
 #profile_pic {
     display: none;
+}
+
+
+.heading{
+    font-weight: bold;
+    text-align: center;
+}
+
+
+
+body {
+    background-color: #f4f4f4;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }

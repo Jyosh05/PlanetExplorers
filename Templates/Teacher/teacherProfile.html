@@ -3,68 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My profile</title>
+    <title>My Profile</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin-top: 2rem;
+        }
+        .profile-picture {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .profile-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            object-fit: cover;
+        }
+        .profile-card {
+            text-align: center;
+        }
+        .profile-card h3 {
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        .profile-card h4 {
+            margin: 0.5rem 0;
+            font-weight: normal;
+        }
+        .btn {
+            margin-top: 1rem;
+        }
+        .modal-content {
+            border-radius: 8px;
+        }
+        .modal-header, .modal-footer {
+            border: none;
+        }
+    </style>
 </head>
 <body>
     {% include 'Teacher/teacherNav.html' %}
     <div class="container">
-
+        <h1 style="text-align: center;">Profile</h1>
         {% if 'user' in session %}
-
-    <div class="profile-container">
-        <div class="profile-picture">
-
-            {% set profile_pic = user[8] %}
-                {% if user[8] %}
-                <img src="{{ url_for('static', filename=user[8]) }}"  style="max-width: 200px; max-height: 200px;">
-                {% else %}
-                <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture"
-                     style="max-width: 200px; max-height: 200px;">
-                {% endif %}
-
+        <div class="profile-container">
+            <div class="profile-picture">
+                {% set profile_pic = user[8] %}
+                <img src="{{ url_for('static', filename=(profile_pic if profile_pic else 'img/default_pp.png')) }}" alt="Profile Picture" class="profile-img">
             </div>
 
-        <div class="profile-card">
-            {% set name = user[4] %}
-            {% if name %}
-                <h3>Welcome, Teacher {{ user[4] }}</h3>
-            {% else %}
-            <h3>Welcome, {{ user[1] }}</h3>
+            <div class="profile-card">
 
-            {% endif %}
-                <br>
                 <h4>Username: {{ user[1] }}</h4>
-                <h4>Email: {{ user[3] }}</h4>
-                <h4>Age: {{ user[5] }} </h4>
-            {% set address =  user[6] %}
-                {% if address %}
-            <h4>Address: {{ address }}</h4>
-            {% else %}
-            <h4>Address: -</h4>
-            {% endif %}
-            {% set hp = user[7] %}
-                {% if hp %}
-                    <h4>Phone: {{ hp }}</h4>
+                {% set name = user[4] %}
+                {% if name %}
+                <h4>Name: {{ name }}</h4>
                 {% else %}
-                    <h4>Phone: -</h4>
+                <h4>Name: -</h4>
                 {% endif %}
+                <h4>Email: {{ user[3] }}</h4>
+                <h4>Age: {{ user[5] }}</h4>
+                <h4>Address: {{ user[6] if user[6] else '-' }}</h4>
+                <h4>Phone: {{ user[7] if user[7] else '-' }}</h4>
 
-            <br>
-                    <!-- Update Profile Button -->
-                    <a href="{{ url_for('updateTeacherProfile') }}" class="btn btn-primary">Update Profile</a>
+                <a href="{{ url_for('updateTeacherProfile') }}" class="btn btn-primary">Update Profile</a>
+                <a href="{{ url_for('updateTeacherPassword') }}" class="btn btn-primary">Update Password</a>
 
-            <br>
-                                <a href="{{ url_for('updateTeacherPassword') }}" class="btn btn-primary">Update Password</a>
-
-                </div>
-
-         <!-- Button to Open the Modal -->
-                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
-                    Delete
+                <!-- Button to Open the Modal -->
+                <button type="button" class="btn btn-danger mt-3" data-toggle="modal" data-target="#deleteModal">
+                    Delete Account
                 </button>
 
                 <!-- The Modal -->
@@ -78,9 +99,6 @@
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
-
-
-                        <div>
                             <!-- Modal Body -->
                             <div class="modal-body">
                                 Are you sure you want to delete your account?
@@ -90,24 +108,15 @@
                                 <form action="{{ url_for('deleteAccount') }}" method="POST">
                                     <button type="submit" class="btn btn-danger">Delete</button>
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-
                                 </form>
-
                             </div>
-                            </div>
-
                         </div>
                     </div>
                 </div>
-        </div>
-
-                    {% endif %}
-
-
-        </div>
-
-    <div>
-        <a href="{{url_for('create_module')}}"></a>
+            </div>
+        {% endif %}
     </div>
+            </div>
+
 </body>
 </html>
