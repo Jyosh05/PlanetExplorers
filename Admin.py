@@ -173,6 +173,7 @@ def adminUpdatePassword():
                                     mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
                                     mydb.commit()
                                     flash('Password updated successfully', 'success')
+                                    log_this("Password updated successfully", user_id=1)
                                     print('Password updated successfully')  # Debug statement
 
                                     # # Refresh session user data
