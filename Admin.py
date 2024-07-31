@@ -5,11 +5,6 @@ import time
 import os
 
 
-@app.route('/adminHome')
-@roles_required('admin')
-def adminHome():
-
-    return render_template('Admin/adminHome.html')
 
 
 @app.route('/adminProfile')
