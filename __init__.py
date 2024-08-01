@@ -478,7 +478,7 @@ def updateProfile():
 
 @app.route('/updatePassword', methods=['POST', 'GET'])
 @limiter.limit("20 per minute")
-@roles_required('student','teacher')
+@roles_required('student')
 def updatePassword():
     if 'user' in session:
         if 'username' in session['user']:
