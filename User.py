@@ -84,7 +84,6 @@ def login():
                     remaining_time = (lockout_time - datetime.now()).seconds // 60
                     flash(f'Your account is locked. Please try again later in {remaining_time} minutes or contact admin.', 'danger')
                     if 'user' in session and 'id' in session['user']:
-                        user_id = session['user']['id']
                         log_this("Account locked")
                     return redirect(url_for('login'))
 
@@ -96,8 +95,8 @@ def login():
                         (user[0],))
                     mydb.commit()
                     regenerate_session()
-
-                    log_this("login successful")
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("login successful")
 
                     role = user[9]
                     session['role'] = role
@@ -126,6 +125,7 @@ def login():
                         send_unlock_email(user[3], unlock_token)
                     else:
                         flash('Invalid credentials. Please try again.', 'danger')
+                        log_this("Invalid username or password",user_id="unknown")
 
                     return redirect(url_for('login'))
             else:
@@ -168,7 +168,7 @@ def login():
                             send_unlock_email(user[3], unlock_token)
                         else:
                             flash('Invalid credentials. Please try again.', 'danger')
-                            log_this("Invalid username or password")
+                            log_this("Invalid username or password",user_id="unknown")
 
                         return redirect(url_for('login'))
 
@@ -226,11 +226,13 @@ def unlock_account(token):
         mycursor.execute('UPDATE users SET locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s', (user[0],))
         mydb.commit()
         flash('Your account has been unlocked. You can now log in.', 'success')
-        log_this("User account has been unlocked")
+        if 'user' in session and 'id' in session['user']:
+            log_this("User account has been unlocked")
 
     else:
         flash('Invalid or expired unlock token', 'danger')
-        log_this("User gave invalid or expired unlock token")
+        if 'user' in session and 'id' in session['user']:
+            log_this("User gave invalid or expired unlock token")
 
     return redirect(url_for('login'))
 
@@ -578,8 +580,8 @@ def updateTeacherPassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
-
-                                log_this("Existing password exists when creating a password")
+                                if 'user' in session and 'id' in session['user']:
+                                    log_this("Existing password exists when creating a password")
                                 return redirect(url_for('updateTeacherPassword'))
                             else:
                                 try:
@@ -600,7 +602,8 @@ def updateTeacherPassword():
 
                                 except Exception as e:
                                     flash(f'Error updating password: {str(e)}', 'danger')
-                                    log_this("Error updating password")
+                                    if 'user' in session and 'id' in session['user']:
+                                        log_this("Error updating password")
                                     print(f'SQL Update Error: {str(e)}')  # Debug statement
                                     return redirect(url_for('updateTeacherPassword'))
                         except Exception as e:
@@ -657,9 +660,19 @@ def user_orders():
 
 @app.route('/logout')
 def logout():
-    session.pop('user',None)
-    print("Logged out successfully")
-    print(session)
+    # session.pop('user',None)
+    # print("Logged out successfully")
+    # print(session)
+    #
+    # log_this("User logged out successfully")
+    # return redirect(url_for('login'))
 
-    log_this("User logged out successfully")
+    if 'user' in session:
+        user_id = session['user']['id']
+        log_this("User logged out successfully", user_id)
+        session.pop('user', None)
+    else:
+        log_this("Logout attempted without active session")
+
+    flash("You have been logged out successfully.", "success")
     return redirect(url_for('login'))

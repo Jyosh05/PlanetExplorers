@@ -64,8 +64,8 @@ def adminUpdateProfile():
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
                     if 'user' in session and 'id' in session['user']:
-                        user_id = session['user']['id']
-                    log_this('Admin Profile information updated successfully')
+
+                        log_this('Admin Profile information updated successfully')
                     return redirect(url_for('adminUpdateProfile'))
 
             # Handle profile picture upload
@@ -86,7 +86,8 @@ def adminUpdateProfile():
                     except Exception as e:
                         flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
                         os.remove(filepath)
-                        log_this(f'Error uploading file to VirusTotal: {str(e)}')
+                        if 'user' in session and 'id' in session['user']:
+                            log_this(f'Error uploading file to VirusTotal: {str(e)}')
                         return redirect(url_for('adminUpdateProfile'))
 
                     if file_id:
@@ -108,7 +109,8 @@ def adminUpdateProfile():
                                            attributes.get('results', {}).values()):
                                         flash('The file is malicious and has not been saved.', 'error')
                                         os.remove(filepath)  # Remove the file if it is malicious
-                                        log_this("Malicious file that has not been saved while updating profile")
+                                        if 'user' in session and 'id' in session['user']:
+                                            log_this("Malicious file that has not been saved while updating profile")
                                         session['user']['profile_picture'] = 'default_pp.png'
                                         return redirect(url_for('adminUpdateProfile'))
                                     else:
@@ -121,7 +123,8 @@ def adminUpdateProfile():
                                             flash('Profile picture scanned and uploaded successfully!', 'success')
                                         except Exception as e:
                                             flash(f'Error updating profile picture: {str(e)}', 'error')
-                                        log_this('Profile picture scanned and uploaded successfully!')
+                                        if 'user' in session and 'id' in session['user']:
+                                            log_this('Profile picture scanned and uploaded successfully!')
                                         return redirect(url_for('adminUpdateProfile'))
                             else:
                                 flash('Failed to retrieve scan report.', 'error')
@@ -141,7 +144,8 @@ def adminUpdateProfile():
                 return render_template("Admin/adminProfile.html", user=user)
             else:
                 flash("User not found in database after update")
-                log_this("User not found in database after update")
+                if 'user' in session and 'id' in session['user']:
+                    log_this("User not found in database after update")
                 return redirect(url_for('login'))  # Redirect to log in if user not found after update
         else:
             # GET request handling
@@ -149,7 +153,8 @@ def adminUpdateProfile():
             return render_template("Admin/adminUpdateProfile.html", user=user)  # Render form with current user data prepopulated
     else:
         flash("User session not found")
-        log_this("User session not found when updating Profile")
+        if 'user' in session and 'id' in session['user']:
+            log_this("User session not found when updating Profile")
         return redirect(url_for('login'))
 
 
@@ -184,7 +189,8 @@ def adminUpdatePassword():
 
                             if password_exists:
                                 flash('Password already exists. Please create another password', 'danger')
-                                log_this("Existing password exists when creating a password")
+                                if 'user' in session and 'id' in session['user']:
+                                    log_this("Existing password exists when creating a password")
                                 return redirect(url_for('adminUpdatePassword'))
                             else:
                                 try:
@@ -193,7 +199,8 @@ def adminUpdatePassword():
                                     mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
                                     mydb.commit()
                                     flash('Password updated successfully', 'success')
-                                    log_this("Password updated successfully")
+                                    if 'user' in session and 'id' in session['user']:
+                                        log_this("Password updated successfully")
                                     print('Password updated successfully')  # Debug statement
 
                                     # # Refresh session user data
@@ -248,7 +255,8 @@ def adminCreateTeacher():
         # checking for existing teacher username
         if existing_teacher_username:
             flash('User with the same username already exists. Please choose a different username.')
-            log_this("User with the same username is entered but already exists")
+            if 'user' in session and 'id' in session['user']:
+                log_this("User with the same username is entered but already exists")
             return render_template('Admin/adminCreateTeacher.html')
 
         existing_teacher_email = "SELECT * FROM users WHERE email = %s"
@@ -281,7 +289,8 @@ def adminCreateTeacher():
             mycursor.execute(query, values)
             mydb.commit()
             flash('Teacher created successfully!', 'success')
-            log_this("Teacher account created successfully")
+            if 'user' in session and 'id' in session['user']:
+                log_this("Teacher account created successfully")
             return redirect(url_for('blogs'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
@@ -304,7 +313,8 @@ def adminDeleteTeacher(id):
             mycursor.execute(delete_query, (id,))
             mydb.commit()
             flash('Teacher deleted successfully', 'success')
-            log_this(f"Teacher Account with User ID {id} deleted")
+            if 'user' in session and 'id' in session['user']:
+                log_this(f"Teacher Account with User ID {id} deleted")
 
             return redirect(url_for('blogs'))
         else:
@@ -313,7 +323,8 @@ def adminDeleteTeacher(id):
     except Exception as e:
         print('Error: ', e)
         mydb.rollback()
-        log_this("Error occurred while deleting teacher")
+        if 'user' in session and 'id' in session['user']:
+            log_this("Error occurred while deleting teacher")
         return "Error occurred while deleting teacher"
 
 
@@ -371,11 +382,13 @@ def adminTeacherUpdate(id):
                 mydb.commit()
 
                 flash('Teacher details updated successfully', 'success')
-                log_this("Teachers detail updated successfully")
+                if 'user' in session and 'id' in session['user']:
+                    log_this("Teachers detail updated successfully")
                 return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
 
             else:
-                log_this("Teacher not found while updating account")
+                if 'user' in session and 'id' in session['user']:
+                    log_this("Teacher not found while updating account")
                 return "Teacher not found"
 
         except Exception as e:
@@ -455,7 +468,8 @@ def adminCreateStudent():
             mycursor.execute(query, values)
             mydb.commit()
             flash('Student created successfully!', 'success')
-            log_this("Student created successfully")
+            if 'user' in session and 'id' in session['user']:
+                log_this("Student created successfully")
             return redirect(url_for('blogs'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
@@ -514,17 +528,20 @@ def adminStudentUpdate(id):
                 mydb.commit()
 
                 flash('Student details updated successfully.', 'success')
-                log_this("Student details updated successfully")
+                if 'user' in session and 'id' in session['user']:
+                    log_this("Student details updated successfully")
                 return redirect(url_for('adminStudentUpdate', id=student_details[0]))
 
             else:
-                log_this("User not found when updating Student")
+                if 'user' in session and 'id' in session['user']:
+                    log_this("User not found when updating Student")
                 return "Student not found"
 
         except Exception as e:
             print("Error: ", e)
             mydb.rollback()
-            log_this("Error occurred while updating student")
+            if 'user' in session and 'id' in session['user']:
+                log_this("Error occurred while updating student")
             return "Error occurred while updating student"
 
     else:
@@ -541,7 +558,8 @@ def adminStudentUpdate(id):
 
         except Exception as e:
             print('Error:', e)
-            log_this("Error occurred while fetching student details")
+            if 'user' in session and 'id' in session['user']:
+                log_this("Error occurred while fetching student details")
             return "Error occurred while fetching student details"
 
 
@@ -558,17 +576,20 @@ def adminDeleteStudent(id):
             mydb.commit()
 
             flash('Student deleted successfully', 'success')
-            log_this(f"Student Account with User ID {id} deleted")
+            if 'user' in session and 'id' in session['user']:
+                log_this(f"Student Account with User ID {id} deleted")
 
             return redirect(url_for('blogs'))
         else:
-            log_this("User not found when deleting account")
+            if 'user' in session and 'id' in session['user']:
+                log_this("User not found when deleting account")
             return "Student not found"
 
     except Exception as e:
         print('Error: ', e)
         mydb.rollback()
-        log_this("Error occurred while deleting student")
+        if 'user' in session and 'id' in session['user']:
+            log_this("Error occurred while deleting student")
         return "Error occurred while deleting student"
 
 
@@ -656,7 +677,8 @@ def adminstoreupdate():
 
     mydb.commit()
     mycursor.close()
-    log_this("Products in store updated")
+    if 'user' in session and 'id' in session['user']:
+        log_this("Products in store updated")
     return redirect(url_for('adminstore'))
 
 
@@ -668,7 +690,8 @@ def adminstoredelete():
     mycursor.execute("DELETE FROM storeproducts WHERE id = %s", (product_id,))
     mydb.commit()
     mycursor.close()
-    log_this("Product deleted successfully")
+    if 'user' in session and 'id' in session['user']:
+        log_this("Product deleted successfully")
     return redirect(url_for('adminstore'))
 
 
