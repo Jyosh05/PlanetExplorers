@@ -259,6 +259,7 @@ for a in tableCheck:
                 product_name VARCHAR(255),
                 quantity INT NOT NULL,
                 price_in_points INT NOT NULL,
+                status VARCHAR(255) DEFAULT 'Pending',
                 FOREIGN KEY (order_id) REFERENCES orders(id),
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )
