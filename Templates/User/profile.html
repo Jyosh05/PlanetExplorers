@@ -9,84 +9,69 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <link rel="stylesheet" type="text/css" href="../../static/css/profile.css">
+
 </head>
 <body>
     {% include 'navbar.html' %}
-    <div class="container">
+    <div class="container mt-5">
         {% if 'user' in session %}
-        <div class="profile-container">
-            <div class="profile-pic-div">
-                <div class="profile-picture">
+        <div class="card mx-auto" style="max-width: 600px;">
+            <div class="card-body text-center">
+                <div class="profile-picture mb-3">
                     {% set profile_pic = user[8] %}
                     {% if user[8] %}
                     <img src="{{ url_for('static', filename=user[8]) }}" class="profile-img">
                     {% else %}
-                    <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture" style="max-width: 200px; max-height: 200px;">
+                    <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture" class="profile-img">
                     {% endif %}
                 </div>
+                <div class="profile-details">
+
+                    <p class="card-text"><strong>Username:</strong> {{ user[1] }}</p>
+                    {% set name = user[4] %}
+                    {% if name %}
+                    <p class="card-text"><strong>Name:</strong>  {{ user[4] }}</p>
+                    {% else %}
+                    <p class="card-text"><strong>Name:</strong>-</p>
+                    {% endif %}
+                    <p class="card-text"><strong>Explorer Points:</strong> {{ user[14] }}</p>
+                    <p class="card-text"><strong>Email:</strong> {{ user[3] }}</p>
+                    <p class="card-text"><strong>Age:</strong> {{ user[5] }}</p>
+                    {% set address = user[6] %}
+                    <p class="card-text"><strong>Address:</strong> {% if address %}{{ address }}{% else %}-{% endif %}</p>
+                    {% set hp = user[7] %}
+                    <p class="card-text"><strong>Phone:</strong> {% if hp %}{{ hp }}{% else %}-{% endif %}</p>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-3">
+                    <a href="{{ url_for('updateProfile') }}" class="btn btn-primary me-md-2">Update Profile</a>
+                    <a href="{{ url_for('updatePassword') }}" class="btn btn-primary me-md-2">Change Password</a>
+                    <a href="{{ url_for('user_orders') }}" class="btn btn-primary me-md-2">View Purchase History</a>
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                </div>
             </div>
+        </div>
 
-            <div class="profile-card">
-                {% set name = user[4] %}
-                {% if name %}
-                <h3>Welcome, Student {{ user[4] }}</h3>
-                {% else %}
-                <h3>Welcome, {{ user[1] }}</h3>
-                {% endif %}
-                <br>
-                <h4>Username: {{ user[1] }}</h4>
-                <h4>Explorer Points: {{ user[14] }}</h4>
-                <h4>Email: {{ user[3] }}</h4>
-                <h4>Age: {{ user[5] }}</h4>
-                {% set address = user[6] %}
-                {% if address %}
-                <h4>Address: {{ address }}</h4>
-                {% else %}
-                <h4>Address: -</h4>
-                {% endif %}
-                {% set hp = user[7] %}
-                {% if hp %}
-                <h4>Phone: {{ hp }}</h4>
-                {% else %}
-                <h4>Phone: -</h4>
-                {% endif %}
-                <br>
-                <!-- Update Profile Button -->
-                <a href="{{ url_for('updateProfile') }}" class="btn btn-primary">Update Profile</a>
-                <br>
-                <a href="{{ url_for('updatePassword') }}" class="btn btn-primary">Change Password</a>
-                <br>
-                <!-- Button to View Purchase History -->
-                <a href="{{ url_for('user_orders') }}" class="btn btn-primary">View Purchase History</a>
-                <br>
-                <!-- Button to Open the Modal -->
-                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
-                    Delete
-                </button>
-
-                <!-- The Modal -->
-                <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <!-- Modal Header -->
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="deleteModalLabel">Delete Confirmation</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <!-- Modal Body -->
-                            <div class="modal-body">
-                                Are you sure you want to delete your account?
-                            </div>
-                            <!-- Modal Footer -->
-                            <div class="modal-footer">
-                                <form action="{{ url_for('deleteAccount') }}" method="POST">
-                                    <button type="submit" class="btn btn-danger">Delete</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                </form>
-                            </div>
-                        </div>
+        <!-- The Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Delete Confirmation</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <!-- Modal Body -->
+                    <div class="modal-body">
+                        Are you sure you want to delete your account?
+                    </div>
+                    <!-- Modal Footer -->
+                    <div class="modal-footer">
+                        <form action="{{ url_for('deleteAccount') }}" method="POST">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </form>
                     </div>
                 </div>
             </div>
