@@ -119,7 +119,9 @@ for a in tableCheck:
                         failed_login_attempts INT DEFAULT 0,
                         lockout_time DATETIME,
                         explorer_points INT DEFAULT 0,
-                        email_verified BOOLEAN
+                        email_verified BOOLEAN,
+                        otp VARCHAR(10),
+                        otpExpiry DATETIME
                     )
                     """)
         print(f"Table 'users' Created")
@@ -157,7 +159,7 @@ for a in tableCheck:
         mycursor.execute("""
             CREATE TABLE IF NOT EXISTS audit_logs(
                 log_id INT PRIMARY KEY,
-                event VARCHAR(100) NULL,
+                event VARCHAR(600) NULL,
                 timestamp DATETIME NULL,
                 user_id VARCHAR(45) NULL
 

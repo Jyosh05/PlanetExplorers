@@ -210,6 +210,18 @@ def adminUpdatePassword():
                                     # else:
                                     #     flash('User not found in database after update', 'error')
                                     #     return redirect(url_for('login'))
+                                    mycursor.execute("SELECT email FROM users WHERE username = %s", (username,))
+
+                                    email_result = mycursor.fetchone()
+                                    email = email_result[0]
+                                    print(email)
+
+                                    subject = 'Password Changed'
+                                    template = f'''<p>Dear user, <br><br>
+                                                You have recently changed your password.<br><br>
+                                                Yours, <br>
+                                                PlanetExplorers Team</p>'''
+                                    send_reset_link_email(email, subject, template)
 
                                 except Exception as e:
                                     flash(f'Error updating password: {str(e)}', 'danger')

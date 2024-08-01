@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OTP Authentication</title>
+</head>
+<body>
+{% include 'navbar.html' %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+<form action="{{ url_for('otpAuthentication') }}" method="POST">
+  <label for="user_otp">Enter OTP:</label>
+  <input type="text" id="user_otp" name="user_otp" required>
+<button type="submit" class="btn btn-primary me-2">Login</button>
+
+<a href="{{ url_for('login') }}" class="btn btn-danger">Back</a>
+
+</form>
+</body>
+</html>

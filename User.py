@@ -1,4 +1,5 @@
 import time
+from random import randint
 
 import mysql.connector
 
@@ -98,10 +99,31 @@ def login():
                     if 'user' in session and 'id' in session['user']:
                         log_this("login successful")
 
-                    role = user[9]
-                    session['role'] = role
-                    print(f"Logged in user role: {role}")
-                    return redirect(url_for(role_redirects.get(role, 'home')))
+
+                    usersEmail = user[3]
+                    otp_expiry = 0
+
+                    if usersEmail:
+                        try:
+                            otp = randint(100000, 999999)
+                            otp_expiry = datetime.now() + timedelta(minutes=5)
+                            # session['otp'] = otp
+                            # session['otp_expiry'] = time.time() + 60  # 300 seconds = 5 minutes
+                            mycursor.execute(
+                                'UPDATE users SET otp = %s, otpExpiry = %s WHERE username = %s',
+                                (otp, otp_expiry, username))
+                            mydb.commit()
+
+                            subject = 'OTP for Authentication'
+                            template = f'Dear User\n\n<p>Here is the OTP to authenticate for your account: {otp}.' \
+                                       f' The OTP is only valid for 5 minutes. \n\n\n Yours Truly, \nPlanetExplorers Team</p>'
+                            send_reset_link_email(usersEmail, subject, template)
+                            flash('Password reset link has been sent to your email.', 'success')
+                            return redirect(url_for('otpAuthentication'))
+                        except Exception as e:
+                            flash(f"Failed to send verification email. Please try again. Reason: {e}")
+
+
                 else:
                     failed_login_attempts = user[12] + 1
                     lockout_duration = 0
@@ -186,6 +208,43 @@ def login():
         return redirect(encoded_url)
 
     return render_template("User/login.html")
+
+@app.route('/otpAuthentication', methods=['POST', 'GET'])
+def otpAuthentication():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        if request.method == 'POST':
+            query = "SELECT * FROM users WHERE username = %s"
+            mycursor.execute(query, (username,))
+            user = mycursor.fetchone()
+
+            user_otp = request.form.get('user_otp')
+
+            # Check if the OTP is valid and has not expired
+            stored_otp = user[16]
+            expiry_time = user[17]
+
+            if stored_otp and datetime.now() < expiry_time:
+                if user_otp == stored_otp:
+                    mycursor.execute(
+                        'UPDATE users SET otp = NULL, otpExpiry = NULL WHERE username = %s',
+                        (user[1],))
+                    mydb.commit()
+
+                    role = user[9]
+                    session['role'] = role
+                    session['login_method'] = 'login'
+
+                    return redirect(url_for(role_redirects.get(role, 'home')))
+                else:
+                    flash("Incorrect OTP, please try again.",'danger')
+                    return render_template('otpAuthentication.html')
+            else:
+                flash("OTP has expired. Please request a new one.", 'danger')
+                return redirect(url_for('login'))
+
+    return render_template('otpAuthentication.html')
+
 
 @app.route('/login/google')
 def login_with_google():
