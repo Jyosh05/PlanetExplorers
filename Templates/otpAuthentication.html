@@ -3,11 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <title>OTP Authentication</title>
+    <style>
+        body {
+            background-color: #0D2818;
+            color: #FFFFFF;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #1E7043;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .container input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 5px;
+        }
+        .container button {
+            width: 48%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .alert {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
 </head>
 <body>
-{% include 'navbar.html' %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
+
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">
@@ -16,14 +88,15 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-
-<form action="{{ url_for('otpAuthentication') }}" method="POST">
-  <label for="user_otp">Enter OTP:</label>
-  <input type="text" id="user_otp" name="user_otp" required>
-<button type="submit" class="btn btn-primary me-2">Login</button>
-
-<a href="{{ url_for('login') }}" class="btn btn-danger">Back</a>
-
-</form>
+        <h1>OTP Authentication</h1>
+        <form action="{{ url_for('otpAuthentication') }}" method="POST">
+            <label for="user_otp">Enter OTP:</label>
+            <input type="text" id="user_otp" name="user_otp" required>
+            <div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <button class="btn btn-danger"><a href="{{ url_for('login') }}">Back</a></button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>

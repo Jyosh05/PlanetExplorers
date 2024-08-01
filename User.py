@@ -121,7 +121,7 @@ def login():
                             template = f'Dear User\n\n<p>Here is the OTP to authenticate for your account: {otp}.' \
                                        f' The OTP is only valid for 5 minutes. \n\n\n Yours Truly, \nPlanetExplorers Team</p>'
                             send_reset_link_email(usersEmail, subject, template)
-                            flash('Password reset link has been sent to your email.', 'success')
+                            flash('OTP sent to your email.', 'success')
                             return redirect(url_for('otpAuthentication'))
                         except Exception as e:
                             flash(f"Failed to send verification email. Please try again. Reason: {e}")
