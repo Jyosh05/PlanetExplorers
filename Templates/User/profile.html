@@ -9,48 +9,40 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <link rel="stylesheet" type="text/css" href="../../static/css/profile.css">
-
 </head>
 <body>
     {% include 'navbar.html' %}
     <div class="container mt-5">
         {% if 'user' in session %}
-        <div class="card mx-auto" style="max-width: 600px;">
-            <div class="card-body text-center">
-                <div class="profile-picture mb-3">
-                    {% set profile_pic = user[8] %}
-                    {% if user[8] %}
-                    <img src="{{ url_for('static', filename=user[8]) }}" class="profile-img">
-                    {% else %}
-                    <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture" class="profile-img">
-                    {% endif %}
-                </div>
-                <div class="profile-details">
-
-                    <p class="card-text"><strong>Username:</strong> {{ user[1] }}</p>
-                    {% set name = user[4] %}
-                    {% if name %}
-                    <p class="card-text"><strong>Name:</strong>  {{ user[4] }}</p>
-                    {% else %}
-                    <p class="card-text"><strong>Name:</strong>-</p>
-                    {% endif %}
-                    <p class="card-text"><strong>Explorer Points:</strong> {{ user[14] }}</p>
-                    <p class="card-text"><strong>Email:</strong> {{ user[3] }}</p>
-                    <p class="card-text"><strong>Age:</strong> {{ user[5] }}</p>
-                    {% set address = user[6] %}
-                    <p class="card-text"><strong>Address:</strong> {% if address %}{{ address }}{% else %}-{% endif %}</p>
-                    {% set hp = user[7] %}
-                    <p class="card-text"><strong>Phone:</strong> {% if hp %}{{ hp }}{% else %}-{% endif %}</p>
-                </div>
-                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-3">
-                    <a href="{{ url_for('updateProfile') }}" class="btn btn-primary me-md-2">Update Profile</a>
-                    <a href="{{ url_for('updatePassword') }}" class="btn btn-primary me-md-2">Change Password</a>
-                    <a href="{{ url_for('user_orders') }}" class="btn btn-primary me-md-2">View Purchase History</a>
-                    {% if user[15] == null %}
-                    <a href="{{ url_for('verify_register') }}" class="btn btn-primary me-md-2"></a>
-                    {% endif %}
-                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">Delete</button>
-                </div>
+        <div class="profile-card mx-auto">
+            <div class="profile-picture">
+                {% set profile_pic = user[8] %}
+                {% if profile_pic %}
+                <img src="{{ url_for('static', filename=profile_pic) }}" class="profile-img">
+                {% else %}
+                <img src="{{ url_for('static', filename='img/default_pp.png') }}" alt="Default Profile Picture" class="profile-img">
+                {% endif %}
+            </div>
+            <div class="profile-details">
+                <p><strong>Username:</strong> {{ user[1] }}</p>
+                {% set name = user[4] %}
+                <p><strong>Name:</strong> {% if name %}{{ name }}{% else %}-{% endif %}</p>
+                <p><strong>Explorer Points:</strong> {{ user[14] }}</p>
+                <p><strong>Email:</strong> {{ user[3] }}</p>
+                <p><strong>Age:</strong> {{ user[5] }}</p>
+                {% set address = user[6] %}
+                <p><strong>Address:</strong> {% if address %}{{ address }}{% else %}-{% endif %}</p>
+                {% set hp = user[7] %}
+                <p><strong>Phone:</strong> {% if hp %}{{ hp }}{% else %}-{% endif %}</p>
+            </div>
+            <div class="buttons mt-4" style="justify-content: center; align-items: center;">
+                <a href="{{ url_for('updateProfile') }}" class="btn btn-primary">Update Profile</a>
+                <a href="{{ url_for('updatePassword') }}" class="btn btn-primary">Change Password</a>
+                <a href="{{ url_for('user_orders') }}" class="btn btn-primary">View Purchase History</a>
+                {% if user[15] is none %}
+                <a href="{{ url_for('verify_register') }}" class="btn btn-info">Verify Email</a>
+                {% endif %}
+                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">Delete Account</button>
             </div>
         </div>
 

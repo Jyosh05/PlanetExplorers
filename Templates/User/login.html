@@ -2,36 +2,113 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #0D2818;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-container {
+            background-color: #1E7043;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            margin: 100px auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            color: #fff;
+        }
+
+        .form-control {
+            background-color: #e9ecef;
+            border: none;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background-color: #0D2818;
+            border-color: #0D2818;
+        }
+
+        .btn-primary:hover {
+            background-color: #154c27;
+            border-color: #154c27;
+        }
+
+        .btn-google {
+            background-color: #db4437;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-google:hover {
+            background-color: #c13a2d;
+        }
+
+        .alert {
+            margin-top: 20px;
+        }
+
+        a {
+            color: #add8e6;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    {% include 'navbar.html' %}
+    <img src="../static/img/logo.png" width="151" height="113">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div class="login-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
+        <form method="POST" action="login">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" name="username" id="username" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" class="form-control">
+            </div>
+            <a href="{{ url_for('forget_password') }}" style="color: #fff;">Forget Password?</a>
 
-    <form method="POST" action="login">
-        <label for="username">User ID</label>
-        <input type="text" name="username" id="username">
-        <br>
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password">
-        <br>
-        <a href="{{ url_for('forget_password') }}">Forget Password?</a>
-        <button type="submit">Login</button>
-    </form>
-    <a href="{{ url_for('register') }}">Register Account</a>
-    <a href="{{url_for('login_with_google')}}">
-        <button type="button">Sign In With Google</button>
-    </a>
+            <button type="submit" class="btn btn-primary btn-block mt-3" style="background-color: #B1F3CF; color: #1E7043; border-color: #B1F3CF">Login</button>
 
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="{{ url_for('login_with_google') }}">
+                <button type="button" class="btn-google mt-2" style="background-color: #fff; color: #000; border-radius: 20px;">Sign In With Google</button>
+            </a>
+            <a href="{{ url_for('home') }}" class="btn btn-danger btn-block mt-3">Cancel</a>
+
+            <p style="color: #fff; margin-top: 20px;">New to PlanetExplorers? <a href="{{ url_for('register') }}" style="color: #fff;">Register Account</a></p>
+
+        </div>
+    </div>
 </body>
 </html>

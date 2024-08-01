@@ -163,11 +163,11 @@ def verify_register():
 
         send_verification_email(email,token)
         flash('Email verification link has been sent to your email', 'success')
-        return redirect(url_for('learnerHome'))
+        return redirect(url_for('login'))
 
     else:
         flash('Error sending email', 'danger')
-        return redirect(url_for('learnerHome'))
+        return redirect(url_for('login'))
 
 
 
