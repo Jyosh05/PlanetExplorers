@@ -143,6 +143,72 @@ def register():
         return redirect(url_for('login'))
     return render_template('User/register.html')
 
+@app.route('/verify_register', methods=['GET', 'POST'])
+def verify_register():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        query = "SELECT email from users WHERE username = %s"
+        mycursor.execute(query,(username,))
+        email = mycursor.fetchone()[0]
+
+        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])  # The serializer requires a secret key
+        # to ensure the tokens are securely generated and can be validated later.
+        token = serializer.dumps(email,
+                                 salt=app.config[
+                                     'SECRET_KEY'])  # dumps method serializes the email address into a token
+        expiration = datetime.utcnow() + timedelta(minutes=5)  # Token expires in 5 minutes
+        save_token = 'INSERT INTO token_validation (email, token, expiration) VALUES (%s, %s, %s)'
+        mycursor.execute(save_token, (email, token, expiration))
+        mydb.commit()
+
+        send_verification_email(email,token)
+        flash('Email verification link has been sent to your email', 'success')
+        return redirect(url_for('learnerHome'))
+
+    else:
+        flash('Error sending email', 'danger')
+        return redirect(url_for('learnerHome'))
+
+
+
+@app.route('/verify_email/<token>', methods=['GET', 'POST'])
+def verify_email(token):
+    email = confirm_token(token)
+    if not email:
+        flash('Invalid or expired token.', 'danger')
+        return redirect(url_for('login'))  # Redirect to the login page if token is invalid
+
+    if request.method == 'POST':
+        yes = True
+        try:
+            # Update the user's email verification status
+            query = "UPDATE users SET email_verified = %s WHERE email = %s"
+            mycursor.execute(query, (yes, email))
+            mydb.commit()
+
+            # Mark the token as used
+            query2 = "UPDATE token_validation SET used = %s WHERE token = %s"
+            mycursor.execute(query2, (yes, token))
+            mydb.commit()
+
+            flash("Email verified, please login again", "success")
+        except Exception as e:
+            # Handle potential database errors
+            mydb.rollback()  # Rollback the transaction in case of error
+            flash(f"An error occurred: {e}", "danger")
+
+        return redirect(url_for('login'))
+
+    # Ensure that the route also handles GET requests
+    return render_template('User/verify_email.html', token=token)  # Render a template if GET request
+
+
+
+
+
+
+
+
 
 @app.route('/teacher_register', methods=["GET", "POST"])
 def teacher_register():

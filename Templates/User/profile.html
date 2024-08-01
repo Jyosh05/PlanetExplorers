@@ -46,6 +46,9 @@
                     <a href="{{ url_for('updateProfile') }}" class="btn btn-primary me-md-2">Update Profile</a>
                     <a href="{{ url_for('updatePassword') }}" class="btn btn-primary me-md-2">Change Password</a>
                     <a href="{{ url_for('user_orders') }}" class="btn btn-primary me-md-2">View Purchase History</a>
+                    {% if user[15] == null %}
+                    <a href="{{ url_for('verify_register') }}" class="btn btn-primary me-md-2"></a>
+                    {% endif %}
                     <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">Delete</button>
                 </div>
             </div>

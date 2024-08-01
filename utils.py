@@ -742,3 +742,18 @@ def get_scan_report(file_id):
     else:
         print(f"Error retrieving scan report: {response.text}")
         return None
+
+serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+def send_verification_email(email, token):
+    verification_link = url_for('verify_email', token=token, _external=True)
+
+    print(f'Generated verification link: {verification_link}')  # Debugging statement
+    msg = Message('Email Verification', sender='your_email@example.com', recipients=[email])
+    msg.body = f'Click the link to verify your email: {verification_link}'
+
+
+    try:
+        mail.send(msg)
+        print(f'Email sent to: {email}')  # Debugging statement
+    except Exception as e:
+        print(f'Error sending email: {str(e)}')  # Debugging statement
