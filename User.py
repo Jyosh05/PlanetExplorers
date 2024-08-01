@@ -38,7 +38,7 @@ def profile():
         flash('Please log in to access your profile', 'danger')
         return redirect(url_for('login'))
 
-    if login_method == 'login':
+    if session['login_method'] == 'login':
         if 'user' in session and 'username' in session['user']:
             username = session['user']['username']
             user = userSession(username)
@@ -56,7 +56,7 @@ def profile():
                 session['profile_pic'] = profile_pic
             return render_template('User/profile.html', user=user, profile_pic=profile_pic)
 
-    elif login_method == 'google':
+    elif session['login_method'] == 'google':
         return render_template('User/google_profile.html', user=user)
 
     else:
