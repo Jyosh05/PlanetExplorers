@@ -16,6 +16,7 @@ def home():
 
 
 @app.route('/learnerHome')
+@limiter.limit("20 per minute")
 @roles_required('student')
 def learnerHome():
     cursor = mydb.cursor(dictionary=True)
@@ -27,6 +28,7 @@ def learnerHome():
 
 
 @app.route('/profile')
+@limiter.limit("20 per minute")
 def profile():
     user = session.get('user')
     login_method = session.get('login_method')
@@ -65,6 +67,7 @@ def profile():
 
 
 @app.route('/login', methods=["GET", "POST"])
+@limiter.limit("20 per minute")
 def login():
     if request.method == "POST":
         try:
@@ -247,6 +250,7 @@ def otpAuthentication():
 
 
 @app.route('/login/google')
+@limiter.limit("20 per minute")
 def login_with_google():
     redirect_uri = url_for('authorize', _external= True)
     return google.authorize_redirect(redirect_uri,prompt='consent')
@@ -308,6 +312,7 @@ def send_unlock_email(email, token):
 
 
 @app.route('/teacher/create_module', methods=['GET', 'POST'])
+@limiter.limit("40 per minute")
 @roles_required("teacher")
 def create_module():
     if request.method == 'GET':
@@ -458,6 +463,7 @@ def show_results(module_id):
 
 
 @app.route('/teacherProfile')
+@limiter.limit("20 per minute")
 @roles_required('teacher')
 def teacherProfile():
     if 'user' in session and 'username' in session['user']:
@@ -478,6 +484,7 @@ def teacherProfile():
     return render_template('Teacher/teacherProfile.html', user=user, profile_pic_url=profile_pic_url)
 
 @app.route('/updateTeacherProfile', methods=['GET', 'POST'])
+@limiter.limit("20 per minute")
 @roles_required('teacher')
 def updateTeacherProfile():
     if 'user' in session and 'username' in session['user']:
@@ -609,6 +616,7 @@ def updateTeacherProfile():
 
 
 @app.route('/updateTeacherPassword', methods=['POST', 'GET'])
+@limiter.limit("20 per minute")
 @roles_required('teacher')
 def updateTeacherPassword():
     if 'user' in session:
