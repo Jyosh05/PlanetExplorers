@@ -648,9 +648,9 @@ def roles_required(*roles):
         return decorated_function
     return wrapper
 
-user_id="unknown"
-def log_this(event):
-    global user_id
+
+def log_this(event, user_id="unknown"):
+    #global user_id
     # We do a select max to get the last log_id in the table
     # the fetchone returns the field in a tuple format
     if 'user' in session and 'id' in session['user']:
