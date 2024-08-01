@@ -203,13 +203,6 @@ def verify_email(token):
     return render_template('User/verify_email.html', token=token)  # Render a template if GET request
 
 
-
-
-
-
-
-
-
 @app.route('/teacher_register', methods=["GET", "POST"])
 def teacher_register():
     if request.method == "POST":
@@ -256,8 +249,7 @@ def teacher_payment(username):
         full_name = request.form.get('full_name')
         email = request.form.get('email')
         address = request.form.get('address')
-        city = request.form.get('city')
-        state = request.form.get('state')
+        address2 = request.form.get('address2')
         zip_code = request.form.get('zip')
         card_name = request.form.get('card_name')
         card_number = request.form.get('card_number').replace(" ", "")  # Remove spaces for validation
@@ -267,7 +259,7 @@ def teacher_payment(username):
 
         try:
             # Validate input for harmful content
-            input_validation(full_name, email, address, city, state, zip_code, card_name, card_number, exp_month,
+            input_validation(full_name, email, address, address2, zip_code, card_name, card_number, exp_month,
                              exp_year, cvv)
 
             # Process payment
