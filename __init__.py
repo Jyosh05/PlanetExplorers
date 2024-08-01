@@ -237,10 +237,44 @@ def teacher_register():
         if register_as_teacher:
             return redirect(url_for('teacher_payment', username=username))
         else:
-            add_info_teacher(username, password, email, name, age, address, phone)
-            return redirect(url_for('success'))
+            add_info(username, password, email, name, age, address, phone)
+            return redirect(url_for('login'))
 
     return render_template('User/register.html')
+
+
+
+@app.route('/confirm_teacher_registration/<token>')
+def confirm_teacher_registration(token):
+    email = confirm_token(token)
+    if email:
+        payment_details = session.get('payment_details')
+        if payment_details and payment_details['email'] == email:
+            try:
+                if process_payment(payment_details['card_name'], payment_details['card_number'], payment_details['exp_month'], payment_details['exp_year'], payment_details['cvv']):
+                    if update_user_role(payment_details['username'], 'teacher'):
+                        add_info_teacher(
+                            payment_details['username'], session['password'], session['email'],
+                            session['name'], session['age'], payment_details['address'], session['phone']
+                        )
+                        session.clear()  # Clear session data after successful registration and payment
+                        flash('Your account has been created successfully.', 'success')
+                        return redirect(url_for('login'))
+                    else:
+                        flash('Failed to update user role', 'danger')
+                        return redirect(url_for('login'))
+                else:
+                    flash('Payment failed', 'danger')
+                    return redirect(url_for('login'))
+            except ValueError as e:
+                flash(str(e), 'danger')
+                return redirect(url_for('login'))
+        else:
+            flash('No payment details found or email mismatch.', 'danger')
+            return redirect(url_for('login'))
+    else:
+        flash('The confirmation link is invalid or has expired.', 'danger')
+        return redirect(url_for('login'))
 
 
 @app.route('/payment/<username>', methods=["GET", "POST"])
@@ -250,6 +284,7 @@ def teacher_payment(username):
         email = request.form.get('email')
         address = request.form.get('address')
         address2 = request.form.get('address2')
+        state = request.form.get('state')
         zip_code = request.form.get('zip')
         card_name = request.form.get('card_name')
         card_number = request.form.get('card_number').replace(" ", "")  # Remove spaces for validation
@@ -259,21 +294,34 @@ def teacher_payment(username):
 
         try:
             # Validate input for harmful content
-            input_validation(full_name, email, address, address2, zip_code, card_name, card_number, exp_month,
-                             exp_year, cvv)
+            input_validation(full_name, email, address, address2, zip_code, card_name, card_number, exp_month, exp_year, cvv)
 
-            # Process payment
-            if process_payment(card_name, card_number, exp_month, exp_year, cvv):
-                if update_user_role(username, 'teacher'):
-                    # Add the user info to the database
-                    add_info_teacher(session['username'], session['password'], session['email'], session['name'],
-                                     session['age'], session['address'], session['phone'])
-                    session.clear()  # Clear session data after successful registration and payment
-                    return redirect(url_for('login'))
-                else:
-                    return "Failed to update user role", 500
-            else:
-                return "Payment failed", 500
+            # Generate confirmation token
+            token = generate_confirm_token(email)
+
+            # Send verification email
+            confirm_url = url_for('confirm_teacher_registration', token=token, _external=True)
+            html = render_template('Teacher/email_teacher_verification.html', confirm_url=confirm_url)
+            send_reset_link_email(email, 'Confirm Your Registration', html)
+
+            # Temporarily store payment details in session or database
+            session['payment_details'] = {
+                'username': username,
+                'full_name': full_name,
+                'email': email,
+                'address': address,
+                'address2': address2,
+                'zip_code': zip_code,
+                'card_name': card_name,
+                'card_number': card_number,
+                'exp_month': exp_month,
+                'exp_year': exp_year,
+                'cvv': cvv
+            }
+
+            flash(
+                'A confirmation email has been sent to your email address. Please confirm to complete the payment.','success')
+            return redirect(url_for('login'))
 
         except ValueError as e:
             return str(e), 400

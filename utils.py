@@ -439,30 +439,33 @@ def add_info(username, password, email, name, age, address, phone):
 def process_payment(card_name, card_number, exp_month, exp_year, cvv):
     try:
         # Validate input for harmful content
-        input_validation(card_name, card_number, exp_month, exp_year, cvv)
+        input_validation(card_name, exp_month, exp_year)
 
-        # Validate card details
+        # Validate card details (plaintext validation)
         card_name_valid = validate_card_name(card_name)
-        card_number_valid = validate_card_number(card_number)
+        card_number_valid = validate_card_number(card_number)  # Compare with hashed value
         expiry_date_valid = validate_expiry_date(exp_month, exp_year)
-        cvv_valid = validate_cvc(cvv)
+        cvv_valid = validate_cvc(cvv)  # Compare with hashed value
 
         if card_name_valid and card_number_valid and expiry_date_valid and cvv_valid:
-            print("Teacher Added Successfully")
+            print("Payment process succeeded")
             return True
+        else:
+            print("Payment validation failed")
     except ValueError as e:
-        print(f"Payment validation failed: {e}")
+        print(f"Payment validation error: {e}")
     return False
-
 
 def validate_card_name(name):
     return len(name) > 0
 
 def validate_card_number(number):
     number = number.replace(" ", "")  # Remove spaces
-    number = number.replace("-", "")  # removes hyphen
+    number = number.replace("-", "")  # Removes hyphens
     return re.match(r"^\d{16}$", number) is not None
 
+def validate_cvc(cvc):
+    return re.match(r"^\d{3}$", cvc) is not None
 
 # Validate Expiry Date
 def validate_expiry_date(month, year):
@@ -472,11 +475,6 @@ def validate_expiry_date(month, year):
         "11": "November", "12": "December"
     }
     return month in months and year.isdigit() and len(year) == 4
-
-
-# Validate CVV
-def validate_cvc(cvc):
-    return re.match(r"^\d{3}$", cvc) is not None
 
 # Update User Role Function
 def update_user_role(username, role):
