@@ -143,7 +143,7 @@ body {
   <div class="sidenav-content">
     {% if 'user' in session %}
       <div class="user-details">
-        <img src="{{ url_for('static', filename='img/' ~ (session['user'].get('profile_picture') or 'default_pp.png')) }}" alt="Profile Picture" style="width: 60px; height: 60px;">
+          <img src="{{ session['profile_pic'] }}" alt="Profile Picture" style="width: 60px; height: 60px;">
         <div class="user-info">
           <p class="username">{{ session['user']['username'] }}</p>
           <p class="role">{{ session['user']['role'] }}</p>

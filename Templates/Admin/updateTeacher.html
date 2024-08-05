@@ -9,6 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <style>
+        body {
+            background-color: #f8f9fa;
+        }
         .heading{
             text-align: center;
             background-color: #324F3E;
@@ -18,8 +21,39 @@
             font-size: 28px;
 
         }
+        .form-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
         .form-container h2 {
             margin-bottom: 20px;
+            font-weight: bolder;
+        }
+        .alert {
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            border: none;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .form-group label {
+            font-weight: bold;
+        }
+        .text-danger {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .form-row {
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -28,13 +62,12 @@
 
     <h1 class="heading">Staff Management System</h1>
 
-    <h2 style="text-align: left; font-weight: bolder; margin-top: 30px; margin-left: 115px;">Update Staff Details</h2>
-
     <div class="container">
         <div class="form-container">
-        <form method="POST" action="">
+            <h2>Update Staff Details</h2>
 
-            <input type="hidden" id="id" name="id" value="{{ teacher_details[0] }}">
+            <form method="POST" action="">
+                <input type="hidden" id="id" name="id" value="{{ teacher_details[0] }}">
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -58,6 +91,8 @@
                     <div class="form-group col-md-6">
                         <label for="password">Password:</label>
                         <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
+                        <small class="form-text text-muted">Leave blank to keep the current password</small>
+
                     </div>
                 </div>
 
@@ -68,7 +103,12 @@
                     </div>
                     <div class="form-group col-md-6">
                         <label for="role">Role:</label>
-                        <input type="text" class="form-control" id="role" name="role" value="{{ teacher_details[3] }}" required>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="">Select a role</option>
+                            <option value="admin" {% if teacher_details[3] == 'admin' %}selected{% endif %}>Admin</option>
+                            <option value="student" {% if teacher_details[3] == 'student' %}selected{% endif %}>Student</option>
+                            <option value="teacher" {% if teacher_details[3] == 'teacher' %}selected{% endif %}>Teacher</option>
+                        </select>
                     </div>
                 </div>
 
@@ -95,11 +135,8 @@
                 </div>
 
                 {% endif %}
-                </form>
-
+            </form>
         </div>
     </div>
-
-
 </body>
 </html>

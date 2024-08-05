@@ -29,17 +29,17 @@
         <a href="/adminCreateStudent" class="btn btn-primary mb-3">Create Student</a>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
 
         <div class="table-responsive">
             <table class="table table-striped w-100">
@@ -51,6 +51,7 @@
                         <th>Email</th>
                         <th>Role</th>
                         <th>Account Status</th>
+                        <th>Login Type</th>
                         <th>Actions</th>
                         <th>Remarks</th>
                     </tr>
@@ -58,22 +59,25 @@
                 <tbody>
                     {% for student in students %}
                     <tr>
-                        <td>{{ student[0] }}</td>
-                        <td>{{ student[1] }}</td>
-                        <td>{{ student[4] }}</td>
-                        <td>{{ student[3] }}</td>
-                        <td>{{ student[9] }}</td>
-                        <td>{{ 'Locked' if student[10] else 'Not locked' }}</td>
+                        <td>{{ student.id }}</td>
+                        <td>{{ student.username }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ student.role }}</td>
+                        <td>{{ student.account_status }}</td>
+                        <td>{{ student.login_type }}</td>
                         <td>
-                            <a href="{{ url_for('adminStudentUpdate', id=student[0]) }}" class="btn btn-warning btn-sm">Update</a>
+                            {% if student.login_type == 'regular' %}
+                            <a href="{{ url_for('adminStudentUpdate', id=student.id) }}" class="btn btn-warning btn-sm">Update</a>
+                            {% endif %}
                         </td>
                         <td>
-                            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#myModal_{{ student[0] }}">
+                            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#myModal_{{ student.id }}">
                                 Delete
                             </button>
 
                             <!-- Modal -->
-                            <div class="modal fade" id="myModal_{{ student[0] }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal fade" id="myModal_{{ student.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <!-- Modal Header -->
@@ -85,11 +89,11 @@
                                         </div>
                                         <!-- Modal Body -->
                                         <div class="modal-body">
-                                            Are you sure you want to delete {{ student[1] }}?
+                                            Are you sure you want to delete {{ student.username }}?
                                         </div>
                                         <!-- Modal Footer -->
                                         <div class="modal-footer">
-                                            <form action="{{ url_for('adminDeleteStudent', id=student[0]) }}" method="POST">
+                                            <form action="{{ url_for('adminDeleteStudent', id=student.id) }}" method="POST">
                                                 <button type="submit" class="btn btn-danger">Delete</button>
                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                                             </form>

@@ -3,23 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Teacher</title>
+    <title>Create Student</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
         .heading{
             text-align: center;
             background-color: #324F3E;
             color: #fff;
-            margin-top: -80px;
+            margin-top: -100px;
             height: 30px;
             font-size: 28px;
 
         }
+        .form-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
         .form-container h2 {
             margin-bottom: 20px;
+            font-weight: bolder;
+        }
+        .alert {
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            border: none;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .form-group label {
+            font-weight: bold;
+        }
+        .form-check-label {
+            font-weight: bold;
+        }
+        .form-row {
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -34,62 +68,67 @@
             <input type="hidden" id="id" name="id" value="{{ student_details[0] }}">
 
             {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
             {% if student_details %}
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label for="username">Username:</label>
-                        <input type="text" class="form-control" id="username" name="username" value="{{ student_details[1] }}" required>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label for="password">Password:</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
-                        <small class="form-text text-muted">Leave blank to keep the current password</small>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="username">Username:</label>
+                    <input type="text" class="form-control" id="username" name="username" value="{{ student_details[1] }}" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="password">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
+                    <small class="form-text text-muted">Leave blank to keep the current password</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="email">Email:</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ student_details[2] }}" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="role">Role:</label>
+                    <select class="form-control" id="role" name="role" required>
+                        <option value="">Select a role</option>
+                        <option value="admin" {% if student_details[3] == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="student" {% if student_details[3] == 'student' %}selected{% endif %}>Student</option>
+                        <option value="teacher" {% if student_details[3] == 'teacher' %}selected{% endif %}>Teacher</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="lock_account" name="lock_account">
+                        <label class="form-check-label" for="lock_account">Lock Account</label>
                     </div>
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label for="email">Email:</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ student_details[2] }}" required>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label for="role">Role:</label>
-                        <input type="text" class="form-control" id="role" name="role" value="{{ student_details[3] }}" required>
+                <div class="form-group col-md-6">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="unlock_account" name="unlock_account">
+                        <label class="form-check-label" for="unlock_account">Unlock Account</label>
                     </div>
                 </div>
+            </div>
 
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="lock_account" name="lock_account">
-                            <label class="form-check-label" for="lock_account">Lock Account</label>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="unlock_account" name="unlock_account">
-                            <label class="form-check-label" for="unlock_account">Unlock Account</label>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Update</button>
-                <a href="/adminStudentTable" class="btn btn-danger">Cancel</a>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="/adminStudentTable" class="btn btn-danger">Cancel</a>
 
             {% else %}
-                <div class="alert alert-danger" role="alert">Student details not found</div>
+            <div class="alert alert-danger" role="alert">Student details not found</div>
             {% endif %}
         </form>
     </div>

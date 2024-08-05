@@ -15,10 +15,18 @@ def adminProfile():
         user = userSession(username)
         if user:
             print(f'user {username} is logged in')
-            return render_template("Admin/adminProfile.html", user=user)
-        else:
-            flash("User not found in database")
-            return redirect(url_for('login'))  # Redirect to log in if user not found
+            mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
+            profile_pic_url = mycursor.fetchone()
+
+            if profile_pic_url and profile_pic_url[0]:
+                profile_pic = url_for('static', filename=profile_pic_url[0])
+            else:
+                profile_pic = url_for('static', filename='img/default_pp.png')
+
+            # You can store the profile_pic_url in the session or pass it to the template
+            session['profile_pic'] = profile_pic
+        return render_template('Admin/adminProfile.html', user=user, profile_pic=profile_pic)
+
     else:
         flash("User session not found")
         return redirect(url_for('login'))  # Redirect to log in if session not found
@@ -78,64 +86,23 @@ def adminUpdateProfile():
                         filename = secure_filename(file.filename)
                         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                         file.save(filepath)
-                    else:
-                        flash('Profile Picture must be less than 32 MB', 'error')
-
-                    try:
-                        file_id = scan_file(filepath)
-                    except Exception as e:
-                        flash(f'Error uploading file to VirusTotal: {str(e)}', 'error')
-                        os.remove(filepath)
+                        image_path = f"img/{filename}"
+                        try:
+                            session['user']['profile_picture'] = filename
+                            mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
+                                             (image_path, current_username))
+                            mydb.commit()
+                            flash('Profile picture uploaded successfully!', 'success')
+                        except Exception as e:
+                            flash(f'Error updating profile picture: {str(e)}', 'error')
                         if 'user' in session and 'id' in session['user']:
-                            log_this(f'Error uploading file to VirusTotal: {str(e)}')
+                            log_this('Profile picture uploaded successfully!')
                         return redirect(url_for('adminUpdateProfile'))
-
-                    if file_id:
-                        flash('Give us a moment! We are scanning your file contents', 'info')
-
-                        start_time = time.time()
-                        timeout = 300  # 5 minutes timeout
-                        while time.time() - start_time < timeout:
-                            try:
-                                report = get_scan_report(file_id)
-                            except Exception as e:
-                                flash(f'Error retrieving scan report: {str(e)}', 'error')
-                                break
-
-                            if report:
-                                attributes = report.get('data', {}).get('attributes', {})
-                                if attributes.get('status') == 'completed':
-                                    if any(result['category'] == 'malicious' for result in
-                                           attributes.get('results', {}).values()):
-                                        flash('The file is malicious and has not been saved.', 'error')
-                                        os.remove(filepath)  # Remove the file if it is malicious
-                                        if 'user' in session and 'id' in session['user']:
-                                            log_this("Malicious file that has not been saved while updating profile")
-                                        session['user']['profile_picture'] = 'default_pp.png'
-                                        return redirect(url_for('adminUpdateProfile'))
-                                    else:
-                                        image_path = f"img/{filename}"
-                                        try:
-                                            session['user']['profile_picture'] = filename
-                                            mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
-                                                             (image_path, current_username))
-                                            mydb.commit()
-                                            flash('Profile picture scanned and uploaded successfully!', 'success')
-                                        except Exception as e:
-                                            flash(f'Error updating profile picture: {str(e)}', 'error')
-                                        if 'user' in session and 'id' in session['user']:
-                                            log_this('Profile picture scanned and uploaded successfully!')
-                                        return redirect(url_for('adminUpdateProfile'))
-                            else:
-                                flash('Failed to retrieve scan report.', 'error')
-                                break
-                            time.sleep(10)  # wait for 10 seconds before retrying
-                        else:
-                            flash('Scan is not yet complete. Try again later.', 'error')
                     else:
-                        flash('Failed to upload file to VirusTotal for scanning.', 'error')
+                        flash('Profile Picture must be less than 32 MB', 'danger')
+                        return redirect(url_for('adminUpdateProfile'))
                 else:
-                    flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'error')
+                    flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'danger')
 
             # Fetch updated user data
             user = userSession(new_username if new_username else current_username)
@@ -381,7 +348,7 @@ def adminTeacherUpdate(id):
                 mycursor.execute(update_teacher, data)
 
                 if lock_account:
-                    mycursor.execute('UPDATE users SET locked = TRUE, locked_until = %s WHERE id = %s', (
+                    mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
                         datetime.now() + timedelta(days=365),
                         id))  # Locked for a long period, essentially permanently locked
 
@@ -491,14 +458,46 @@ def adminCreateStudent():
     return render_template('Admin/adminCreateStudent.html')
 
 
+# @app.route('/adminStudentTable', methods=['GET'])
+# @roles_required('admin')
+# def adminUsersRetrieve():
+#     select_query = "SELECT * FROM users WHERE role = %s"
+#     mycursor.execute(select_query, ('student',))
+#     rows = mycursor.fetchall()
+#     count = len(rows)
+#     return render_template('Admin/adminStudentTable.html', students=rows, count=count)
+
 @app.route('/adminStudentTable', methods=['GET'])
 @roles_required('admin')
 def adminUsersRetrieve():
-    select_query = "SELECT * FROM users WHERE role = %s"
-    mycursor.execute(select_query, ('student',))
-    rows = mycursor.fetchall()
-    count = len(rows)
-    return render_template('Admin/adminStudentTable.html', students=rows, count=count)
+    # Fetch regular users
+    select_regular_query = "SELECT id, username, name, email, role, locked FROM users WHERE role = %s"
+    mycursor.execute(select_regular_query, ('student',))
+    regular_users = mycursor.fetchall()
+
+    # Fetch OAuth users
+    select_oauth_query = "SELECT googleid, email, name, role FROM oauth WHERE role = %s"
+    mycursor.execute(select_oauth_query, ('student',))
+    oauth_users = mycursor.fetchall()
+
+    print("OAuth Users:", oauth_users)
+
+
+    # Combine results and indicate the login type
+    students = [
+        {'id': user[0], 'username': user[1], 'name': user[2], 'email': user[3], 'role': user[4],
+         'account_status': 'Locked' if user[5] else 'Not locked', 'login_type': 'regular'}
+        for user in regular_users
+    ]
+    students.extend([
+        {'id': user[0], 'username': user[1], 'name': user[2], 'email': user[1], 'role': user[3],
+         'account_status': 'NA', 'login_type': 'oauth'}
+        for user in oauth_users
+    ])
+
+    count = len(students)
+
+    return render_template('Admin/adminStudentTable.html', students=students, count=count)
 
 
 @app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
@@ -575,9 +574,40 @@ def adminStudentUpdate(id):
             return "Error occurred while fetching student details"
 
 
+# @app.route('/adminDeleteStudent/<int:id>', methods=['GET', 'POST'])
+# def adminDeleteStudent(id):
+#     try:
+#         select_query = "SELECT * FROM users WHERE id = %s"
+#         mycursor.execute(select_query, (id,))
+#         student = mycursor.fetchone()
+#
+#         if student:
+#             delete_query = "DELETE FROM users WHERE id = %s"
+#             mycursor.execute(delete_query, (id,))
+#             mydb.commit()
+#
+#             flash('Student deleted successfully', 'success')
+#             if 'user' in session and 'id' in session['user']:
+#                 log_this(f"Student Account with User ID {id} deleted")
+#
+#             return redirect(url_for('blogs'))
+#         else:
+#             if 'user' in session and 'id' in session['user']:
+#                 log_this("User not found when deleting account")
+#             return "Student not found"
+#
+#     except Exception as e:
+#         print('Error: ', e)
+#         mydb.rollback()
+#         if 'user' in session and 'id' in session['user']:
+#             log_this("Error occurred while deleting student")
+#         return "Error occurred while deleting student"
+
+
 @app.route('/adminDeleteStudent/<int:id>', methods=['GET', 'POST'])
 def adminDeleteStudent(id):
     try:
+        # Check if the student is in the regular users table
         select_query = "SELECT * FROM users WHERE id = %s"
         mycursor.execute(select_query, (id,))
         student = mycursor.fetchone()
@@ -591,11 +621,26 @@ def adminDeleteStudent(id):
             if 'user' in session and 'id' in session['user']:
                 log_this(f"Student Account with User ID {id} deleted")
 
-            return redirect(url_for('blogs'))
         else:
-            if 'user' in session and 'id' in session['user']:
-                log_this("User not found when deleting account")
-            return "Student not found"
+            # Check if the student is in the OAuth users table
+            select_query = "SELECT * FROM oauth WHERE googleid = %s"
+            mycursor.execute(select_query, (id,))
+            oauth_student = mycursor.fetchone()
+
+            if oauth_student:
+                delete_query = "DELETE FROM oauth WHERE googleid = %s"
+                mycursor.execute(delete_query, (id,))
+                mydb.commit()
+
+                flash('OAuth Student deleted successfully', 'success')
+                if 'user' in session and 'id' in session['user']:
+                    log_this(f"OAuth Student Account with User ID {id} deleted")
+            else:
+                if 'user' in session and 'id' in session['user']:
+                    log_this("User not found when deleting account")
+                return "Student not found"
+
+        return redirect(url_for('blogs'))
 
     except Exception as e:
         print('Error: ', e)
