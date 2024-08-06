@@ -1,8 +1,6 @@
 import time
 from random import randint
-
 import mysql.connector
-
 from utils import *
 from flask import render_template, redirect, url_for, request, flash
 import urllib.parse

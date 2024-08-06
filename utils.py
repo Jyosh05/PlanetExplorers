@@ -1,10 +1,9 @@
-
 from flask import Flask, session, abort, flash, url_for
 import mysql.connector
 
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, abuse_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api, CLIENTID, CLIENTSECRET
+from Configuration import DB_Config, secret_key, abuse_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api, CLIENTID, CLIENTSECRET, payment_secret
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -16,8 +15,8 @@ from datetime import timedelta, datetime
 import requests
 import secrets
 import re
-
 from authlib.integrations.flask_client import OAuth
+from cryptography.fernet import Fernet
 
 
 app = Flask(__name__)
@@ -69,6 +68,8 @@ limiter = Limiter(
 app.config['ABUSE_IPDB_API_KEY'] = abuse_key
 app.config['GOOGLE_CLIENT_ID'] = CLIENTID
 app.config['GOOGLE_CLIENT_SECRET'] = CLIENTSECRET
+app.config['PAYMENT_KEY'] = payment_secret
+cipher_suite = Fernet(payment_secret)
 
 
 oauth = OAuth(app)
@@ -124,10 +125,8 @@ for a in tableCheck:
                         otpExpiry DATETIME
                     )
                     """)
-        print(f"Table 'users' Created")
 
 mycursor.execute('SELECT * FROM users')
-print(f"Using table 'users' ")
 users = mycursor.fetchall()
 
 
@@ -166,10 +165,7 @@ for a in tableCheck:
             )
         """)
 
-    print(f"Table 'audit_logs' Created")
-
 mycursor.execute('SELECT * FROM audit_logs')
-print(f"Using Table 'audit_logs'")
 audit_log = mycursor.fetchall()
 
 
@@ -190,10 +186,7 @@ for a in tableCheck:
             )
         """)
 
-    print(f"Table 'storeproducts' Created")
-
 mycursor.execute('SELECT * FROM storeproducts')
-print(f"Using Table 'storeproducts'")
 storeproducts = mycursor.fetchall()
 
 
@@ -214,10 +207,8 @@ for a in tableCheck:
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )
         """)
-        print(f"Table 'cart' Created")
 
 mycursor.execute('SELECT * FROM cart')
-print(f"Using Table 'cart'")
 cart = mycursor.fetchall()
 
 
@@ -238,10 +229,8 @@ for a in tableCheck:
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         """)
-        print(f"Table 'orders' created")
 
 mycursor.execute('SELECT * FROM orders')
-print(f"Using Table 'orders'")
 orders = mycursor.fetchall()
 
 
@@ -264,10 +253,8 @@ for a in tableCheck:
                 FOREIGN KEY (product_id) REFERENCES storeproducts(id)
             )
         """)
-        print(f"Table 'order_items' Created")
 
 mycursor.execute('SELECT * FROM order_items')
-print(f"Using Table 'order_items'")
 order_items = mycursor.fetchall()
 
 
@@ -286,10 +273,8 @@ for a in tableCheck:
                         used BOOLEAN DEFAULT FALSE
                     )
                     """)
-        print(f"Table 'token_validation' Created")
 
 mycursor.execute('SELECT * FROM token_validation')
-print(f"Using table 'token_validation' ")
 token_validation = mycursor.fetchall()
 
 tableCheck = ['modules']
@@ -305,10 +290,8 @@ for a in tableCheck:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        print(f"Table 'modules' Created")
 
 mycursor.execute('SELECT * FROM modules')
-print(f"Using table 'modules'")
 modules = mycursor.fetchall()
 # Check if the 'questions' table exists, and create it if not
 mycursor.execute("SHOW TABLES LIKE 'questions'")
@@ -439,18 +422,25 @@ def add_info(username, password, email, name, age, address, phone):
         print(f"error: {str(e)}")
 
 
+def encrypt_payment_data(data):
+    """Encrypt payment data."""
+    return cipher_suite.encrypt(data.encode('utf-8'))
+
+def decrypt_payment_data(encrypted_data):
+    """Decrypt payment data."""
+    return cipher_suite.decrypt(encrypted_data).decode('utf-8')
+
 def process_payment(card_name, card_number, exp_month, exp_year, cvv):
     try:
         # Validate input for harmful content
-        input_validation(card_name, exp_month, exp_year)
+        input_validation(card_name, card_number, exp_month, exp_year, cvv)
 
-        # Validate card details (plaintext validation)
-        card_name_valid = validate_card_name(card_name)
-        card_number_valid = validate_card_number(card_number)  # Compare with hashed value
+        # Example mock validation (replace with real validation logic)
+        card_number_valid = validate_card_number(card_number)
+        cvv_valid = validate_cvc(cvv)
         expiry_date_valid = validate_expiry_date(exp_month, exp_year)
-        cvv_valid = validate_cvc(cvv)  # Compare with hashed value
 
-        if card_name_valid and card_number_valid and expiry_date_valid and cvv_valid:
+        if card_number_valid and cvv_valid and expiry_date_valid:
             print("Payment process succeeded")
             return True
         else:
@@ -470,7 +460,6 @@ def validate_card_number(number):
 def validate_cvc(cvc):
     return re.match(r"^\d{3}$", cvc) is not None
 
-# Validate Expiry Date
 def validate_expiry_date(month, year):
     months = {
         "01": "January", "02": "February", "03": "March", "04": "April", "05": "May",
@@ -479,7 +468,6 @@ def validate_expiry_date(month, year):
     }
     return month in months and year.isdigit() and len(year) == 4
 
-# Update User Role Function
 def update_user_role(username, role):
     try:
         query = "UPDATE users SET role = %s WHERE username = %s"
@@ -490,6 +478,7 @@ def update_user_role(username, role):
     except mysql.connector.Error as err:
         print(f"Database error: {str(err)}")
         return False
+
 
 # Add Teacher Information Function
 def add_info_teacher(username, password, email, name, age, address, phone):

@@ -1,8 +1,7 @@
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
-
 # Configuration is a file containing sensitive information
-from Configuration import RECAPTCHA_SITE_KEY, abuse_key
+from Configuration import RECAPTCHA_SITE_KEY
 import bcrypt
 import urllib.parse
 import os
@@ -253,7 +252,6 @@ def teacher_register():
     return render_template('User/register.html')
 
 
-
 @app.route('/confirm_teacher_registration/<token>')
 def confirm_teacher_registration(token):
     email = confirm_token(token)
@@ -261,7 +259,11 @@ def confirm_teacher_registration(token):
         payment_details = session.get('payment_details')
         if payment_details and payment_details['email'] == email:
             try:
-                if process_payment(payment_details['card_name'], payment_details['card_number'], payment_details['exp_month'], payment_details['exp_year'], payment_details['cvv']):
+                # Decrypt payment details for validation
+                card_number = decrypt_payment_data(payment_details['card_number'])
+                cvv = decrypt_payment_data(payment_details['cvv'])
+
+                if process_payment(payment_details['card_name'], card_number, payment_details['exp_month'], payment_details['exp_year'], cvv):
                     if update_user_role(payment_details['username'], 'teacher'):
                         add_info_teacher(
                             payment_details['username'], session['password'], session['email'],
@@ -288,7 +290,6 @@ def confirm_teacher_registration(token):
 
 
 @app.route('/payment/<username>', methods=["GET", "POST"])
-@limiter.limit("20 per minute")
 def teacher_payment(username):
     if request.method == "POST":
         full_name = request.form.get('full_name')
@@ -307,6 +308,10 @@ def teacher_payment(username):
             # Validate input for harmful content
             input_validation(full_name, email, address, address2, zip_code, card_name, card_number, exp_month, exp_year, cvv)
 
+            # Encrypt the payment details
+            encrypted_card_number = encrypt_payment_data(card_number)
+            encrypted_cvv = encrypt_payment_data(cvv)
+
             # Generate confirmation token
             token = generate_confirm_token(email)
 
@@ -315,7 +320,7 @@ def teacher_payment(username):
             html = render_template('Teacher/email_teacher_verification.html', confirm_url=confirm_url)
             send_reset_link_email(email, 'Confirm Your Registration', html)
 
-            # Temporarily store payment details in session or database
+            # Temporarily store encrypted payment details in session
             session['payment_details'] = {
                 'username': username,
                 'full_name': full_name,
@@ -324,14 +329,13 @@ def teacher_payment(username):
                 'address2': address2,
                 'zip_code': zip_code,
                 'card_name': card_name,
-                'card_number': card_number,
+                'card_number': encrypted_card_number,
                 'exp_month': exp_month,
                 'exp_year': exp_year,
-                'cvv': cvv
+                'cvv': encrypted_cvv
             }
 
-            flash(
-                'A confirmation email has been sent to your email address. Please confirm to complete the payment.','success')
+            flash('A confirmation email has been sent to your email address. Please confirm to complete the payment.', 'success')
             return redirect(url_for('login'))
 
         except ValueError as e:

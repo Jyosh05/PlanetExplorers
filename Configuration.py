@@ -1,13 +1,13 @@
 DB_Config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'JYOSHNA2006!',
+    'password': 'mysql',
     'database': 'planetexplorers',
     'port': 3306
 }
 
 secret_key = "a20b68420dwf6f8828g12409241kg12498214u12485b550fdd81497e382b0568f8fa710fdafcb7d"
-
+payment_secret = 'vjGhzU5lX0rYDkHBKpC06W37MBOrEYOzk-jIahq1Xng='
 abuse_key = "400b85b0390f3c8a296edb5c346e0b684205b550fdd81497e382b0568f8fa710c279b82dfdafcb7d"
 
 admin_config = {
