@@ -10,6 +10,8 @@ from flask import jsonify
 
 @app.route('/')
 def home():
+    if 'user' in session:
+        session.pop('user', None)
     return render_template("home.html")  # need to create template
 
 
@@ -27,6 +29,7 @@ def learnerHome():
 
 @app.route('/profile')
 @limiter.limit("20 per minute")
+@roles_required('student')
 def profile():
     user = session.get('user')
     login_method = session.get('login_method')
