@@ -3,7 +3,7 @@ import mysql.connector
 
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, abuse_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, virusTotal_api, CLIENTID, CLIENTSECRET, payment_secret
+from Configuration import DB_Config, secret_key, abuse_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, CLIENTID, CLIENTSECRET, payment_secret
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
