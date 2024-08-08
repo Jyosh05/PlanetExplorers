@@ -700,38 +700,38 @@ def generate_unlock_token():
     return token
 
 
-def scan_file(file_path):
-    url = "https://www.virustotal.com/api/v3/files"
-    headers = {
-        "accept": "application/json",
-        "x-apikey": virusTotal_api
-    }
-    with open(file_path, 'rb') as file:
-        files = {'file': (file_path, file)}
-        response = requests.post(url, headers=headers, files=files)
-        if response.status_code == 200:
-            result = response.json()
-            file_id = result['data']['id']
-            print(response.text)
-            return file_id
-        else:
-            print(f"Error uploading file: {response.text}")
-            return None
-
-
-def get_scan_report(file_id):
-    url = f"https://www.virustotal.com/api/v3/analyses/{file_id}"
-    headers = {
-        "accept": "application/json",
-        "x-apikey": virusTotal_api
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        print(response.text)
-        return response.json()
-    else:
-        print(f"Error retrieving scan report: {response.text}")
-        return None
+# def scan_file(file_path):
+#     url = "https://www.virustotal.com/api/v3/files"
+#     headers = {
+#         "accept": "application/json",
+#         "x-apikey": virusTotal_api
+#     }
+#     with open(file_path, 'rb') as file:
+#         files = {'file': (file_path, file)}
+#         response = requests.post(url, headers=headers, files=files)
+#         if response.status_code == 200:
+#             result = response.json()
+#             file_id = result['data']['id']
+#             print(response.text)
+#             return file_id
+#         else:
+#             print(f"Error uploading file: {response.text}")
+#             return None
+#
+#
+# def get_scan_report(file_id):
+#     url = f"https://www.virustotal.com/api/v3/analyses/{file_id}"
+#     headers = {
+#         "accept": "application/json",
+#         "x-apikey": virusTotal_api
+#     }
+#     response = requests.get(url, headers=headers)
+#     if response.status_code == 200:
+#         print(response.text)
+#         return response.json()
+#     else:
+#         print(f"Error retrieving scan report: {response.text}")
+#         return None
 
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 def send_verification_email(email, token):
