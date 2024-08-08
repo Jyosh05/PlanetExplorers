@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Module</title>
 </head>
+    <link rel="stylesheet" type="text/css" href="../../static/css/module.css">
 <body>
     {% include 'Teacher/teacherNav.html' %}
     <h1>Create Module</h1>
@@ -14,6 +15,7 @@
             <!-- Initial question form fields here -->
         </div>
         <button type="button" onclick="addQuestion()">Add Another Question</button><br><br>
+        <button><a href="{{url_for('teacherHome')}}" class="no-style-link">Back to Home</a></button>
         <button type="submit">Submit</button>
     </form>
 

@@ -181,6 +181,7 @@ def verify_register():
 
 @app.route('/verify_email/<token>', methods=['GET', 'POST'])
 def verify_email(token):
+    yes = False
     email = confirm_token(token)
     if not email:
         flash('Invalid or expired token.', 'danger')
@@ -207,8 +208,27 @@ def verify_email(token):
 
         return redirect(url_for('login'))
 
-    # Ensure that the route also handles GET requests
-    return render_template('User/verify_email.html', token=token)  # Render a template if GET request
+    # Handle GET request
+    try:
+        # Update the user's email verification status
+        query = "UPDATE users SET email_verified = %s WHERE email = %s"
+        mycursor.execute(query, (True, email))
+        mydb.commit()
+
+        # Mark the token as used
+        query2 = "UPDATE token_validation SET used = %s WHERE token = %s"
+        mycursor.execute(query2, (True, token))
+        mydb.commit()
+
+        return redirect(url_for('email_verified_success'))
+    except Exception as e:
+        mydb.rollback()  # Rollback the transaction in case of error
+        flash(f"An error occurred: {e}", "danger")
+        return redirect(url_for('login'))
+
+@app.route('/email_verified_sucess')
+def email_verified_success():
+    return render_template('User/verify_email.html')  # Render a template if GET request
 
 
 @app.route('/teacher_register', methods=["GET", "POST"])

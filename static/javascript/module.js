@@ -20,10 +20,26 @@ function addQuestion() {
             </select>
         </label><br>
         <label>Explorer Points: <input type="number" name="explorerpoints" required></label><br>
+        <button type="button" onclick="removeQuestion(this)">Remove Question</button>
         <hr>
     `;
 
     questionsDiv.appendChild(newQuestionDiv);
+}
+
+function removeQuestion(button) {
+    const questionDiv = button.parentElement; // Get the parent div of the button
+    questionDiv.remove(); // Remove the entire question div
+    updateQuestionNumbers(); // Update the question numbers after removal
+}
+
+function updateQuestionNumbers() {
+    const questions = document.querySelectorAll('.question');
+    questions.forEach((div, index) => {
+        const questionNumber = index + 1;
+        const h3 = div.querySelector('h3');
+        h3.textContent = `Question ${questionNumber}`;
+    });
 }
 
 document.getElementById('create-module-form').addEventListener('submit', async function (event) {
@@ -72,4 +88,3 @@ document.getElementById('create-module-form').addEventListener('submit', async f
         alert(`Error: ${error.message}`);
     }
 });
-
