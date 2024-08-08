@@ -64,11 +64,12 @@ def adminUpdateProfile():
                         user = userSession(current_username)
                         return render_template('Admin/adminUpdateProfile.html', user=user)
                 try:
-                    mycursor.execute(
-                        "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
-                        (new_username, name, email, age, address, phone, current_username))
-                    mydb.commit()
-                    flash('User information updated successfully', 'success')
+                    if input_validation(new_username, name, email, address) and age_validation(age) and validate_phone_number(phone):
+                        mycursor.execute(
+                            "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
+                            (new_username, name, email, age, address, phone, current_username))
+                        mydb.commit()
+                        flash('User information updated successfully', 'success')
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
                     if 'user' in session and 'id' in session['user']:
@@ -248,29 +249,31 @@ def adminCreateTeacher():
             return render_template('Admin/adminCreateTeacher.html')
 
         try:
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            role = 'teacher'
-            print("Received form data:")
-            print(f"Username: {username}")
-            print(f"Password: {password}")
-            print(f"Email: {email}")
-            print(f"Name: {name}")
-            print(f"Age: {age}")
-            print(f"Address: {address}")
-            print(f"Phone: {phone}")
-            query = """
-                        INSERT INTO users (username, password, email, name ,age, address, phone, role)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
-                    """
-            # Tuple to make sure the input cannot be changed
-            values = (username, hashed_password, email, name, age, address, phone, role)
-            # Executing the parameterized query and the tuple as the inputs
-            mycursor.execute(query, values)
-            mydb.commit()
-            flash('Teacher created successfully!', 'success')
-            if 'user' in session and 'id' in session['user']:
-                log_this("Teacher account created successfully")
-            return redirect(url_for('blogs'))
+            if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
+
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                role = 'teacher'
+                print("Received form data:")
+                print(f"Username: {username}")
+                print(f"Password: {password}")
+                print(f"Email: {email}")
+                print(f"Name: {name}")
+                print(f"Age: {age}")
+                print(f"Address: {address}")
+                print(f"Phone: {phone}")
+                query = """
+                            INSERT INTO users (username, password, email, name ,age, address, phone, role)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
+                        """
+                # Tuple to make sure the input cannot be changed
+                values = (username, hashed_password, email, name, age, address, phone, role)
+                # Executing the parameterized query and the tuple as the inputs
+                mycursor.execute(query, values)
+                mydb.commit()
+                flash('Teacher created successfully!', 'success')
+                if 'user' in session and 'id' in session['user']:
+                    log_this("Teacher account created successfully")
+                return redirect(url_for('blogs'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
             log_this(f'An error occurred: {str(e)}')
@@ -342,33 +345,37 @@ def adminTeacherUpdate(id):
             if teacher_details:
                 # Hash the password if provided, otherwise keep the existing one
                 hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else teacher_details[2]
+                if input_validation(username, email):
 
-                update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
-                data = (username, hashed_password, email, role, id)
-                mycursor.execute(update_teacher, data)
+                    update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                    data = (username, hashed_password, email, role, id)
+                    mycursor.execute(update_teacher, data)
 
-                if lock_account:
-                    mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
-                        datetime.now() + timedelta(days=365),
-                        id))  # Locked for a long period, essentially permanently locked
+                    if lock_account:
+                        mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
+                            datetime.now() + timedelta(days=365),
+                            id))  # Locked for a long period, essentially permanently locked
 
-                # Unlock account if requested
-                if unlock_account:
-                    mycursor.execute(
-                        'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
-                        (id,))
+                    # Unlock account if requested
+                    if unlock_account:
+                        mycursor.execute(
+                            'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
+                            (id,))
 
-                mydb.commit()
+                    mydb.commit()
 
-                flash('Teacher details updated successfully', 'success')
-                if 'user' in session and 'id' in session['user']:
-                    log_this("Teachers detail updated successfully")
-                return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
+                    flash('Teacher details updated successfully', 'success')
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("Teachers detail updated successfully")
+                    return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
 
-            else:
-                if 'user' in session and 'id' in session['user']:
-                    log_this("Teacher not found while updating account")
-                return "Teacher not found"
+                else:
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("Teacher not found while updating account")
+                    return "Teacher not found"
+
+        except ValueError:
+            return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
 
         except Exception as e:
             print("Error: ", e)
@@ -427,29 +434,31 @@ def adminCreateStudent():
             return render_template('Admin/adminCreateStudent.html')
 
         try:
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            role = 'student'
-            print("Received form data:")
-            print(f"Username: {username}")
-            print(f"Password: {password}")
-            print(f"Email: {email}")
-            print(f"Name: {name}")
-            print(f"Age: {age}")
-            print(f"Address: {address}")
-            print(f"Phone: {phone}")
-            query = """
-                        INSERT INTO users (username, password, email, name ,age, address, phone, role)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
-                    """
-            # Tuple to make sure the input cannot be changed
-            values = (username, hashed_password, email, name, age, address, phone, role)
-            # Executing the parameterized query and the tuple as the inputs
-            mycursor.execute(query, values)
-            mydb.commit()
-            flash('Student created successfully!', 'success')
-            if 'user' in session and 'id' in session['user']:
-                log_this("Student created successfully")
-            return redirect(url_for('blogs'))
+            if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
+
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                role = 'student'
+                print("Received form data:")
+                print(f"Username: {username}")
+                print(f"Password: {password}")
+                print(f"Email: {email}")
+                print(f"Name: {name}")
+                print(f"Age: {age}")
+                print(f"Address: {address}")
+                print(f"Phone: {phone}")
+                query = """
+                            INSERT INTO users (username, password, email, name ,age, address, phone, role)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
+                        """
+                # Tuple to make sure the input cannot be changed
+                values = (username, hashed_password, email, name, age, address, phone, role)
+                # Executing the parameterized query and the tuple as the inputs
+                mycursor.execute(query, values)
+                mydb.commit()
+                flash('Student created successfully!', 'success')
+                if 'user' in session and 'id' in session['user']:
+                    log_this("Student created successfully")
+                return redirect(url_for('blogs'))
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
             log_this("Error occurred")
@@ -518,35 +527,39 @@ def adminStudentUpdate(id):
             student_details = mycursor.fetchone()
 
             if student_details:
-                # Hash the password if provided, otherwise keep the existing one
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else student_details[2]
+                if input_validation(username, email):
+                    # Hash the password if provided, otherwise keep the existing one
+                    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else student_details[2]
 
-                update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
-                data = (username, hashed_password, email, role, id)
-                mycursor.execute(update_student, data)
-                # Lock account if requested
-                if lock_account:
-                    mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
-                    datetime.now() + timedelta(days=365),
-                    id))  # Locked for a long period, essentially permanently locked
+                    update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                    data = (username, hashed_password, email, role, id)
+                    mycursor.execute(update_student, data)
+                    # Lock account if requested
+                    if lock_account:
+                        mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
+                        datetime.now() + timedelta(days=365),
+                        id))  # Locked for a long period, essentially permanently locked
 
-                # Unlock account if requested
-                if unlock_account:
-                    mycursor.execute(
-                        'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
-                        (id,))
+                    # Unlock account if requested
+                    if unlock_account:
+                        mycursor.execute(
+                            'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
+                            (id,))
 
-                mydb.commit()
+                    mydb.commit()
 
-                flash('Student details updated successfully.', 'success')
-                if 'user' in session and 'id' in session['user']:
-                    log_this("Student details updated successfully")
-                return redirect(url_for('adminStudentUpdate', id=student_details[0]))
+                    flash('Student details updated successfully.', 'success')
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("Student details updated successfully")
+                    return redirect(url_for('adminStudentUpdate', id=student_details[0]))
 
-            else:
-                if 'user' in session and 'id' in session['user']:
-                    log_this("User not found when updating Student")
-                return "Student not found"
+                else:
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("User not found when updating Student")
+                    return "Student not found"
+
+        except ValueError:
+            return redirect(url_for('adminStudentUpdate', id=student_details[0]))
 
         except Exception as e:
             print("Error: ", e)

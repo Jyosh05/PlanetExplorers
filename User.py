@@ -572,12 +572,13 @@ def updateTeacherProfile():
                         user = userSession(current_username)
                         return render_template('Teacher/updateTeacherProfile.html', user=user)
                 try:
-                    mycursor.execute(
-                        "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
-                        (new_username, name, email, age, address, phone, current_username))
-                    mydb.commit()
-                    flash('Teacher information updated successfully', 'success')
-                    log_this("Teachers detail updated successfully")
+                    if input_validation(new_username, name, email, address) and age_validation(age) and validate_phone_number(phone):
+                        mycursor.execute(
+                            "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
+                            (new_username, name, email, age, address, phone, current_username))
+                        mydb.commit()
+                        flash('Teacher information updated successfully', 'success')
+                        log_this("Teachers detail updated successfully")
                 except Exception as e:
                     flash(f'Error updating user information: {str(e)}', 'error')
                     return redirect(url_for('updateTeacherProfile'))
