@@ -9,6 +9,15 @@
 </head>
 <body>
     {% include 'Teacher/teacherNav.html' %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
     <h1>Welcome to Teacher's Home</h1>
 
     <h2>Your Modules</h2>
