@@ -380,6 +380,55 @@ def create_module():
             return jsonify({"error": "An unexpected error has occurred: " + str(e)}), 500
 
 
+#Update module
+@app.route('/update_module/<int:module_id>', methods=['GET', 'POST'])
+def update_module(module_id):
+    # Fetch the module details
+    mycursor.execute("SELECT * FROM modules WHERE module_id = %s", (module_id,))
+    module = mycursor.fetchone()
+
+    # Fetch the questions related to the module
+    mycursor.execute("SELECT * FROM questions WHERE module_id = %s", (module_id,))
+    questions = mycursor.fetchall()
+
+    if request.method == 'POST':
+        try:
+            # Update module details
+            module_name = request.form['module_name']
+            mycursor.execute("""
+                UPDATE modules 
+                SET module_name = %s 
+                WHERE module_id = %s
+            """, (module_name, module_id))
+
+            # Update each question
+            for question in questions:
+                question_id = question[0]  # Assuming question_id is the first column
+                question_text = request.form[f'question_{question_id}']
+                choice_a = request.form[f'choice_a_{question_id}']
+                choice_b = request.form[f'choice_b_{question_id}']
+                choice_c = request.form[f'choice_c_{question_id}']
+                choice_d = request.form[f'choice_d_{question_id}']
+                answer = request.form[f'answer_{question_id}']
+                explorer_points = request.form[f'explorer_points_{question_id}']
+
+                mycursor.execute("""
+                    UPDATE questions 
+                    SET question = %s, choice_a = %s, choice_b = %s, choice_c = %s, choice_d = %s, answer = %s, explorer_points = %s 
+                    WHERE question_id = %s AND module_id = %s
+                """, (
+                question_text, choice_a, choice_b, choice_c, choice_d, answer, explorer_points, question_id, module_id))
+
+            # Commit the transaction
+            mydb.commit()
+            flash('Module and questions updated successfully!', 'success')
+            return redirect(url_for('teacherHome'))
+        except Exception as e:
+            mydb.rollback()
+            flash(f"An error occurred: {e}", 'danger')
+
+    return render_template('Teacher/update_module.html', module=module, questions=questions)
+
 
 @app.route('/student/module/<int:module_id>', methods=['GET'])
 @roles_required('student')
