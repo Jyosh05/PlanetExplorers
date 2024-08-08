@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Module</title>
+</head>
+<body>
+    <h1>Update Module</h1>
+    <form method="POST">
+        <label>Module Name: <input type="text" name="module_name" value="{{ module[1] }}" required></label><br><br>
+
+        {% for question in questions %}
+            <div class="question">
+                <h3>Question {{ loop.index }}</h3>
+                <label>Question: <input type="text" name="question_{{ question[0] }}" value="{{ question[2] }}" required></label><br>
+                <label>Choice A: <input type="text" name="choice_a_{{ question[0] }}" value="{{ question[3] }}" required></label><br>
+                <label>Choice B: <input type="text" name="choice_b_{{ question[0] }}" value="{{ question[4] }}" required></label><br>
+                <label>Choice C: <input type="text" name="choice_c_{{ question[0] }}" value="{{ question[5] }}" required></label><br>
+                <label>Choice D: <input type="text" name="choice_d_{{ question[0] }}" value="{{ question[6] }}" required></label><br>
+                <label>Answer:
+                    <select name="answer_{{ question[0] }}" required>
+                        <option value="A" {% if question[7] == 'A' %}selected{% endif %}>A</option>
+                        <option value="B" {% if question[7] == 'B' %}selected{% endif %}>B</option>
+                        <option value="C" {% if question[7] == 'C' %}selected{% endif %}>C</option>
+                        <option value="D" {% if question[7] == 'D' %}selected{% endif %}>D</option>
+                    </select>
+                </label><br>
+                <label>Explorer Points: <input type="number" name="explorer_points_{{ question[0] }}" value="{{ question[8] }}" required></label><br>
+            </div>
+        {% endfor %}
+
+        <button type="submit">Update Module</button>
+    </form>
+</body>
+</html>

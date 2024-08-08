@@ -9,6 +9,15 @@
 </head>
 <body>
     {% include 'Teacher/teacherNav.html' %}
-    <h1>Welcome to teacher's home</h1>
+    <h1>Welcome to Teacher's Home</h1>
+
+    <h2>Your Modules</h2>
+    <ul>
+        {% for module in modules %}
+            <li>
+                <a href="{{ url_for('update_module', module_id=module[0]) }}">{{ module[1] }}</a>
+            </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>

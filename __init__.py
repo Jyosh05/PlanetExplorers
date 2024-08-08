@@ -580,7 +580,13 @@ def teacherHome():
         if user:
             print(f'user {username} is logged in')
             log_this("login successful")
-            return render_template("Teacher/teacherHome.html", user=user)
+
+            # Fetch all modules associated with the teacher
+            teacher_id = session['user']['id']  # Assuming the userSession provides a user object with an 'id'
+            mycursor.execute("SELECT module_id, module_name FROM modules WHERE teacher_id = %s", (teacher_id,))
+            modules = mycursor.fetchall()
+
+            return render_template("Teacher/teacherHome.html", user=user, modules=modules)
         else:
             flash("User not found in database")
             return redirect(url_for('login'))  # Redirect to log in if user not found
