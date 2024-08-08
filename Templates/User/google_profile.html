@@ -2,9 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Google Profile</title>
+    <style>
+        .profile_page-container {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .profile_page-pic {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+        }
+
+        .profile_page-name {
+            font-size: 24px;
+            margin-top: 10px;
+        }
+
+        .profile_page-role {
+            font-size: 18px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .profile_page-points {
+            font-size: 20px;
+            color: #33764E;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Google profile</h1>
+    {% include 'navbar.html' %}
+    <div class="profile_page-container">
+        <img src="{{ profilePic }}" alt="Profile Picture" class="profile_page-pic">
+        <div class="profile_page-name">{{ name }}</div>
+        <div class="profile_page-email">{{email}}</div>
+        <div class="profile_page-role">{{ role }}</div>
+        <div class="profile_page-points">{{ explorer_points }} Explorer Points</div>
+    </div>
 </body>
 </html>

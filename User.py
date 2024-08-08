@@ -60,7 +60,32 @@ def profile():
             return render_template('User/profile.html', user=user, profile_pic=profile_pic)
 
     elif session['login_method'] == 'google':
-        return render_template('User/google_profile.html', user=user)
+        email = user['email']  # Assuming email is stored in the session under 'user'
+
+        # Fetch the Google profile details from the oauth table
+        mycursor.execute("""
+                SELECT email, profilePic, name, role, explorer_points
+                FROM oauth
+                WHERE email = %s
+            """, (email,))
+        user_info = mycursor.fetchone()
+
+        if user_info:
+            email, profile_pic, name, role, explorer_points = user_info
+            if not profile_pic:
+                profile_pic = url_for('static', filename='img/default_pp.png')
+            session['profile_pic'] = profile_pic
+        else:
+            flash('User information not found', 'danger')
+            return redirect(url_for('login'))
+
+        return render_template('User/google_profile.html',
+                            user=user,
+                            email=email,
+                            profilePic=profile_pic,
+                            name=name,
+                            role=role,
+                            explorer_points=explorer_points)
 
     else:
         flash('Unknown login method', 'danger')
