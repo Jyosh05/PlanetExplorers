@@ -12,7 +12,7 @@
         <div id="part1">
             <label for="username">Username:</label>
             <br>
-            <input type="text" id="username" name="username" required><br>
+            <input type="text" id="username" name="username" required style="width: 394px;"><br>
                     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -24,14 +24,14 @@
     {% endwith %}
             <label for="password">Password:</label>
             <br>
-            <input type="password" id="password" name="password" oninput="checkPasswordStrength()" required><br>
+            <input type="password" id="password" name="password" oninput="checkPasswordStrength()" required style="width: 394px;"><br>
             <div id="password-strength-bar-container">
                 <div id="password-strength-bar"></div>
             </div>
             <ul id="password-feedback"></ul>
             <label for="email">Email:</label>
             <br>
-            <input type="email" id="email" name="email" required><br>
+            <input type="email" id="email" name="email" required style="width: 394px;"><br>
             <div class="button-container">
                 <button type="button" onclick="goToPart2()" id="next-button" disabled>Next</button>
             </div>
@@ -40,22 +40,25 @@
         <div id="part2" style="display: none;">
             <label for="name">Name:</label>
             <br>
-            <input type="text" id="name" name="name" required>
+            <input type="text" id="name" name="name" required style="width: 394px;">
+
             <br>
             <label for="age">Age:</label>
             <br>
-            <input type="number" id="age" name="age" required>
+            <input type="number" id="age" name="age" required style="width: 394px;">
             <br>
             <label for="address">Address:</label>
             <br>
-            <input type="text" id="address" name="address" required>
+            <input type="text" id="address" name="address" required style="width: 394px;">
             <br>
             <label for="phone">Phone:</label>
             <br>
-            <input type="text" id="phone" name="phone" required>
+            <input type="text" id="phone" name="phone" required style="width: 394px;">
             <br>
-            <input type="checkbox" id="register_as_teacher" name="register_as_teacher">
-            <label for="register_as_teacher">Register as Teacher</label>
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="register_as_teacher" name="register_as_teacher" style="transform: scale(2);">
+                <label for="register_as_teacher" style="padding-left: 10px;">Register as Teacher</label>
+            </div>
             <br>
             <div class="button-container">
                 <button type="button" onclick="goToPart1()">Back</button>
