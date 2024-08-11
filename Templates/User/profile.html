@@ -27,7 +27,9 @@
                 <p><strong>Username:</strong> {{ user[1] }}</p>
                 {% set name = user[4] %}
                 <p><strong>Name:</strong> {% if name %}{{ name }}{% else %}-{% endif %}</p>
-                <p><strong>Explorer Points:</strong> {{ user[14] }}</p>
+                <p class="explorer-points-container">
+                    <strong>Explorer Points:</strong> {{ user[14] }}&times;<img src="{{ url_for('static', filename='img/explorer_point.png')}}">
+                </p>
                 <p><strong>Email:</strong> {{ user[3] }}</p>
                 <p><strong>Age:</strong> {{ user[5] }}</p>
                 {% set address = user[6] %}

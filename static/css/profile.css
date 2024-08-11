@@ -60,3 +60,11 @@ h5 {
     text-align: left;
     padding-left: 20px;
 }
+
+
+.explorer-points-container img {
+    width: 40px;
+    height: 60px;
+    margin-bottom: -20px;
+    margin-left: -10px;
+}
