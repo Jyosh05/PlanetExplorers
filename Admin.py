@@ -18,7 +18,6 @@ def adminProfile():
         if user:
             print(f'user {username} is logged in')
 
-            # Use `with` to handle the cursor
             with mydb.cursor() as mycursor:
                 mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
                 profile_pic_url = mycursor.fetchone()
@@ -44,111 +43,117 @@ def adminProfile():
 @app.route('/adminUpdateProfile', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminUpdateProfile():
-    if 'user' in session and 'username' in session['user']:
-        with mydb.cursor() as mycursor:
-            current_username = session['user']['username']
+    with mydb.cursor() as mycursor:
+        try:
+            if 'user' in session and 'username' in session['user']:
 
-            if request.method == 'POST':
-                new_username = request.form.get('username')
-                name = request.form.get('name')
-                email = request.form.get('email')
-                age = request.form.get('age')
-                address = request.form.get('address')
-                phone = request.form.get('phone')
+                        current_username = session['user']['username']
 
-                if new_username or name or email or age or address or phone:
-                    if new_username != current_username:
-                        # Check if the new username already exists
-                        existing_username_check = "SELECT * FROM users WHERE username = %s"
-                        mycursor.execute(existing_username_check, (new_username,))
-                        existing_user_username = mycursor.fetchone()
+                        if request.method == 'POST':
+                            new_username = request.form.get('username')
+                            name = request.form.get('name')
+                            email = request.form.get('email')
+                            age = request.form.get('age')
+                            address = request.form.get('address')
+                            phone = request.form.get('phone')
 
-                        if existing_user_username:
-                            flash('User with the same username already exists. Please choose a different username.',
-                                  'danger')
-                            user = userSession(current_username)
-                            return render_template('Admin/adminUpdateProfile.html', user=user)
+                            if new_username or name or email or age or address or phone:
+                                if new_username != current_username:
+                                    # Check if the new username already exists
+                                    existing_username_check = "SELECT * FROM users WHERE username = %s"
+                                    mycursor.execute(existing_username_check, (new_username,))
+                                    existing_user_username = mycursor.fetchone()
 
-                    # Check for existing email
-                    if email:
-                        existing_email_check = "SELECT * FROM users WHERE email = %s AND username != %s"
-                        mycursor.execute(existing_email_check, (email, current_username))
-                        existing_user_email = mycursor.fetchone()
+                                    if existing_user_username:
+                                        flash('User with the same username already exists. Please choose a different username.',
+                                              'danger')
+                                        user = userSession(current_username)
+                                        return render_template('Admin/adminUpdateProfile.html', user=user)
 
-                        if existing_user_email:
-                            flash('User with the same email already exists. Please choose a different email.', 'danger')
-                            user = userSession(current_username)
-                            return render_template('Admin/adminUpdateProfile.html', user=user)
+                                # Check for existing email
+                                if email:
+                                    existing_email_check = "SELECT * FROM users WHERE email = %s AND username != %s"
+                                    mycursor.execute(existing_email_check, (email, current_username))
+                                    existing_user_email = mycursor.fetchone()
 
-                    # Update user information
-                    try:
-                        if (input_validation(new_username, name, email, address) and
-                                age_validation(age) and
-                                validate_phone_number(phone)):
-                            mycursor.execute(
-                                "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
-                                (new_username, name, email, age, address, phone, current_username)
-                            )
-                            mydb.commit()
-                            flash('User information updated successfully', 'success')
-                    except Exception as e:
-                        flash(f'Error updating user information: {str(e)}', 'error')
-                        if 'user' in session and 'id' in session['user']:
-                            log_this('Admin Profile information updated successfully')
-                        return redirect(url_for('adminUpdateProfile'))
+                                    if existing_user_email:
+                                        flash('User with the same email already exists. Please choose a different email.', 'danger')
+                                        user = userSession(current_username)
+                                        return render_template('Admin/adminUpdateProfile.html', user=user)
 
-                # Handle profile picture upload
-                if 'image' in request.files:
-                    file = request.files['image']
-                    if file.filename == '':
-                        flash('No profile picture selected', 'error')
-                    elif file and allowed_file(file.filename):
-                        if file.content_length < 32 * 1024 * 1024:  # Check if file size is less than 32 MB
-                            filename = secure_filename(file.filename)
-                            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                            file.save(filepath)
-                            image_path = f"img/{filename}"
+                                # Update user information
+                                try:
+                                    if (input_validation(new_username, name, email, address) and
+                                            age_validation(age) and
+                                            validate_phone_number(phone)):
+                                        mycursor.execute(
+                                            "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
+                                            (new_username, name, email, age, address, phone, current_username)
+                                        )
+                                        mydb.commit()
+                                        flash('User information updated successfully', 'success')
+                                except Exception as e:
+                                    flash(f'Error updating user information: {str(e)}', 'error')
+                                    if 'user' in session and 'id' in session['user']:
+                                        log_this('Admin Profile information updated successfully')
+                                    return redirect(url_for('adminUpdateProfile'))
 
-                            try:
-                                session['user']['profile_picture'] = filename
-                                mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
-                                                 (image_path, current_username))
-                                mydb.commit()
-                                flash('Profile picture uploaded successfully!', 'success')
-                            except Exception as e:
-                                flash(f'Error updating profile picture: {str(e)}', 'error')
-                            if 'user' in session and 'id' in session['user']:
-                                log_this('Profile picture uploaded successfully!')
-                            return redirect(url_for('adminUpdateProfile'))
+                            # Handle profile picture upload
+                            if 'image' in request.files:
+                                file = request.files['image']
+                                if file.filename == '':
+                                    flash('No profile picture selected', 'error')
+                                elif file and allowed_file(file.filename):
+                                    if file.content_length < 32 * 1024 * 1024:  # Check if file size is less than 32 MB
+                                        filename = secure_filename(file.filename)
+                                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                                        file.save(filepath)
+                                        image_path = f"img/{filename}"
+
+                                        try:
+                                            session['user']['profile_picture'] = filename
+                                            mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
+                                                             (image_path, current_username))
+                                            mydb.commit()
+                                            flash('Profile picture uploaded successfully!', 'success')
+                                        except Exception as e:
+                                            flash(f'Error updating profile picture: {str(e)}', 'error')
+                                        if 'user' in session and 'id' in session['user']:
+                                            log_this('Profile picture uploaded successfully!')
+                                        return redirect(url_for('adminUpdateProfile'))
+                                    else:
+                                        flash('Profile Picture must be less than 32 MB', 'danger')
+                                        return redirect(url_for('adminUpdateProfile'))
+                                else:
+                                    flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'danger')
+
+                            # Fetch updated user data
+                            user = userSession(new_username if new_username else current_username)
+                            if user:
+                                session['user'][
+                                    'username'] = new_username if new_username else current_username  # Update session with new username if changed
+                                return render_template("Admin/adminProfile.html", user=user)
+                            else:
+                                flash("User not found in database after update")
+                                if 'user' in session and 'id' in session['user']:
+                                    log_this("User not found in database after update")
+                                return redirect(url_for('login'))  # Redirect to log in if user not found after update
+
                         else:
-                            flash('Profile Picture must be less than 32 MB', 'danger')
-                            return redirect(url_for('adminUpdateProfile'))
-                    else:
-                        flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'danger')
+                            # GET request handling
+                            user = userSession(current_username)
+                            return render_template("Admin/adminUpdateProfile.html",
+                                                   user=user)  # Render form with current user data prepopulated
 
-                # Fetch updated user data
-                user = userSession(new_username if new_username else current_username)
-                if user:
-                    session['user'][
-                        'username'] = new_username if new_username else current_username  # Update session with new username if changed
-                    return render_template("Admin/adminProfile.html", user=user)
-                else:
-                    flash("User not found in database after update")
-                    if 'user' in session and 'id' in session['user']:
-                        log_this("User not found in database after update")
-                    return redirect(url_for('login'))  # Redirect to log in if user not found after update
 
             else:
-                # GET request handling
-                user = userSession(current_username)
-                return render_template("Admin/adminUpdateProfile.html",
-                                       user=user)  # Render form with current user data prepopulated
+                flash("User session not found")
+                if 'user' in session and 'id' in session['user']:
+                    log_this("User session not found when updating Profile")
+                return redirect(url_for('login'))
 
-    else:
-        flash("User session not found")
-        if 'user' in session and 'id' in session['user']:
-            log_this("User session not found when updating Profile")
-        return redirect(url_for('login'))
+        finally:
+            mycursor.close()
 
 
 @app.route('/adminUpdatePassword', methods=['POST', 'GET'])
@@ -809,88 +814,98 @@ def adminstoredelete():
 @app.route('/adminOrders', methods=['GET', 'POST'])
 @roles_required('admin')
 def admin_orders():
-    if request.method == 'POST':
-        # Handle status update
-        order_id = request.form.get('order_id')
-        product_id = request.form.get('product_id')
-        new_status = request.form.get('status')
+    try:
+        with mydb.cursor() as mycursor:
+            if request.method == 'POST':
+                # Handle status update
+                order_id = request.form.get('order_id')
+                product_id = request.form.get('product_id')
+                new_status = request.form.get('status')
 
-        try:
+                try:
+                    mycursor.execute("""
+                        UPDATE order_items 
+                        SET status = %s 
+                        WHERE order_id = %s AND product_id = %s
+                    """, (new_status, order_id, product_id))
+                    mydb.commit()
+                    flash("Item status updated successfully.", 'success')
+                except Exception as e:
+                    mydb.rollback()
+                    flash(f"Error updating status: {e}", 'danger')
+
             mycursor.execute("""
-                UPDATE order_items 
-                SET status = %s 
-                WHERE order_id = %s AND product_id = %s
-            """, (new_status, order_id, product_id))
-            mydb.commit()
-            flash("Item status updated successfully.", 'success')
-        except Exception as e:
-            mydb.rollback()
-            flash(f"Error updating status: {e}", 'danger')
+                SELECT o.id, o.user_id, u.username, o.total_points, o.shipping_option, o.order_date, o.status 
+                FROM orders o
+                JOIN users u ON o.user_id = u.id
+                ORDER BY o.order_date DESC
+            """)
+            orders = mycursor.fetchall()
 
-    mycursor.execute("""
-        SELECT o.id, o.user_id, u.username, o.total_points, o.shipping_option, o.order_date, o.status 
-        FROM orders o
-        JOIN users u ON o.user_id = u.id
-        ORDER BY o.order_date DESC
-    """)
-    orders = mycursor.fetchall()
+            order_list = []
+            for order in orders:
+                mycursor.execute("""
+                    SELECT oi.product_id, oi.product_name, oi.quantity, oi.status 
+                    FROM order_items oi 
+                    WHERE oi.order_id = %s
+                """, (order[0],))
+                items = mycursor.fetchall()
+                order_list.append({
+                    'order': order,
+                    'items': items
+                })
 
-    order_list = []
-    for order in orders:
-        mycursor.execute("""
-            SELECT oi.product_id, oi.product_name, oi.quantity, oi.status 
-            FROM order_items oi 
-            WHERE oi.order_id = %s
-        """, (order[0],))
-        items = mycursor.fetchall()
-        order_list.append({
-            'order': order,
-            'items': items
-        })
+            return render_template('Store/admin_orders.html', orders=order_list)
 
-    return render_template('Store/admin_orders.html', orders=order_list)
+    finally:
+        mycursor.close()
 
 
 @app.route('/update_item_status/<int:order_id>/<int:product_id>', methods=['POST'])
 @roles_required('admin')
 def update_item_status(order_id, product_id):
-    new_status = request.form.get('status')
-
     try:
-        # Update the item status
-        mycursor.execute("""
-            UPDATE order_items 
-            SET status = %s 
-            WHERE order_id = %s AND product_id = %s
-        """, (new_status, order_id, product_id))
+        with mydb.cursor() as mycursor:
+            new_status = request.form.get('status')
 
-        # Check if all items in the order are completed
-        mycursor.execute("""
-            SELECT COUNT(*) 
-            FROM order_items 
-            WHERE order_id = %s AND status != 'Completed'
-        """, (order_id,))
-        incomplete_items = mycursor.fetchone()[0]
+            try:
+                # Update the item status
+                mycursor.execute("""
+                    UPDATE order_items 
+                    SET status = %s 
+                    WHERE order_id = %s AND product_id = %s
+                """, (new_status, order_id, product_id))
 
-        # Update the order status based on item status
-        if incomplete_items == 0:
-            order_status = 'Completed'
-        else:
-            order_status = 'Pending'
+                # Check if all items in the order are completed
+                mycursor.execute("""
+                    SELECT COUNT(*) 
+                    FROM order_items 
+                    WHERE order_id = %s AND status != 'Completed'
+                """, (order_id,))
+                incomplete_items = mycursor.fetchone()[0]
 
-        mycursor.execute("""
-            UPDATE orders 
-            SET status = %s 
-            WHERE id = %s
-        """, (order_status, order_id))
+                # Update the order status based on item status
+                if incomplete_items == 0:
+                    order_status = 'Completed'
+                else:
+                    order_status = 'Pending'
 
-        mydb.commit()
-        flash('Item status updated successfully!', 'success')
-    except Exception as e:
-        mydb.rollback()
-        flash(f'An error occurred: {e}', 'danger')
+                mycursor.execute("""
+                    UPDATE orders 
+                    SET status = %s 
+                    WHERE id = %s
+                """, (order_status, order_id))
 
-    return redirect(url_for('admin_orders'))
+                mydb.commit()
+                flash('Item status updated successfully!', 'success')
+            except Exception as e:
+                mydb.rollback()
+                flash(f'An error occurred: {e}', 'danger')
+
+            return redirect(url_for('admin_orders'))
+
+    finally:
+        mycursor.close()
 
 
 @app.route('/blogs')
