@@ -6,27 +6,38 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Teacher Home</title>
+    <link rel="stylesheet" href="../../static/css/teacherHome.css">
 </head>
 <body>
     {% include 'Teacher/teacherNav.html' %}
-            {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
-    <h1>Welcome to Teacher's Home</h1>
-
-    <h2>Your Modules</h2>
-    <ul>
-        {% for module in modules %}
-            <li>
-                <a href="{{ url_for('update_module', module_id=module[0]) }}">{{ module[1] }}</a>
-            </li>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
         {% endfor %}
-    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <h1 class="teacher-home-header">Welcome to Teacher's Home</h1>
+    <br>
+    <div>
+        <h2 class="teacher-modules-header">Your Modules</h2>
+        <ul class="module-list" id="module-list">
+            {% for module in modules %}
+                <li class="module-item"{% if loop.index > 3 %} data-hidden="true" style="display: none;"{% endif %}>
+                    <a class="module-link" href="{{ url_for('update_module', module_id=module[0]) }}">{{ module[1] }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="teacher-see-more">
+            <a href="#" id="see-more-link">See more</a>
+        </div>
+    </div>
+
+    <script src="../../static/javascript/teacherHome.js"></script>
 </body>
 </html>
+
