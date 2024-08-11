@@ -1,0 +1,75 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #4E7D65; /* Background color to match the green in the image */
+    margin: 0;
+    padding: 0;
+}
+
+.teacher-home-header, .teacher-modules-header {
+    color: black;
+    margin-left: 20px;
+}
+
+.module-list {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 20px;
+}
+
+.module-item {
+    background-color: #E8FFE9; /* Light green color for the boxes */
+    border-radius: 20px;
+    width: 250px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+    margin: 10px;
+    text-align: center;
+}
+
+.module-link {
+    color: #4E7D65; /* Green color for the text */
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.module-link:hover {
+    text-decoration: underline;
+}
+
+.teacher-container {
+    padding: 20px;
+}
+
+.teacher-see-more {
+    text-align: right;
+    margin-right: 20px;
+    color: white;
+}
+.module-item {
+    background-color: #E8FFE9;
+    border-radius: 20px;
+    width: 250px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+    margin: 10px;
+    text-align: center;
+    transition: all 0.3s ease-in-out; /* Add transition effect */
+}
+
+#module-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+}
+
