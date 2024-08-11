@@ -46,7 +46,7 @@
             </div>
 
             <div class="totals">
-                <p>Total Points: <span id="total-points" data-initial-total-points="{{ total_points }}">{{ total_points }}</span></p>
+                <p><img src="{{ url_for('static', filename='img/explorer_point.png') }}" alt="Explorer Point" class="explorer-point-icon">Total Points: <span id="total-points" data-initial-total-points="{{ total_points }}">{{ total_points }}</span></p>
             </div>
 
             <button type="submit" class="btn btn-primary" id="checkout-button">Place Order</button>

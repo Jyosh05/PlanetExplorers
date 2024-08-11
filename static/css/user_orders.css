@@ -10,3 +10,10 @@ th, td {
 th {
    background-color: #f2f2f2;
 }
+
+.explorer-point-icon {
+    width: 30px; /* Smaller size for the token image */
+    height: auto;
+    vertical-align: middle; /* Aligns the image with the text */
+    margin-right: 5px; /* Space between image and text */
+}

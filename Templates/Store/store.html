@@ -28,7 +28,7 @@
                 <img src="{{ url_for('static', filename=product[4]) }}" alt="{{ product[1] }}" class="product-image">
                 <div class="product-details">
                     <h2 class="product-name">{{ product[1] }}</h2>
-                    <p class="product-price">Explorer Points: {{ product[5] }}</p>
+                    <p class="product-price"><img src="{{ url_for('static', filename='img/explorer_point.png') }}" alt="Explorer Point" class="explorer-point-icon">Explorer Points: {{ product[5] }}</p>
                 </div>
             </li>
             {% endfor %}
@@ -41,7 +41,6 @@
             <img id="popup-image" src="" alt="" class="popup-image">
             <h2 id="popup-name"></h2>
             <p id="popup-description"></p>
-            <p id="popup-price"></p>
             <p id="popup-price_in_points"></p>
             <form id="add-to-cart-form" class="add-to-cart-form">
                 <input type="hidden" name="product_id" id="popup-product-id">

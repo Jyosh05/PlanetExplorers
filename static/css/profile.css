@@ -61,10 +61,9 @@ h5 {
     padding-left: 20px;
 }
 
-
-.explorer-points-container img {
-    width: 40px;
-    height: 60px;
-    margin-bottom: -20px;
-    margin-left: -10px;
+.explorer-point-icon {
+    width: 30px; /* Smaller size for the token image */
+    height: auto;
+    vertical-align: middle; /* Aligns the image with the text */
+    margin-right: 5px; /* Space between image and text */
 }
