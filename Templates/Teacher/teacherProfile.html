@@ -79,7 +79,7 @@
                 <h4>Age: {{ user[5] }}</h4>
                 <h4>Address: {{ user[6] if user[6] else '-' }}</h4>
                 <h4>Phone: {{ user[7] if user[7] else '-' }}</h4>
-
+                <a href="{{url_for('teacherHome')}}" class="btn btn-primary">Back to Home</a>
                 <a href="{{ url_for('updateTeacherProfile') }}" class="btn btn-primary">Update Profile</a>
                 <a href="{{ url_for('updateTeacherPassword') }}" class="btn btn-primary">Update Password</a>
 

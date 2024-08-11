@@ -4,9 +4,11 @@ body {
     margin: 0;
     padding: 0;
 }
-
-.teacher-home-header, .teacher-modules-header {
-    color: black;
+.teacher-home-header{
+    color:black;
+}
+.teacher-modules-header {
+    color: white;
     margin-left: 20px;
 }
 
@@ -46,12 +48,21 @@ body {
 .teacher-container {
     padding: 20px;
 }
-
 .teacher-see-more {
     text-align: right;
     margin-right: 20px;
-    color: white;
 }
+
+#see-more-link {
+    color: white; /* Change text color to white */
+    text-decoration: none; /* Remove underline */
+    font-size: 18px; /* Optional: Adjust font size if needed */
+}
+
+#see-more-link:hover {
+    text-decoration: underline; /* Optional: Add underline on hover */
+}
+
 .module-item {
     background-color: #E8FFE9;
     border-radius: 20px;
@@ -71,5 +82,10 @@ body {
     flex-wrap: wrap;
     justify-content: space-around;
     align-items: center;
+}
+
+.modules_div {
+    background: #33764E; /* Make sure the '#' is included */
+    padding:15px;
 }
 
