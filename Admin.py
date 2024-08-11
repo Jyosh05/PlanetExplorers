@@ -12,20 +12,29 @@ import time, os
 def adminProfile():
     if 'user' in session and 'username' in session['user']:
         username = session['user']['username']
+
+        # Fetch the user data
         user = userSession(username)
         if user:
             print(f'user {username} is logged in')
-            mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
-            profile_pic_url = mycursor.fetchone()
 
+            # Use `with` to handle the cursor
+            with mydb.cursor() as mycursor:
+                mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
+                profile_pic_url = mycursor.fetchone()
+                mycursor.close()
+
+            # Determine the profile picture path
             if profile_pic_url and profile_pic_url[0]:
                 profile_pic = url_for('static', filename=profile_pic_url[0])
             else:
                 profile_pic = url_for('static', filename='img/default_pp.png')
 
-            # You can store the profile_pic_url in the session or pass it to the template
+            # Store the profile picture in the session
             session['profile_pic'] = profile_pic
-        return render_template('Admin/adminProfile.html', user=user, profile_pic=profile_pic)
+
+
+            return render_template('Admin/adminProfile.html', user=user, profile_pic=profile_pic)
 
     else:
         flash("User session not found")
@@ -36,89 +45,105 @@ def adminProfile():
 @roles_required('admin')
 def adminUpdateProfile():
     if 'user' in session and 'username' in session['user']:
-        current_username = session['user']['username']
-        if request.method == 'POST':
-            new_username = request.form.get('username')
-            name = request.form.get('name')
-            email = request.form.get('email')
-            age = request.form.get('age')
-            address = request.form.get('address')
-            phone = request.form.get('phone')
-            if new_username or name or email or age or address or phone:
-                if new_username != current_username:
-                    existing_username_check = "SELECT * FROM users WHERE username = %s"
-                    mycursor.execute(existing_username_check, (new_username,))
-                    existing_user_username = mycursor.fetchone()
-                    if existing_user_username:
-                        flash('User with the same username already exists. Please choose a different username.', 'danger')
-                        user = userSession(current_username)
-                        return render_template('Admin/adminUpdateProfile.html', user=user)
+        with mydb.cursor() as mycursor:
+            current_username = session['user']['username']
 
-                # Check for existing email
-                if email:
-                    existing_email_check = "SELECT * FROM users WHERE email = %s AND username != %s"
-                    mycursor.execute(existing_email_check, (email, current_username))
-                    existing_user_email = mycursor.fetchone()
-                    if existing_user_email:
-                        flash('User with the same email already exists. Please choose a different email.', 'danger')
-                        user = userSession(current_username)
-                        return render_template('Admin/adminUpdateProfile.html', user=user)
-                try:
-                    if input_validation(new_username, name, email, address) and age_validation(age) and validate_phone_number(phone):
-                        mycursor.execute(
-                            "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
-                            (new_username, name, email, age, address, phone, current_username))
-                        mydb.commit()
-                        flash('User information updated successfully', 'success')
-                except Exception as e:
-                    flash(f'Error updating user information: {str(e)}', 'error')
-                    if 'user' in session and 'id' in session['user']:
+            if request.method == 'POST':
+                new_username = request.form.get('username')
+                name = request.form.get('name')
+                email = request.form.get('email')
+                age = request.form.get('age')
+                address = request.form.get('address')
+                phone = request.form.get('phone')
 
-                        log_this('Admin Profile information updated successfully')
-                    return redirect(url_for('adminUpdateProfile'))
+                if new_username or name or email or age or address or phone:
+                    if new_username != current_username:
+                        # Check if the new username already exists
+                        existing_username_check = "SELECT * FROM users WHERE username = %s"
+                        mycursor.execute(existing_username_check, (new_username,))
+                        existing_user_username = mycursor.fetchone()
 
-            # Handle profile picture upload
-            if 'image' in request.files:
-                file = request.files['image']
-                if file.filename == '':
-                    flash('No profile picture selected', 'error')
-                elif file and allowed_file(file.filename):
-                    if file.content_length < 32 * 1024 * 1024:  # check if files size is less than 32 MB
-                        filename = secure_filename(file.filename)
-                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                        file.save(filepath)
-                        image_path = f"img/{filename}"
-                        try:
-                            session['user']['profile_picture'] = filename
-                            mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
-                                             (image_path, current_username))
+                        if existing_user_username:
+                            flash('User with the same username already exists. Please choose a different username.',
+                                  'danger')
+                            user = userSession(current_username)
+                            return render_template('Admin/adminUpdateProfile.html', user=user)
+
+                    # Check for existing email
+                    if email:
+                        existing_email_check = "SELECT * FROM users WHERE email = %s AND username != %s"
+                        mycursor.execute(existing_email_check, (email, current_username))
+                        existing_user_email = mycursor.fetchone()
+
+                        if existing_user_email:
+                            flash('User with the same email already exists. Please choose a different email.', 'danger')
+                            user = userSession(current_username)
+                            return render_template('Admin/adminUpdateProfile.html', user=user)
+
+                    # Update user information
+                    try:
+                        if (input_validation(new_username, name, email, address) and
+                                age_validation(age) and
+                                validate_phone_number(phone)):
+                            mycursor.execute(
+                                "UPDATE users SET username = %s, name = %s, email = %s, age = %s, address = %s, phone = %s WHERE username = %s",
+                                (new_username, name, email, age, address, phone, current_username)
+                            )
                             mydb.commit()
-                            flash('Profile picture uploaded successfully!', 'success')
-                        except Exception as e:
-                            flash(f'Error updating profile picture: {str(e)}', 'error')
+                            flash('User information updated successfully', 'success')
+                    except Exception as e:
+                        flash(f'Error updating user information: {str(e)}', 'error')
                         if 'user' in session and 'id' in session['user']:
-                            log_this('Profile picture uploaded successfully!')
+                            log_this('Admin Profile information updated successfully')
                         return redirect(url_for('adminUpdateProfile'))
-                    else:
-                        flash('Profile Picture must be less than 32 MB', 'danger')
-                        return redirect(url_for('adminUpdateProfile'))
-                else:
-                    flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'danger')
 
-            # Fetch updated user data
-            user = userSession(new_username if new_username else current_username)
-            if user:
-                session['user']['username'] = new_username if new_username else current_username  # Update session with new username if changed
-                return render_template("Admin/adminProfile.html", user=user)
+                # Handle profile picture upload
+                if 'image' in request.files:
+                    file = request.files['image']
+                    if file.filename == '':
+                        flash('No profile picture selected', 'error')
+                    elif file and allowed_file(file.filename):
+                        if file.content_length < 32 * 1024 * 1024:  # Check if file size is less than 32 MB
+                            filename = secure_filename(file.filename)
+                            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                            file.save(filepath)
+                            image_path = f"img/{filename}"
+
+                            try:
+                                session['user']['profile_picture'] = filename
+                                mycursor.execute("UPDATE users SET profilePic = %s WHERE username = %s",
+                                                 (image_path, current_username))
+                                mydb.commit()
+                                flash('Profile picture uploaded successfully!', 'success')
+                            except Exception as e:
+                                flash(f'Error updating profile picture: {str(e)}', 'error')
+                            if 'user' in session and 'id' in session['user']:
+                                log_this('Profile picture uploaded successfully!')
+                            return redirect(url_for('adminUpdateProfile'))
+                        else:
+                            flash('Profile Picture must be less than 32 MB', 'danger')
+                            return redirect(url_for('adminUpdateProfile'))
+                    else:
+                        flash('Invalid file format. Allowed formats are png, jpg, jpeg, gif.', 'danger')
+
+                # Fetch updated user data
+                user = userSession(new_username if new_username else current_username)
+                if user:
+                    session['user'][
+                        'username'] = new_username if new_username else current_username  # Update session with new username if changed
+                    return render_template("Admin/adminProfile.html", user=user)
+                else:
+                    flash("User not found in database after update")
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("User not found in database after update")
+                    return redirect(url_for('login'))  # Redirect to log in if user not found after update
+
             else:
-                flash("User not found in database after update")
-                if 'user' in session and 'id' in session['user']:
-                    log_this("User not found in database after update")
-                return redirect(url_for('login'))  # Redirect to log in if user not found after update
-        else:
-            # GET request handling
-            user = userSession(current_username)
-            return render_template("Admin/adminUpdateProfile.html", user=user)  # Render form with current user data prepopulated
+                # GET request handling
+                user = userSession(current_username)
+                return render_template("Admin/adminUpdateProfile.html",
+                                       user=user)  # Render form with current user data prepopulated
+
     else:
         flash("User session not found")
         if 'user' in session and 'id' in session['user']:
@@ -134,77 +159,78 @@ def adminUpdatePassword():
             username = session['user']['username']
             print("Session data:", session['user'])  # Debug statement
             print("Username from session:", username)  # Debug statement
+            with mydb.cursor() as mycursor:
 
-            if request.method == 'POST':
-                new_password = request.form.get('new_password')
-                confirm_password = request.form.get('confirm_password')
+                if request.method == 'POST':
+                    new_password = request.form.get('new_password')
+                    confirm_password = request.form.get('confirm_password')
 
-                if new_password and confirm_password:
-                    if new_password == confirm_password:
-                        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-                        try:
-                            # Check if the new hashed password already exists in the database
-                            print("Checking if the new hashed password already exists in the database.")  # Debug statement
-                            mycursor.execute("SELECT password FROM users")
-                            all_passwords = mycursor.fetchall()
+                    if new_password and confirm_password:
+                        if new_password == confirm_password:
+                            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                            try:
+                                # Check if the new hashed password already exists in the database
+                                print("Checking if the new hashed password already exists in the database.")  # Debug statement
+                                mycursor.execute("SELECT password FROM users")
+                                all_passwords = mycursor.fetchall()
 
-                            # Check if the new password matches any existing password
-                            password_exists = False
-                            for stored_password in all_passwords:
-                                if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
-                                    password_exists = True
-                                    break
+                                # Check if the new password matches any existing password
+                                password_exists = False
+                                for stored_password in all_passwords:
+                                    if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
+                                        password_exists = True
+                                        break
 
-                            if password_exists:
-                                flash('Password already exists. Please create another password', 'danger')
-                                if 'user' in session and 'id' in session['user']:
-                                    log_this("Existing password exists when creating a password")
-                                return redirect(url_for('adminUpdatePassword'))
-                            else:
-                                try:
-                                    print(f"Updating password for username: {username}")  # Debug statement
-                                    print(f"Hashed password: {hashed_password}")  # Debug statement
-                                    mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
-                                    mydb.commit()
-                                    flash('Password updated successfully', 'success')
+                                if password_exists:
+                                    flash('Password already exists. Please create another password', 'danger')
                                     if 'user' in session and 'id' in session['user']:
-                                        log_this("Password updated successfully")
-                                    print('Password updated successfully')  # Debug statement
-
-                                    # # Refresh session user data
-                                    # user = userSession(username)
-                                    # if user:
-                                    #     session['user'] = user  # Update session with refreshed user data
-                                    # else:
-                                    #     flash('User not found in database after update', 'error')
-                                    #     return redirect(url_for('login'))
-                                    mycursor.execute("SELECT email FROM users WHERE username = %s", (username,))
-
-                                    email_result = mycursor.fetchone()
-                                    email = email_result[0]
-                                    print(email)
-
-                                    subject = 'Password Changed'
-                                    template = f'''<p>Dear user, <br><br>
-                                                You have recently changed your password.<br><br>
-                                                Yours, <br>
-                                                PlanetExplorers Team</p>'''
-                                    send_reset_link_email(email, subject, template)
-
-                                except Exception as e:
-                                    flash(f'Error updating password: {str(e)}', 'danger')
-                                    print(f'SQL Update Error: {str(e)}')  # Debug statement
+                                        log_this("Existing password exists when creating a password")
                                     return redirect(url_for('adminUpdatePassword'))
-                        except Exception as e:
-                            flash(f'Error checking existing password: {str(e)}', 'danger')
-                            print(f'SQL Select Error: {str(e)}')  # Debug statement
+                                else:
+                                    try:
+                                        print(f"Updating password for username: {username}")  # Debug statement
+                                        print(f"Hashed password: {hashed_password}")  # Debug statement
+                                        mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
+                                        mydb.commit()
+                                        flash('Password updated successfully', 'success')
+                                        if 'user' in session and 'id' in session['user']:
+                                            log_this("Password updated successfully")
+                                        print('Password updated successfully')  # Debug statement
+
+                                        # # Refresh session user data
+                                        # user = userSession(username)
+                                        # if user:
+                                        #     session['user'] = user  # Update session with refreshed user data
+                                        # else:
+                                        #     flash('User not found in database after update', 'error')
+                                        #     return redirect(url_for('login'))
+                                        mycursor.execute("SELECT email FROM users WHERE username = %s", (username,))
+
+                                        email_result = mycursor.fetchone()
+                                        email = email_result[0]
+                                        print(email)
+
+                                        subject = 'Password Changed'
+                                        template = f'''<p>Dear user, <br><br>
+                                                    You have recently changed your password.<br><br>
+                                                    Yours, <br>
+                                                    PlanetExplorers Team</p>'''
+                                        send_reset_link_email(email, subject, template)
+
+                                    except Exception as e:
+                                        flash(f'Error updating password: {str(e)}', 'danger')
+                                        print(f'SQL Update Error: {str(e)}')  # Debug statement
+                                        return redirect(url_for('adminUpdatePassword'))
+                            except Exception as e:
+                                flash(f'Error checking existing password: {str(e)}', 'danger')
+                                print(f'SQL Select Error: {str(e)}')  # Debug statement
+                                return redirect(url_for('adminUpdatePassword'))
+                        else:
+                            flash('Passwords do not match.', 'danger')
                             return redirect(url_for('adminUpdatePassword'))
                     else:
-                        flash('Passwords do not match.', 'danger')
+                        flash('Please provide both password fields.', 'danger')
                         return redirect(url_for('adminUpdatePassword'))
-                else:
-                    flash('Please provide both password fields.', 'danger')
-                    return redirect(url_for('adminUpdatePassword'))
         else:
             flash("Username not found in session")
             return redirect(url_for('login'))
@@ -212,102 +238,108 @@ def adminUpdatePassword():
         flash("User session not found")
         return redirect(url_for('login'))
 
+    mycursor.close()
     return render_template("Admin/adminUpdatePassword.html")
 
 
 @app.route('/adminCreateTeacher', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminCreateTeacher():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        email = request.form.get('email')
+    with mydb.cursor() as mycursor:
+        if request.method == 'POST':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
 
-        name = request.form.get('name')
-        age = request.form.get('age')
-        address = request.form.get('address')
-        phone = request.form.get('phone')
+            name = request.form.get('name')
+            age = request.form.get('age')
+            address = request.form.get('address')
+            phone = request.form.get('phone')
 
-        existing_teacher_check_username = "SELECT * FROM users WHERE username = %s"
-        mycursor.execute(existing_teacher_check_username, (username,))
-        existing_teacher_username = mycursor.fetchone()
+            existing_teacher_check_username = "SELECT * FROM users WHERE username = %s"
+            mycursor.execute(existing_teacher_check_username, (username,))
+            existing_teacher_username = mycursor.fetchone()
 
-        # checking for existing teacher username
-        if existing_teacher_username:
-            flash('User with the same username already exists. Please choose a different username.')
-            if 'user' in session and 'id' in session['user']:
-                log_this("User with the same username is entered but already exists")
-            return render_template('Admin/adminCreateTeacher.html')
-
-        existing_teacher_email = "SELECT * FROM users WHERE email = %s"
-        mycursor.execute(existing_teacher_email, (email,))
-        existing_teacher_email_check = mycursor.fetchone()
-
-        # checking for existing teacher email
-        if existing_teacher_email_check:
-            flash('User with the same email already exists. Please choose a different email.', 'danger')
-            return render_template('Admin/adminCreateTeacher.html')
-
-        try:
-            if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
-
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-                role = 'teacher'
-                print("Received form data:")
-                print(f"Username: {username}")
-                print(f"Password: {password}")
-                print(f"Email: {email}")
-                print(f"Name: {name}")
-                print(f"Age: {age}")
-                print(f"Address: {address}")
-                print(f"Phone: {phone}")
-                query = """
-                            INSERT INTO users (username, password, email, name ,age, address, phone, role)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
-                        """
-                # Tuple to make sure the input cannot be changed
-                values = (username, hashed_password, email, name, age, address, phone, role)
-                # Executing the parameterized query and the tuple as the inputs
-                mycursor.execute(query, values)
-                mydb.commit()
-                flash('Teacher created successfully!', 'success')
+            # checking for existing teacher username
+            if existing_teacher_username:
+                flash('User with the same username already exists. Please choose a different username.')
                 if 'user' in session and 'id' in session['user']:
-                    log_this("Teacher account created successfully")
-                return redirect(url_for('blogs'))
-        except Exception as e:
-            flash(f'An error occurred: {str(e)}', 'danger')
-            log_this(f'An error occurred: {str(e)}')
-            return render_template('Admin/adminCreateTeacher.html')
+                    log_this("User with the same username is entered but already exists")
+                return render_template('Admin/adminCreateTeacher.html')
 
+            existing_teacher_email = "SELECT * FROM users WHERE email = %s"
+            mycursor.execute(existing_teacher_email, (email,))
+            existing_teacher_email_check = mycursor.fetchone()
+
+            # checking for existing teacher email
+            if existing_teacher_email_check:
+                flash('User with the same email already exists. Please choose a different email.', 'danger')
+                return render_template('Admin/adminCreateTeacher.html')
+
+            try:
+                if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
+
+                    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                    role = 'teacher'
+                    print("Received form data:")
+                    print(f"Username: {username}")
+                    print(f"Password: {password}")
+                    print(f"Email: {email}")
+                    print(f"Name: {name}")
+                    print(f"Age: {age}")
+                    print(f"Address: {address}")
+                    print(f"Phone: {phone}")
+                    query = """
+                                INSERT INTO users (username, password, email, name ,age, address, phone, role)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
+                            """
+                    # Tuple to make sure the input cannot be changed
+                    values = (username, hashed_password, email, name, age, address, phone, role)
+                    # Executing the parameterized query and the tuple as the inputs
+                    mycursor.execute(query, values)
+                    mydb.commit()
+                    flash('Teacher created successfully!', 'success')
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("Teacher account created successfully")
+                    return redirect(url_for('blogs'))
+            except Exception as e:
+                flash(f'An error occurred: {str(e)}', 'danger')
+                log_this(f'An error occurred: {str(e)}')
+                return render_template('Admin/adminCreateTeacher.html')
+    mycursor.close()
     return render_template('Admin/adminCreateTeacher.html')
 
 
 @app.route('/adminDeleteTeacher/<int:id>', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminDeleteTeacher(id):
-    try:
-        select_query = "SELECT * FROM users WHERE id = %s"
-        mycursor.execute(select_query, (id,))
-        teacher = mycursor.fetchone()
+    with mydb.cursor() as mycursor:
+        try:
+            select_query = "SELECT * FROM users WHERE id = %s"
+            mycursor.execute(select_query, (id,))
+            teacher = mycursor.fetchone()
 
-        if teacher:
-            delete_query = "DELETE FROM users WHERE id = %s"
-            mycursor.execute(delete_query, (id,))
-            mydb.commit()
-            flash('Teacher deleted successfully', 'success')
+            if teacher:
+                delete_query = "DELETE FROM users WHERE id = %s"
+                mycursor.execute(delete_query, (id,))
+                mydb.commit()
+                flash('Teacher deleted successfully', 'success')
+                if 'user' in session and 'id' in session['user']:
+                    log_this(f"Teacher Account with User ID {id} deleted")
+                return redirect(url_for('blogs'))
+            else:
+                return "Teacher not found"
+
+        except Exception as e:
+            print('Error: ', e)
+            mydb.rollback()
             if 'user' in session and 'id' in session['user']:
-                log_this(f"Teacher Account with User ID {id} deleted")
+                log_this("Error occurred while deleting teacher")
+            return "Error occurred while deleting teacher"
 
-            return redirect(url_for('blogs'))
-        else:
-            return "Teacher not found"
+        finally:
+            mycursor.close()
 
-    except Exception as e:
-        print('Error: ', e)
-        mydb.rollback()
-        if 'user' in session and 'id' in session['user']:
-            log_this("Error occurred while deleting teacher")
-        return "Error occurred while deleting teacher"
 
 
 @app.route('/adminTeacherTable', methods=['GET'])
@@ -315,11 +347,13 @@ def adminDeleteTeacher(id):
 def adminTeachersRetrieve():
     if 'user' in session and 'id' in session['user']:
         admin_id = session['user']['id']
-    select_query = "SELECT * FROM users WHERE role = %s or role = %s"
-    mycursor.execute(select_query, ('teacher', 'admin',))
-    rows = mycursor.fetchall()
-    count = len(rows)
-    return render_template('Admin/adminTeacherTable.html', teachers=rows, count=count, admin_id=admin_id)
+        with mydb.cursor() as mycursor:
+            select_query = "SELECT * FROM users WHERE role = %s or role = %s"
+            mycursor.execute(select_query, ('teacher', 'admin',))
+            rows = mycursor.fetchall()
+            count = len(rows)
+            mycursor.close()
+            return render_template('Admin/adminTeacherTable.html', teachers=rows, count=count, admin_id=admin_id)
 
 
 @app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
@@ -327,142 +361,140 @@ def adminTeachersRetrieve():
 def adminTeacherUpdate(id):
     if 'user' in session and 'id' in session['user']:
         admin_id = session['user']['id']
+        with mydb.cursor() as mycursor:
+            try:
+                if request.method == 'POST':
+                        username = request.form.get('username')
+                        password = request.form.get('password')
+                        email = request.form.get('email')
+                        role = request.form.get('role')
+                        lock_account = request.form.get('lock_account')
+                        unlock_account = request.form.get('unlock_account')
 
-    if request.method == 'POST':
-        try:
-            username = request.form.get('username')
-            password = request.form.get('password')
-            email = request.form.get('email')
-            role = request.form.get('role')
-            lock_account = request.form.get('lock_account')
-            unlock_account = request.form.get('unlock_account')
+                        # Fetch existing teacher details from the database
+                        select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+                        mycursor.execute(select_query, (id,))
+                        teacher_details = mycursor.fetchone()
 
-            # Fetch existing teacher details from the database
-            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
-            mycursor.execute(select_query, (id,))
-            teacher_details = mycursor.fetchone()
+                        if teacher_details:
+                            # Hash the password if provided, otherwise keep the existing one
+                            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
+                            teacher_details[2]
+                            if input_validation(username, email):
 
-            if teacher_details:
-                # Hash the password if provided, otherwise keep the existing one
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else teacher_details[2]
-                if input_validation(username, email):
+                                update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                                data = (username, hashed_password, email, role, id)
+                                mycursor.execute(update_teacher, data)
 
-                    update_teacher = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
-                    data = (username, hashed_password, email, role, id)
-                    mycursor.execute(update_teacher, data)
+                                if lock_account:
+                                    mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
+                                        datetime.now() + timedelta(days=365),
+                                        id))  # Locked for a long period, essentially permanently locked
 
-                    if lock_account:
-                        mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
-                            datetime.now() + timedelta(days=365),
-                            id))  # Locked for a long period, essentially permanently locked
+                                # Unlock account if requested
+                                if unlock_account:
+                                    mycursor.execute(
+                                        'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
+                                        (id,))
 
-                    # Unlock account if requested
-                    if unlock_account:
-                        mycursor.execute(
-                            'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
-                            (id,))
+                                mydb.commit()
 
-                    mydb.commit()
+                                flash('Teacher details updated successfully', 'success')
+                                if 'user' in session and 'id' in session['user']:
+                                    log_this("Teacher details updated successfully")
+                                return redirect(url_for('adminTeacherUpdate', id=id))
 
-                    flash('Teacher details updated successfully', 'success')
-                    if 'user' in session and 'id' in session['user']:
-                        log_this("Teachers detail updated successfully")
-                    return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
+                            else:
+                                if 'user' in session and 'id' in session['user']:
+                                    log_this("Invalid input while updating teacher details")
+                                return "Invalid input"
 
-                else:
-                    if 'user' in session and 'id' in session['user']:
-                        log_this("Teacher not found while updating account")
-                    return "Teacher not found"
+                else:  # GET request handling
+                        # Fetch existing teacher details to prepopulate the form, excluding the hashed password
+                        select_query = "SELECT id, username, email, role, locked FROM users WHERE id = %s"
+                        mycursor.execute(select_query, (id,))
+                        teacher_details = mycursor.fetchone()
 
-        except ValueError:
-            return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
+                        if teacher_details:
+                            return render_template('Admin/updateTeacher.html', teacher_details=teacher_details,
+                                                   admin_id=admin_id)
+                        else:
+                            return render_template('Admin/updateTeacher.html', teacher_details=None, error="Teacher not found")
 
-        except Exception as e:
-            print("Error: ", e)
-            mydb.rollback()
-            log_this("Error occurred while updating teacher")
-            return "Error occurred while updating teacher"
+            except Exception as e:
+                print('Error:', e)
+                mydb.rollback()
+                log_this("Error occurred while updating teacher")
+                return "Error occurred while updating teacher"
 
-    else:
-        try:
-            # Fetch existing teacher details to prepopulate the form, excluding the hashed password
-            select_query = "SELECT id, username, email, role, locked FROM users WHERE id = %s"
-            mycursor.execute(select_query, (id,))
-            teacher_details = mycursor.fetchone()
-
-            if teacher_details:
-                return render_template('Admin/updateTeacher.html', teacher_details=teacher_details, admin_id=admin_id)
-            else:
-                return render_template('Admin/updateTeacher.html', teacher_details=None, error="Teacher not found")
-
-        except Exception as e:
-            print('Error:', e)
-            log_this("Error occurred while fetching teacher details")
-            return "Error occurred while fetching teacher details"
+            finally:
+                mycursor.close()  # Ensure the connection is closed after request processing
 
 
 @app.route('/adminCreateStudent', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminCreateStudent():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        email = request.form.get('email')
+    with mydb.cursor() as mycursor:
+        if request.method == 'POST':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
 
-        name = request.form.get('name')
-        age = request.form.get('age')
-        address = request.form.get('address')
-        phone = request.form.get('phone')
+            name = request.form.get('name')
+            age = request.form.get('age')
+            address = request.form.get('address')
+            phone = request.form.get('phone')
 
-        existing_student_check_username = "SELECT * FROM users WHERE username = %s"
-        mycursor.execute(existing_student_check_username, (username,))
-        existing_student_check_username = mycursor.fetchone()
+            existing_student_check_username = "SELECT * FROM users WHERE username = %s"
+            mycursor.execute(existing_student_check_username, (username,))
+            existing_student_check_username = mycursor.fetchone()
 
-        # checking for existing teacher username
-        if existing_student_check_username:
-            flash('User with the same username already exists. Please choose a different username.', 'danger')
-            return render_template('Admin/adminCreateStudent.html')
+            # checking for existing teacher username
+            if existing_student_check_username:
+                flash('User with the same username already exists. Please choose a different username.', 'danger')
+                return render_template('Admin/adminCreateStudent.html')
 
-        existing_student_email = "SELECT * FROM users WHERE email = %s"
-        mycursor.execute(existing_student_email, (email,))
-        existing_student_email = mycursor.fetchone()
+            existing_student_email = "SELECT * FROM users WHERE email = %s"
+            mycursor.execute(existing_student_email, (email,))
+            existing_student_email = mycursor.fetchone()
 
-        # checking for existing teacher email
-        if existing_student_email:
-            flash('User with the same email already exists. Please choose a different email.', 'danger')
-            log_this("User with the same email already exists when creating student")
-            return render_template('Admin/adminCreateStudent.html')
+            # checking for existing teacher email
+            if existing_student_email:
+                flash('User with the same email already exists. Please choose a different email.', 'danger')
+                log_this("User with the same email already exists when creating student")
+                return render_template('Admin/adminCreateStudent.html')
 
-        try:
-            if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
+            try:
+                if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
 
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-                role = 'student'
-                print("Received form data:")
-                print(f"Username: {username}")
-                print(f"Password: {password}")
-                print(f"Email: {email}")
-                print(f"Name: {name}")
-                print(f"Age: {age}")
-                print(f"Address: {address}")
-                print(f"Phone: {phone}")
-                query = """
-                            INSERT INTO users (username, password, email, name ,age, address, phone, role)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
-                        """
-                # Tuple to make sure the input cannot be changed
-                values = (username, hashed_password, email, name, age, address, phone, role)
-                # Executing the parameterized query and the tuple as the inputs
-                mycursor.execute(query, values)
-                mydb.commit()
-                flash('Student created successfully!', 'success')
-                if 'user' in session and 'id' in session['user']:
-                    log_this("Student created successfully")
-                return redirect(url_for('blogs'))
-        except Exception as e:
-            flash(f'An error occurred: {str(e)}', 'danger')
-            log_this("Error occurred")
-            return render_template('Admin/adminCreateStudent.html')
+                    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                    role = 'student'
+                    print("Received form data:")
+                    print(f"Username: {username}")
+                    print(f"Password: {password}")
+                    print(f"Email: {email}")
+                    print(f"Name: {name}")
+                    print(f"Age: {age}")
+                    print(f"Address: {address}")
+                    print(f"Phone: {phone}")
+                    query = """
+                                INSERT INTO users (username, password, email, name ,age, address, phone, role)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
+                            """
+                    # Tuple to make sure the input cannot be changed
+                    values = (username, hashed_password, email, name, age, address, phone, role)
+                    # Executing the parameterized query and the tuple as the inputs
+                    mycursor.execute(query, values)
+                    mydb.commit()
+                    flash('Student created successfully!', 'success')
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("Student created successfully")
+                    return redirect(url_for('blogs'))
+            except Exception as e:
+                flash(f'An error occurred: {str(e)}', 'danger')
+                log_this("Error occurred")
+                return render_template('Admin/adminCreateStudent.html')
+            mycursor.close()
 
     return render_template('Admin/adminCreateStudent.html')
 
@@ -479,112 +511,117 @@ def adminCreateStudent():
 @app.route('/adminStudentTable', methods=['GET'])
 @roles_required('admin')
 def adminUsersRetrieve():
-    # Fetch regular users
-    select_regular_query = "SELECT id, username, name, email, role, locked FROM users WHERE role = %s"
-    mycursor.execute(select_regular_query, ('student',))
-    regular_users = mycursor.fetchall()
+    with mydb.cursor() as mycursor:
+        # Fetch regular users
+        select_regular_query = "SELECT id, username, name, email, role, locked FROM users WHERE role = %s"
+        mycursor.execute(select_regular_query, ('student',))
+        regular_users = mycursor.fetchall()
 
-    # Fetch OAuth users
-    select_oauth_query = "SELECT googleid, email, name, role FROM oauth WHERE role = %s"
-    mycursor.execute(select_oauth_query, ('student',))
-    oauth_users = mycursor.fetchall()
+        # Fetch OAuth users
+        select_oauth_query = "SELECT googleid, email, name, role FROM oauth WHERE role = %s"
+        mycursor.execute(select_oauth_query, ('student',))
+        oauth_users = mycursor.fetchall()
 
-    print("OAuth Users:", oauth_users)
+        print("OAuth Users:", oauth_users)
 
 
-    # Combine results and indicate the login type
-    students = [
-        {'id': user[0], 'username': user[1], 'name': user[2], 'email': user[3], 'role': user[4],
-         'account_status': 'Locked' if user[5] else 'Not locked', 'login_type': 'regular'}
-        for user in regular_users
-    ]
-    students.extend([
-        {'id': user[0], 'username': user[1], 'name': user[2], 'email': user[1], 'role': user[3],
-         'account_status': 'NA', 'login_type': 'oauth'}
-        for user in oauth_users
-    ])
+        # Combine results and indicate the login type
+        students = [
+            {'id': user[0], 'username': user[1], 'name': user[2], 'email': user[3], 'role': user[4],
+             'account_status': 'Locked' if user[5] else 'Not locked', 'login_type': 'regular'}
+            for user in regular_users
+        ]
+        students.extend([
+            {'id': user[0], 'username': user[1], 'name': user[2], 'email': user[1], 'role': user[3],
+             'account_status': 'NA', 'login_type': 'oauth'}
+            for user in oauth_users
+        ])
 
-    count = len(students)
+        count = len(students)
 
+    mycursor.close()
     return render_template('Admin/adminStudentTable.html', students=students, count=count)
 
 
 @app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
 @roles_required('admin')
 def adminStudentUpdate(id):
-    if request.method == 'POST':
-        try:
-            username = request.form.get('username')
-            password = request.form.get('password')
-            email = request.form.get('email')
-            role = request.form.get('role')
-            lock_account = request.form.get('lock_account')
-            unlock_account = request.form.get('unlock_account')
+    with mydb.cursor() as mycursor:
+        if request.method == 'POST':
+            try:
+                username = request.form.get('username')
+                password = request.form.get('password')
+                email = request.form.get('email')
+                role = request.form.get('role')
+                lock_account = request.form.get('lock_account')
+                unlock_account = request.form.get('unlock_account')
 
-            # Fetch existing product details from the database
-            select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
-            mycursor.execute(select_query, (id,))
-            student_details = mycursor.fetchone()
+                # Fetch existing product details from the database
+                select_query = "SELECT id, username, password, email, role FROM users WHERE id = %s"
+                mycursor.execute(select_query, (id,))
+                student_details = mycursor.fetchone()
 
-            if student_details:
-                if input_validation(username, email):
-                    # Hash the password if provided, otherwise keep the existing one
-                    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else student_details[2]
+                if student_details:
+                    if input_validation(username, email):
+                        # Hash the password if provided, otherwise keep the existing one
+                        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else student_details[2]
 
-                    update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
-                    data = (username, hashed_password, email, role, id)
-                    mycursor.execute(update_student, data)
-                    # Lock account if requested
-                    if lock_account:
-                        mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
-                        datetime.now() + timedelta(days=365),
-                        id))  # Locked for a long period, essentially permanently locked
+                        update_student = "UPDATE users SET username = %s, password = %s, email = %s, role = %s WHERE id = %s"
+                        data = (username, hashed_password, email, role, id)
+                        mycursor.execute(update_student, data)
+                        # Lock account if requested
+                        if lock_account:
+                            mycursor.execute('UPDATE users SET locked = TRUE, lockout_time = %s WHERE id = %s', (
+                            datetime.now() + timedelta(days=365),
+                            id))  # Locked for a long period, essentially permanently locked
 
-                    # Unlock account if requested
-                    if unlock_account:
-                        mycursor.execute(
-                            'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
-                            (id,))
+                        # Unlock account if requested
+                        if unlock_account:
+                            mycursor.execute(
+                                'UPDATE users SET failed_login_attempts = 0, locked = FALSE, lockout_time = NULL, unlock_token = NULL WHERE id = %s',
+                                (id,))
 
-                    mydb.commit()
+                        mydb.commit()
 
-                    flash('Student details updated successfully.', 'success')
-                    if 'user' in session and 'id' in session['user']:
-                        log_this("Student details updated successfully")
-                    return redirect(url_for('adminStudentUpdate', id=student_details[0]))
+                        flash('Student details updated successfully.', 'success')
+                        if 'user' in session and 'id' in session['user']:
+                            log_this("Student details updated successfully")
+                        return redirect(url_for('adminStudentUpdate', id=student_details[0]))
 
+                    else:
+                        if 'user' in session and 'id' in session['user']:
+                            log_this("User not found when updating Student")
+                        return "Student not found"
+
+            except ValueError:
+                return redirect(url_for('adminStudentUpdate', id=student_details[0]))
+
+            except Exception as e:
+                print("Error: ", e)
+                mydb.rollback()
+                if 'user' in session and 'id' in session['user']:
+                    log_this("Error occurred while updating student")
+                return "Error occurred while updating student"
+
+        else:
+            try:
+                # Fetch existing teacher details to prepopulate the form
+                select_query = "SELECT id, username, email, role FROM users WHERE id = %s"
+                mycursor.execute(select_query, (id,))
+                student_details = mycursor.fetchone()
+
+                if student_details:
+                    return render_template('Admin/updateStudent.html', student_details=student_details)
                 else:
-                    if 'user' in session and 'id' in session['user']:
-                        log_this("User not found when updating Student")
-                    return "Student not found"
+                    return render_template('Admin/updateStudent.html', student_details=None, error="Student not found")
 
-        except ValueError:
-            return redirect(url_for('adminStudentUpdate', id=student_details[0]))
+            except Exception as e:
+                print('Error:', e)
+                if 'user' in session and 'id' in session['user']:
+                    log_this("Error occurred while fetching student details")
+                return "Error occurred while fetching student details"
 
-        except Exception as e:
-            print("Error: ", e)
-            mydb.rollback()
-            if 'user' in session and 'id' in session['user']:
-                log_this("Error occurred while updating student")
-            return "Error occurred while updating student"
-
-    else:
-        try:
-            # Fetch existing teacher details to prepopulate the form
-            select_query = "SELECT id, username, email, role FROM users WHERE id = %s"
-            mycursor.execute(select_query, (id,))
-            student_details = mycursor.fetchone()
-
-            if student_details:
-                return render_template('Admin/updateStudent.html', student_details=student_details)
-            else:
-                return render_template('Admin/updateStudent.html', student_details=None, error="Student not found")
-
-        except Exception as e:
-            print('Error:', e)
-            if 'user' in session and 'id' in session['user']:
-                log_this("Error occurred while fetching student details")
-            return "Error occurred while fetching student details"
+    mycursor.close()
 
 
 # @app.route('/adminDeleteStudent/<int:id>', methods=['GET', 'POST'])
@@ -619,48 +656,52 @@ def adminStudentUpdate(id):
 
 @app.route('/adminDeleteStudent/<int:id>', methods=['GET', 'POST'])
 def adminDeleteStudent(id):
-    try:
-        # Check if the student is in the regular users table
-        select_query = "SELECT * FROM users WHERE id = %s"
-        mycursor.execute(select_query, (id,))
-        student = mycursor.fetchone()
-
-        if student:
-            delete_query = "DELETE FROM users WHERE id = %s"
-            mycursor.execute(delete_query, (id,))
-            mydb.commit()
-
-            flash('Student deleted successfully', 'success')
-            if 'user' in session and 'id' in session['user']:
-                log_this(f"Student Account with User ID {id} deleted")
-
-        else:
-            # Check if the student is in the OAuth users table
-            select_query = "SELECT * FROM oauth WHERE googleid = %s"
+    with mydb.cursor() as mycursor:
+        try:
+            # Check if the student is in the regular users table
+            select_query = "SELECT * FROM users WHERE id = %s"
             mycursor.execute(select_query, (id,))
-            oauth_student = mycursor.fetchone()
+            student = mycursor.fetchone()
 
-            if oauth_student:
-                delete_query = "DELETE FROM oauth WHERE googleid = %s"
+            if student:
+                delete_query = "DELETE FROM users WHERE id = %s"
                 mycursor.execute(delete_query, (id,))
                 mydb.commit()
 
-                flash('OAuth Student deleted successfully', 'success')
+                flash('Student deleted successfully', 'success')
                 if 'user' in session and 'id' in session['user']:
-                    log_this(f"OAuth Student Account with User ID {id} deleted")
+                    log_this(f"Student Account with User ID {id} deleted")
+
             else:
-                if 'user' in session and 'id' in session['user']:
-                    log_this("User not found when deleting account")
-                return "Student not found"
+                # Check if the student is in the OAuth users table
+                select_query = "SELECT * FROM oauth WHERE googleid = %s"
+                mycursor.execute(select_query, (id,))
+                oauth_student = mycursor.fetchone()
 
-        return redirect(url_for('blogs'))
+                if oauth_student:
+                    delete_query = "DELETE FROM oauth WHERE googleid = %s"
+                    mycursor.execute(delete_query, (id,))
+                    mydb.commit()
 
-    except Exception as e:
-        print('Error: ', e)
-        mydb.rollback()
-        if 'user' in session and 'id' in session['user']:
-            log_this("Error occurred while deleting student")
-        return "Error occurred while deleting student"
+                    flash('OAuth Student deleted successfully', 'success')
+                    if 'user' in session and 'id' in session['user']:
+                        log_this(f"OAuth Student Account with User ID {id} deleted")
+                else:
+                    if 'user' in session and 'id' in session['user']:
+                        log_this("User not found when deleting account")
+                    return "Student not found"
+
+            return redirect(url_for('blogs'))
+
+        except Exception as e:
+            print('Error: ', e)
+            mydb.rollback()
+            if 'user' in session and 'id' in session['user']:
+                log_this("Error occurred while deleting student")
+            return "Error occurred while deleting student"
+
+        finally:
+            mycursor.close()
 
 
 @app.route('/adminstore')
@@ -855,7 +896,10 @@ def update_item_status(order_id, product_id):
 @app.route('/blogs')
 @roles_required('admin')
 def blogs():
-    mycursor.execute("SELECT * FROM audit_logs")
-    data = mycursor.fetchall()
-    print(data)
+    with mydb.cursor() as mycursor:
+        mycursor.execute("SELECT * FROM audit_logs")
+        data = mycursor.fetchall()
+        print(data)
+
+    mycursor.close()
     return render_template("audit_logs.html", data=data, nameOfPage='Log')
