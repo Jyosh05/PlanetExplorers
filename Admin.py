@@ -632,7 +632,10 @@ def adminStudentUpdate(id):
                     if input_validation(username, email):
                         # Hash the password if provided, otherwise keep the existing one
                         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else student_details[2]
-
+                        if password:
+                            if not password_checker(password):
+                                flash("An Unexpected Error Has Occurred")
+                                return redirect(url_for('adminStudentUpdate', id=student_details[0]))
                         # Check if the new hashed password already exists in the database
                         print("Checking if the new hashed password already exists in the database.")  # Debug statement
                         mycursor.execute("SELECT password FROM users")
