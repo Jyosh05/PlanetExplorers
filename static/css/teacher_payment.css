@@ -7,7 +7,6 @@
     border: none;
     outline: none;
     font-family: 'Poppins', sans-serif;
-    text-transform: capitalize;
     transition: all 0.2s linear;
 }
 
