@@ -8,6 +8,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../../static/css/password_checker.css">
     <style>
         body {
             background-color: #f8f9fa;
@@ -88,8 +89,13 @@
                 </div>
                 <div class="form-group col-md-6">
                     <label for="password">Password:</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password" oninput="checkPasswordStrength()">
                     <small class="form-text text-muted">Leave blank to keep the current password</small>
+                    <br>
+                    <div id="password-strength-bar-container">
+                        <div id="password-strength-bar"></div>
+                    </div>
+                    <ul id="password-feedback"></ul>
                 </div>
             </div>
 
@@ -133,4 +139,5 @@
         </form>
     </div>
 </body>
+    <script src="../../static/javascript/password_checker.js"></script>
 </html>
