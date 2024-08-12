@@ -51,6 +51,13 @@ body {
     color: #28a745;
 }
 
+.explorer-point-icon {
+    width: 30px; /* Smaller size for the token image */
+    height: auto;
+    vertical-align: middle; /* Aligns the image with the text */
+    margin-right: 5px; /* Space between image and text */
+}
+
 .quantity-controls {
     display: flex;
     align-items: center;

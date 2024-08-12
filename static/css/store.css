@@ -13,6 +13,7 @@ body {
 h1 {
     text-align: center;
     color: #333;
+    padding: 40px
 }
 
 .product-list {
@@ -21,12 +22,12 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
+    gap: 20px; /* Adds space between rows and columns */
 }
 
 .product-item {
     background-color: #fff;
     width: 300px;
-    margin: 15px;
     padding: 15px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -34,6 +35,8 @@ h1 {
     flex-direction: column;
     align-items: center;
     transition: transform 0.2s;
+    border-style: ridge;
+    position: relative;
 }
 
 .product-item:hover {
@@ -41,8 +44,8 @@ h1 {
 }
 
 .product-image {
-    width: 100%;
-    height: auto;
+    width: 200px;
+    height: 200px;
     max-width: 200px;
 }
 
@@ -58,7 +61,17 @@ h1 {
 .product-price {
     color: #333;
     font-size: 1.2em;
-    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centers the content horizontally */
+    bottom: 15px; /* Distance from the bottom */
+}
+
+.explorer-point-icon {
+    width: 30px; /* Smaller size for the token image */
+    height: auto;
+    vertical-align: middle; /* Aligns the image with the text */
+    margin-right: 5px; /* Space between image and text */
 }
 
 .product-popup {

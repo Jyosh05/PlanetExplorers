@@ -30,7 +30,7 @@
                         {% for item in cart_items %}
                             <li class="cart-item" data-id="{{ item[0] }}">
                                 <span class="item-name">{{ item[1] }}</span>
-                                <span class="item-price_in_points">Explorer Points: {{ item[2] }}</span>
+                                <span class="item-price_in_points"><img src="{{ url_for('static', filename='img/explorer_point.png') }}" alt="Explorer Point" class="explorer-point-icon">Explorer Points: {{ item[2] }}</span>
                                 <div class="quantity-controls">
                                     <button class="quantity-btn minus-btn">-</button>
                                     <input type="text" class="quantity-field" value="{{ item[3] }}" readonly>
