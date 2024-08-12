@@ -79,53 +79,58 @@ def reset_password(token):
         if request.method == 'POST':
             new_password = request.form['password']
             confirm_password = request.form['confirm_password']
+            try:
+                if input_validation(new_password and confirm_password):
 
-            # Validate new password and confirm password
-            if new_password != confirm_password:
-                flash('Passwords do not match.', 'danger')
-                return redirect(request.url)
 
-            else:
-                try:
-                    # Retrieve all hashed passwords from the database
-                    print("Retrieving all hashed passwords from the database.")  # Debug statement
-                    mycursor.execute("SELECT password FROM users")
-                    all_passwords = mycursor.fetchall()
-
-                    # Check if the new password matches any existing password
-                    password_exists = False
-                    for stored_password in all_passwords:
-                        if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
-                            password_exists = True
-                            break
-
-                    if password_exists:
-                        flash('Password already exists. Please create another password.')
-                        print("Password already exists. Please create another password.")
+                    # Validate new password and confirm password
+                    if new_password != confirm_password:
+                        flash('Passwords do not match.', 'danger')
+                        return redirect(request.url)
 
                     else:
-                        # Hash the new password and update the user's password in the database
-                        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-                        update_query = "UPDATE users SET password = %s WHERE email = %s"
-                        mycursor.execute(update_query, (hashed_password, email))
-                        expire_token = "UPDATE token_validation SET used = %s WHERE token = %s"
-                        used = True
-                        mycursor.execute(expire_token,(used,token))
-                        mydb.commit()
+                        try:
+                            # Retrieve all hashed passwords from the database
+                            print("Retrieving all hashed passwords from the database.")  # Debug statement
+                            mycursor.execute("SELECT password FROM users")
+                            all_passwords = mycursor.fetchall()
 
-                        print("Password updated successfully")
-                        flash('Your password has been reset successfully.', 'success')
-                        subject = 'Password Changed'
-                        template = f'''<p>Dear user, <br><br>
-                                                You have recently changed your password.<br><br>
-                                                Yours, <br>
-                                                PlanetExplorers Team</p>'''
-                        send_reset_link_email(email, subject, template)
-                        return redirect(url_for('login'))  # Redirect to login page after successful password reset
+                            # Check if the new password matches any existing password
+                            password_exists = False
+                            for stored_password in all_passwords:
+                                if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
+                                    password_exists = True
+                                    break
 
-                except Exception as e:
-                    print("Error updating password:", e)
-                    return False  # Indicate failure due to error
+                            if password_exists:
+                                flash('Password already exists. Please create another password.')
+                                print("Password already exists. Please create another password.")
+
+                            else:
+                                # Hash the new password and update the user's password in the database
+                                hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                                update_query = "UPDATE users SET password = %s WHERE email = %s"
+                                mycursor.execute(update_query, (hashed_password, email))
+                                expire_token = "UPDATE token_validation SET used = %s WHERE token = %s"
+                                used = True
+                                mycursor.execute(expire_token,(used,token))
+                                mydb.commit()
+
+                                print("Password updated successfully")
+                                flash('Your password has been reset successfully.', 'success')
+                                subject = 'Password Changed'
+                                template = f'''<p>Dear user, <br><br>
+                                                        You have recently changed your password.<br><br>
+                                                        Yours, <br>
+                                                        PlanetExplorers Team</p>'''
+                                send_reset_link_email(email, subject, template)
+                                return redirect(url_for('login'))  # Redirect to login page after successful password reset
+
+                        except Exception as e:
+                            print("Error updating password:", e)
+                            return False  # Indicate failure due to error
+            except ValueError:
+                flash('Error Resetting Password. Please try again!', 'danger')
     mycursor.close()
 
     return render_template('User/reset_password.html', token=token)
@@ -521,71 +526,77 @@ def updatePassword():
                     confirm_password = request.form.get('confirm_password')
 
                     if new_password and confirm_password:
-                        if new_password == confirm_password:
-                            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-                            try:
-                                # Check if the new hashed password already exists in the database
-                                print("Checking if the new hashed password already exists in the database.")  # Debug statement
-                                mycursor.execute("SELECT password FROM users")
-                                all_passwords = mycursor.fetchall()
-
-                                # Check if the new password matches any existing password
-                                password_exists = False
-                                for stored_password in all_passwords:
-                                    if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
-                                        password_exists = True
-                                        break
-
-                                if password_exists:
-                                    flash('Password already exists. Please create another password', 'danger')
-                                    if 'user' in session and 'id' in session['user']:
-                                        log_this("Existing password exists when creating a password")
-                                    return redirect(url_for('updatePassword'))
-                                else:
+                        try:
+                            if input_validation(new_password and confirm_password):
+                                if new_password == confirm_password:
+                                    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
                                     try:
-                                        print(f"Updating password for username: {username}")  # Debug statement
-                                        print(f"Hashed password: {hashed_password}")  # Debug statement
-                                        mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username,))
-                                        mydb.commit()
-                                        flash('Password updated successfully', 'success')
-                                        if 'user' in session and 'id' in session['user']:
-                                            log_this("Password updated successfully")
-                                        print('Password updated successfully')  # Debug statement
+                                        # Check if the new hashed password already exists in the database
+                                        print("Checking if the new hashed password already exists in the database.")  # Debug statement
+                                        mycursor.execute("SELECT password FROM users")
+                                        all_passwords = mycursor.fetchall()
 
-                                        # # Refresh session user data
-                                        # user = userSession(username)
-                                        # if user:
-                                        #     session['user'] = user  # Update session with refreshed user data
-                                        # else:
-                                        #     flash('User not found in database after update', 'error')
-                                        #     return redirect(url_for('login'))
-                                        mycursor.execute("SELECT email FROM users WHERE username = %s", (username,))
+                                        # Check if the new password matches any existing password
+                                        password_exists = False
+                                        for stored_password in all_passwords:
+                                            if bcrypt.checkpw(new_password.encode('utf-8'), stored_password[0].encode('utf-8')):
+                                                password_exists = True
+                                                break
 
-                                        email_result = mycursor.fetchone()
-                                        email = email_result[0]
-                                        print(email)
+                                        if password_exists:
+                                            flash('Password already exists. Please create another password', 'danger')
+                                            if 'user' in session and 'id' in session['user']:
+                                                log_this("Existing password exists when creating a password")
+                                            return redirect(url_for('updatePassword'))
+                                        else:
+                                            try:
+                                                print(f"Updating password for username: {username}")  # Debug statement
+                                                print(f"Hashed password: {hashed_password}")  # Debug statement
+                                                mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username,))
+                                                mydb.commit()
+                                                flash('Password updated successfully', 'success')
+                                                if 'user' in session and 'id' in session['user']:
+                                                    log_this("Password updated successfully")
+                                                print('Password updated successfully')  # Debug statement
 
-                                        subject = 'Password Changed'
-                                        template = f'''<p>Dear user, <br><br>
-                                                    You have recently changed your password.<br><br>
-                                                    Yours, <br>
-                                                    PlanetExplorers Team</p>'''
-                                        send_reset_link_email(email, subject, template)
+                                                # # Refresh session user data
+                                                # user = userSession(username)
+                                                # if user:
+                                                #     session['user'] = user  # Update session with refreshed user data
+                                                # else:
+                                                #     flash('User not found in database after update', 'error')
+                                                #     return redirect(url_for('login'))
+                                                mycursor.execute("SELECT email FROM users WHERE username = %s", (username,))
 
+                                                email_result = mycursor.fetchone()
+                                                email = email_result[0]
+                                                print(email)
+
+                                                subject = 'Password Changed'
+                                                template = f'''<p>Dear user, <br><br>
+                                                            You have recently changed your password.<br><br>
+                                                            Yours, <br>
+                                                            PlanetExplorers Team</p>'''
+                                                send_reset_link_email(email, subject, template)
+
+                                            except Exception as e:
+                                                flash(f'Error updating password: {str(e)}', 'danger')
+                                                print(f'SQL Update Error: {str(e)}')  # Debug statement
+                                                return redirect(url_for('updatePassword'))
                                     except Exception as e:
-                                        flash(f'Error updating password: {str(e)}', 'danger')
-                                        print(f'SQL Update Error: {str(e)}')  # Debug statement
+                                        flash(f'Error checking existing password: {str(e)}', 'danger')
+                                        print(f'SQL Select Error: {str(e)}')  # Debug statement
                                         return redirect(url_for('updatePassword'))
-                            except Exception as e:
-                                flash(f'Error checking existing password: {str(e)}', 'danger')
-                                print(f'SQL Select Error: {str(e)}')  # Debug statement
+                                else:
+                                    flash('Passwords do not match.', 'danger')
+                                    return redirect(url_for('updatePassword'))
+                            else:
+                                flash('Please provide both password fields.', 'danger')
                                 return redirect(url_for('updatePassword'))
-                        else:
-                            flash('Passwords do not match.', 'danger')
-                            return redirect(url_for('updatePassword'))
-                    else:
-                        flash('Please provide both password fields.', 'danger')
-                        return redirect(url_for('updatePassword'))
+                        except ValueError:
+                            flash('Error updating password. Please try again!', 'danger')
+
+
         else:
             flash("Username not found in session")
             return redirect(url_for('login'))
