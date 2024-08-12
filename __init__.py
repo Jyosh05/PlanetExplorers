@@ -56,7 +56,7 @@ def forget_password():
                     send_reset_link_email(email, subject, template)
                     flash('Password reset link has been sent to your email.', 'success')
                 else:
-                    flash('Account with this email does not exist.', 'danger')
+                    flash('Error sending email. Check if the email entered is registered in your account or your WiFi connection is strong. ', 'danger')
             else:
                 flash('Invalid reCAPTCHA. Please try again.', 'danger')
 
