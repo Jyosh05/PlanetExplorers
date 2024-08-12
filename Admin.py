@@ -406,6 +406,9 @@ def adminTeacherUpdate(id):
                                 hashed_password = bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())if password else \
                                 teacher_details[2]
                                 if password:
+                                    if not password_checker(password):
+                                        flash("An UnExpected Error Has Occurred")
+                                        return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
                                     if input_validation(password):
                                         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
                                         teacher_details[2]
