@@ -407,7 +407,7 @@ def adminTeacherUpdate(id):
                                 teacher_details[2]
                                 if password:
                                     if not password_checker(password):
-                                        flash("An UnExpected Error Has Occurred")
+                                        flash("An UnExpected Error Has Occurred", 'danger')
                                         return redirect(url_for('adminTeacherUpdate', id=teacher_details[0]))
                                     if input_validation(password):
                                         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
@@ -634,7 +634,7 @@ def adminStudentUpdate(id):
                         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else student_details[2]
                         if password:
                             if not password_checker(password):
-                                flash("An Unexpected Error Has Occurred")
+                                flash("An Unexpected Error Has Occurred", 'danger')
                                 return redirect(url_for('adminStudentUpdate', id=student_details[0]))
                         # Check if the new hashed password already exists in the database
                         print("Checking if the new hashed password already exists in the database.")  # Debug statement
