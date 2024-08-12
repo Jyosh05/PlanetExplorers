@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Registration</title>
-    <link rel="stylesheet" type="text/css" href="../../static/css/register.css">
+    <link rel="stylesheet" href="../../static/css/register.css">
+    <link rel="stylesheet" href="../../static/css/password_checker.css">
 </head>
 <body>
     <img src="../static/img/logo.png" width="151" height="113">
@@ -53,7 +54,7 @@
             <br>
             <label for="phone">Phone:</label>
             <br>
-            <input type="text" id="phone" name="phone" required style="width: 394px;">
+            <input type="number" id="phone" name="phone" required style="width: 394px;">
             <br>
             <div style="display: flex; align-items: center;">
                 <input type="checkbox" id="register_as_teacher" name="register_as_teacher" style="transform: scale(2);">
@@ -71,5 +72,6 @@
         </div>
     </form>
     <script src="../../static/javascript/register.js"></script>
+    <script src="../../static/javascript/password_checker.js"></script>
 </body>
 </html>

@@ -362,14 +362,14 @@ def age_validation(age):
 
 
 def validate_phone_number(phone_number):
-    pattern = r"^\+(?:[0-9] ?){6,14}[0-9]$"
-    if re.match(pattern, phone_number) == False:
-        raise ValueError("Invalid input: Phone number does not match the requirements")
+    pattern = r"^\d{8}$"
+    if not re.match(pattern, phone_number):
+        raise ValueError("Invalid input: Phone number must be exactly 8 digits long and contain only numbers.")
     return True
 
 
-def update_info(input_string):
-    pass
+
+
 
 
 def check_existing_credentials(username=None, email=None):
@@ -747,3 +747,7 @@ def send_verification_email(email, token):
         print(f'Email sent to: {email}')  # Debugging statement
     except Exception as e:
         print(f'Error sending email: {str(e)}')  # Debugging statement
+
+def password_checker(password):
+    regex = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+    return re.match(regex,password) is not None

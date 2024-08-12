@@ -136,30 +136,41 @@ def reset_password(token):
 def register():
     with mydb.cursor() as mycursor:
         if request.method == "POST":
-            username = request.form.get('username')
-            password = request.form.get('password')
-            email = request.form.get('email')
-            if check_existing_credentials(username, email):
-                flash("Username or email already in use",'danger')
-                return redirect(url_for('register'))
+            try:
+                username = request.form.get('username')
+                password = request.form.get('password')
+                if not password_checker(password):
+                    print("password does not meet requirement")
+                    return redirect(url_for('register'))
+                email = request.form.get('email')
+                if check_existing_credentials(username, email):
+                    flash("Username or email already in use",'danger')
+                    return redirect(url_for('register'))
 
-            name = request.form.get('name')
-            age = request.form.get('age')
-            address = request.form.get('address')
-            phone = request.form.get('phone')
-            print("Received form data:")
-            print(f"Username: {username}")
-            print(f"Password: {password}")
-            print(f"Email: {email}")
-            print(f"Name: {name}")
-            print(f"Age: {age}")
-            print(f"Address: {address}")
-            print(f"Phone: {phone}")
-            input_validation(username,password,email,name,address)
-            age_validation(age)
-            validate_phone_number(phone)
-            add_info(username, password, email, name, age, address, phone)
-            return redirect(url_for('login'))
+                name = request.form.get('name')
+                age = request.form.get('age')
+                address = request.form.get('address')
+                phone = request.form.get('phone')
+                print("Received form data:")
+                print(f"Username: {username}")
+                print(f"Password: {password}")
+                print(f"Email: {email}")
+                print(f"Name: {name}")
+                print(f"Age: {age}")
+                print(f"Address: {address}")
+                print(f"Phone: {phone}")
+                input_validation(username,password,email,name,address)
+                age_validation(age)
+                validate_phone_number(phone)
+
+                add_info(username, password, email, name, age, address, phone)
+                return redirect(url_for('login'))
+            except ValueError as error:
+                print(error)
+                return redirect(url_for('register'))
+            except Exception as e:
+                print(e)
+                return redirect(url_for('register'))
 
     mycursor.close()
     return render_template('User/register.html')
