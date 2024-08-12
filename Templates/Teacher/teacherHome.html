@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Teacher Home</title>
     <link rel="stylesheet" href="../../static/css/teacherHome.css">
@@ -27,10 +26,8 @@
         <h2 class="teacher-modules-header">Your Modules</h2>
         <ul class="module-list" id="module-list">
             {% for module in modules %}
-                <li class="module-item"{% if loop.index > 3 %} data-hidden="true" style="display: none;"{% endif %}>
-                    <a class="module-link" href="{{ url_for('update_module', module_id=module[0]) }}">
-                        {{ module[1] }}
-                    </a>
+                <li class="module-item"{% if loop.index > 3 %} data-hidden="true"{% endif %} data-url="{{ url_for('update_module', module_id=module[0]) }}">
+                    {{ module[1] }}
                 </li>
             {% endfor %}
         </ul>

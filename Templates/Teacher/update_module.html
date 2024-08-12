@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Module</title>
+    <link rel="stylesheet" href="../../static/css/update_module.css">
 </head>
 <body>
     <h1>Update Module</h1>
@@ -30,6 +31,7 @@
             </div>
         {% endfor %}
 
+        <button><a href="{{url_for('teacherHome')}}">Back To Home</a></button>
         <button type="submit">Update Module</button>
     </form>
 </body>
