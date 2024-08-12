@@ -167,6 +167,9 @@ def adminUpdatePassword():
 
             if request.method == 'POST':
                 new_password = request.form.get('new_password')
+                if not password_checker(new_password):
+                    flash('An Unexpected Error Has Occurred','danger')
+                    return redirect(url_for('adminUpdatePassword'))
                 confirm_password = request.form.get('confirm_password')
 
                 if new_password and confirm_password:
@@ -249,6 +252,9 @@ def adminCreateTeacher():
         if request.method == 'POST':
             username = request.form.get('username')
             password = request.form.get('password')
+            if not password_checker(password):
+                flash('An Unexpected Error Has Occured','danger')
+                return redirect(url_for('adminCreateTeacher'))
             email = request.form.get('email')
 
             name = request.form.get('name')
@@ -384,6 +390,9 @@ def adminTeacherUpdate(id):
                 if request.method == 'POST':
                         username = request.form.get('username')
                         password = request.form.get('password')
+                        if not password_checker(password):
+                            flash('An Unexpected Error Has Occurred','danger')
+                            return redirect(url_for('adminTeacherUpdate'))
                         email = request.form.get('email')
                         role = request.form.get('role')
                         lock_account = request.form.get('lock_account')
@@ -474,6 +483,9 @@ def adminCreateStudent():
         if request.method == 'POST':
             username = request.form.get('username')
             password = request.form.get('password')
+            if not password_checker(password):
+                flash('An Unexpected Error Has Occured','danger')
+                return redirect(url_for('adminCreateStudent'))
             email = request.form.get('email')
 
             name = request.form.get('name')
@@ -604,6 +616,9 @@ def adminStudentUpdate(id):
             try:
                 username = request.form.get('username')
                 password = request.form.get('password')
+                if not password_checker(password):
+                    flash('An Unexpected Error Has Occurred','danger')
+                    return redirect(url_for('adminStudentUpdate'))
                 email = request.form.get('email')
                 role = request.form.get('role')
                 lock_account = request.form.get('lock_account')
