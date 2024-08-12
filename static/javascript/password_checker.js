@@ -1,12 +1,13 @@
-
 function checkPasswordStrength() {
     var password = document.getElementById("password").value;
     var feedback = document.getElementById("password-feedback");
     var strengthBar = document.getElementById("password-strength-bar");
     var nextButton = document.getElementById("next-button");
 
-    // Clear previous feedback
+    // Clear previous feedback and strength bar
     feedback.innerHTML = "";
+    strengthBar.style.width = "0%";
+    strengthBar.style.backgroundColor = "#FF5656"; // Reset to default color
 
     // Check if the password field is empty
     if (password.trim() === "") {

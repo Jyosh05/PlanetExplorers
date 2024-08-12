@@ -169,6 +169,7 @@ def register():
                 validate_phone_number(phone)
 
                 add_info(username, password, email, name, age, address, phone)
+                mycursor.close()
                 return redirect(url_for('login'))
             except ValueError as error:
                 print(error)
