@@ -385,14 +385,11 @@ def adminTeachersRetrieve():
 def adminTeacherUpdate(id):
     if 'user' in session and 'id' in session['user']:
         admin_id = session['user']['id']
-        with mydb.cursor() as mycursor:
+        with (mydb.cursor() as mycursor):
             try:
                 if request.method == 'POST':
                         username = request.form.get('username')
                         password = request.form.get('password')
-                        if not password_checker(password):
-                            flash('An Unexpected Error Has Occurred','danger')
-                            return redirect(url_for('adminTeacherUpdate'))
                         email = request.form.get('email')
                         role = request.form.get('role')
                         lock_account = request.form.get('lock_account')
@@ -405,7 +402,9 @@ def adminTeacherUpdate(id):
 
                         if teacher_details:
                             if input_validation(username, email):
-                            # Hash the password if provided, otherwise keep the existing one
+                                # Hash the password if provided, otherwise keep the existing one
+                                hashed_password = bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())if password else \
+                                teacher_details[2]
                                 if password:
                                     if input_validation(password):
                                         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
@@ -616,9 +615,6 @@ def adminStudentUpdate(id):
             try:
                 username = request.form.get('username')
                 password = request.form.get('password')
-                if not password_checker(password):
-                    flash('An Unexpected Error Has Occurred','danger')
-                    return redirect(url_for('adminStudentUpdate'))
                 email = request.form.get('email')
                 role = request.form.get('role')
                 lock_account = request.form.get('lock_account')
