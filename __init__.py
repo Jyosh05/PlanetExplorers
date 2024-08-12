@@ -39,18 +39,24 @@ def forget_password():
             # verify recaptcha
             valid = verify_response(recaptcha)
             if valid:
-                # generate reset token
-                token = generate_confirm_token(email)
-                reset_url = url_for('reset_password', token=token, _external=True)
-                subject = 'Password Reset Requested'
-                template = f'''<p>Dear user, <br><br>
-                            You requested to change your password. Click the link to reset your password: <a href="{reset_url}">{reset_url}</a>. 
-                            The link will be valid for 5 minutes. <br>
-                            If you did not request a password change, please ignore this email.<br><br>
-                            Yours, <br>
-                            PlanetExplorers Team</p>'''
-                send_reset_link_email(email, subject, template)
-                flash('Password reset link has been sent to your email.', 'success')
+                mycursor.execute('SELECT email FROM users WHERE email = %s', (email,))
+                email_exist = mycursor.fetchone()
+
+                if email_exist:
+                    # generate reset token
+                    token = generate_confirm_token(email)
+                    reset_url = url_for('reset_password', token=token, _external=True)
+                    subject = 'Password Reset Requested'
+                    template = f'''<p>Dear user, <br><br>
+                                You requested to change your password. Click the link to reset your password: <a href="{reset_url}">{reset_url}</a>. 
+                                The link will be valid for 5 minutes. <br>
+                                If you did not request a password change, please ignore this email.<br><br>
+                                Yours, <br>
+                                PlanetExplorers Team</p>'''
+                    send_reset_link_email(email, subject, template)
+                    flash('Password reset link has been sent to your email.', 'success')
+                else:
+                    flash('Account with this email does not exist.', 'danger')
             else:
                 flash('Invalid reCAPTCHA. Please try again.', 'danger')
 
