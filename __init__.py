@@ -174,6 +174,7 @@ def register():
     return render_template('User/register.html')
 
 @app.route('/verify_register', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 def verify_register():
     try:
         with mydb.cursor() as mycursor:
@@ -208,6 +209,7 @@ def verify_register():
 
 
 @app.route('/verify_email/<token>', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 def verify_email(token):
     with mydb.cursor() as mycursor:
         try:
