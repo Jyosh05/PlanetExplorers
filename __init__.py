@@ -81,7 +81,9 @@ def reset_password(token):
             confirm_password = request.form['confirm_password']
             try:
                 if input_validation(new_password and confirm_password):
-
+                    if not password_checker(new_password):
+                        flash('An Unknown Error Has Occurred')
+                        return redirect(url_for('login'))
 
                     # Validate new password and confirm password
                     if new_password != confirm_password:
@@ -523,13 +525,16 @@ def updatePassword():
             with mydb.cursor() as mycursor:
 
                 if request.method == 'POST':
-                    new_password = request.form.get('new_password')
+                    new_password = request.form.get('password')
                     confirm_password = request.form.get('confirm_password')
 
                     if new_password and confirm_password:
                         try:
                             if input_validation(new_password and confirm_password):
                                 if new_password == confirm_password:
+                                    if not password_checker(new_password):
+                                        flash("An Unexpected Error Has Occurred")
+                                        return redirect(url_for('updatePassword'))
                                     hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
                                     try:
                                         # Check if the new hashed password already exists in the database

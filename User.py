@@ -745,11 +745,14 @@ def updateTeacherPassword():
                     print("Username from session:", username)  # Debug statement
 
                     if request.method == 'POST':
-                        new_password = request.form.get('new_password')
+                        new_password = request.form.get('password')
                         confirm_password = request.form.get('confirm_password')
 
                         if new_password and confirm_password:
                             if new_password == confirm_password:
+                                if not password_checker(new_password):
+                                    flash("An Unexpected Error Has Occurred")
+                                    return redirect(url_for('updateTeacherPassword'))
                                 hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
                                 try:
                                     # Check if the new hashed password already exists in the database
