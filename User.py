@@ -243,7 +243,8 @@ def login():
 
                 except ValueError as e:
                     print(f"Error: {e}")
-                    log_this(f"Runtime error during login: {e}")
+                    sql_injection = f"Runtime error during login: {e}"
+                    log_this(sql_injection)
                     flash(f"Error: {e}", 'danger')
                     return redirect(url_for('login'))
 

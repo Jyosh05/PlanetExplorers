@@ -206,6 +206,7 @@
                     <option value="Existing password exists when creating a password">Existing password exists when creating a password</option>
                     <option value="Account locked">User Accounts that are locked</option>
                     <option value="User account has been unlocked">Unlocked accounts</option>
+                    <option value="{{ sql_injection }}">SQL injection</option>
                     <!-- Additional options can be added here -->
                 </select>
             </div>
@@ -286,7 +287,15 @@
     'account_locked': 'dangerous',
     'existing_password_exists_when_creating_a_password': 'minor-error',
     'user_account_has_been_unlocked': 'safe',
-    'account_locked': 'dangerous'
+    'account_locked': 'dangerous',
+    '{{ sql_injection }}': 'dangerous',
+    'admin_profile_information_updated_successfully': 'safe',
+    'password_updated_successfully': 'safe',
+    'logout_attempted_without_active_session': 'dangerous',
+    'user_session_not_found_when_updating_profile': 'minor-error',
+    'products_in_store_updated': 'safe',
+    'user_gave_invalid_or_expired_unlock_token': 'minor-error'
+
 
 
 };
