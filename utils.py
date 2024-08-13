@@ -736,3 +736,14 @@ def send_verification_email(email, token):
 def password_checker(password):
     regex = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
     return re.match(regex,password) is not None
+
+def send_unlock_email(email, token):
+    subject = 'Unlock Your Account'
+    unlock_url = url_for('unlock_account', token=token, _external=True)
+    template = f'<p>Hi,</p>' \
+               f'<p>You have requested to unlock your account. Please click the link below to unlock your account:</p>' \
+               f'<p><a href="{unlock_url}">{unlock_url}</a></p>' \
+               f'<p>If you did not request this, please ignore this email.</p>' \
+               f'<p>Best regards,<br>PlanetExplorers Team</p>'
+    send_reset_link_email(email, subject, template)
+

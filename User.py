@@ -355,16 +355,6 @@ def unlock_account(token):
         mycursor.close()
 
 
-def send_unlock_email(email, token):
-    subject = 'Unlock Your Account'
-    unlock_url = url_for('unlock_account', token=token, _external=True)
-    template = f'<p>Hi,</p>' \
-               f'<p>You have requested to unlock your account. Please click the link below to unlock your account:</p>' \
-               f'<p><a href="{unlock_url}">{unlock_url}</a></p>' \
-               f'<p>If you did not request this, please ignore this email.</p>' \
-               f'<p>Best regards,<br>PlanetExplorers Team</p>'
-    send_reset_link_email(email, subject, template)
-
 
 @app.route('/teacher/create_module', methods=['GET', 'POST'])
 @limiter.limit("100 per hour")
