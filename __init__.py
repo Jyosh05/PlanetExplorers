@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 # Configuration is a file containing sensitive information
-from Configuration import RECAPTCHA_SITE_KEY
+
 import bcrypt
 import urllib.parse
 import os
@@ -9,11 +9,12 @@ from utils import *
 from User import *
 from Admin import *
 
-# !!!!!IF THERE IS ANY DB ERROR, CHECK THE CONFIG FILE AND IF THE PASSWORD IS CONFIG PROPERLY!!!!!
+try:
+    from config import abuse_key, RECAPTCHA_SITE_KEY
+except ImportError:
+    # Handle the case where config cannot be imported
+    raise RuntimeError("Failed to import configuration settings")
 
-# !!!!CHECK THE INPUT FUNCTION BEFORE USING, THERE IS CURRENTLY 1 FUNCTION THAT ADDS IN NEW USERS AS STUDENTS ONLY!!!!
-# ALL FUNCTIONS: input_validation(input_string), age_validation(age), update_info(input_string),add_info(username, /password, email, age, address),
-# delete_info(),get_info()
 
 
 @app.before_request

@@ -1,9 +1,9 @@
 from flask import Flask, session, abort, flash, url_for
 import mysql.connector
+import config_loader
 
 
 # Configuration is a file containing sensitive information
-from Configuration import DB_Config, secret_key, abuse_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, CLIENTID, CLIENTSECRET, payment_secret
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -17,6 +17,14 @@ import secrets
 import re
 from authlib.integrations.flask_client import OAuth
 from cryptography.fernet import Fernet
+
+try:
+    # Import configuration values from the dynamically loaded module
+    from config import DB_Config, secret_key, abuse_key, admin_config, email_config, RECAPTCHA_SECRET_KEY, CLIENTID, CLIENTSECRET, payment_secret, RECAPTCHA_SITE_KEY
+except ImportError:
+    # Handle the case where config cannot be imported
+    raise RuntimeError("Failed to import configuration settings")
+
 
 
 app = Flask(__name__)
