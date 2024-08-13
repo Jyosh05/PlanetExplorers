@@ -1,0 +1,29 @@
+/* static/css/email_verified.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #E8FFE9; /* Background color similar to your other pages */
+    color: #333; /* Dark text for readability */
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+h1 {
+    color: #33764E; /* Match the color scheme */
+    margin-top: 50px;
+}
+
+p {
+    font-size: 1.2em;
+    margin-top: 20px;
+}
+
+a {
+    color: #33764E;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
