@@ -3,14 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>Student Home</title>
+    <link rel="stylesheet" href="../../static/css/studentHome.css"> <!-- Link to the CSS file -->
 </head>
 <body>
     {% include 'navbar.html' %}
-    <h1>Welcome Student!</h1>
-    {% for module in modules %}
-    <div class="module-box" onclick="location.href='/student/module/{{ module.module_id }}'">
-        <h3>{{ module.module_name }}</h3>
+    <br>
+    <h1 class="student-home-header">Welcome Student!</h1>
+    <br>
+    <br>
+    <div class="student-container">
+        <h2 class="student-modules-header">Explore</h2>
+        <div id="module-list" class="module-list">
+            {% for module in modules %}
+            <div class="module-item" data-url="/student/module/{{ module.module_id }}">
+                <h3 class="module-link">{{ module.module_name }}</h3>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="student-see-more">
+            <a href="#" id="see-more-link">See more</a>
+        </div>
     </div>
-    {% endfor %}
+    <br>
+    <br>
+    <br>
+    <script src="../../static/javascript/studentHome.js"></script> <!-- Link to the JavaScript file -->
 </body>
 </html>

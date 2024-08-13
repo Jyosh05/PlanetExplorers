@@ -490,7 +490,7 @@ def update_module(module_id):
 @roles_required('student')
 def get_module_questions(module_id):
     cursor = mydb.cursor(dictionary=True)
-    cursor.execute("SELECT module_id, question, choice_a, choice_b, choice_c, choice_d FROM questions WHERE module_id = %s", (module_id,))
+    cursor.execute("SELECT question_id, question, choice_a, choice_b, choice_c, choice_d FROM questions WHERE module_id = %s", (module_id,))
     questions = cursor.fetchall()
     return render_template('User/student_module_question.html', questions=questions, module_id=module_id)
 
@@ -507,36 +507,47 @@ def submit_answers(module_id):
 
         cursor = mydb.cursor(dictionary=True)
 
-        cursor.execute("SELECT question_id, question, answer, explorer_points FROM questions WHERE module_id = %s", (module_id,))
+        # Fetch the correct answers and points
+        cursor.execute("SELECT question_id, answer, explorer_points FROM questions WHERE module_id = %s", (module_id,))
         questions = cursor.fetchall()
 
         correct_answers = 0
         total_explorer_points = 0
         wrong_questions = []
 
-        for question in questions:
-            question_id = question['question_id']
-            question_text = question['question']
-            correct_answer = question['answer']
-            explorer_points = question['explorer_points']
+        # Create dictionaries for quick lookup
+        correct_answers_dict = {str(q['question_id']): q['answer'] for q in questions}
+        points_dict = {str(q['question_id']): q['explorer_points'] for q in questions}
 
-            for user_answer in answers.values():
-                print(user_answer)
-                print(correct_answer)
-                if user_answer == correct_answer:
-                    correct_answers += 1
-                    total_explorer_points += explorer_points
-                else:
-                    wrong_questions.append(question_id)  # Collect question_id for wrong answers
+        # Process user answers
+        for question_id, user_answer in answers.items():
+            if not question_id.startswith('question_'):
+                continue  # Skip invalid keys
+
+            # Extract numeric part of question_id
+            question_id_num = question_id.split('_')[1]
+            correct_answer = correct_answers_dict.get(question_id_num)
+            explorer_points = points_dict.get(question_id_num, 0)
+
+            if user_answer == correct_answer:
+                correct_answers += 1
+                total_explorer_points += explorer_points
+            else:
+                wrong_questions.append(question_id_num)  # Collect question_id for wrong answers
+
+        # Update explorer points based on login method
         if session['login_method'] == 'login':
-            cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s", (total_explorer_points, user_id))
+            cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s",
+                           (total_explorer_points, user_id))
+            mydb.commit()
+        elif session['login_method'] == 'google':
+            cursor.execute("UPDATE oauth SET explorer_points = explorer_points + %s WHERE googleid = %s",
+                           (total_explorer_points, user_id))
             mydb.commit()
 
-        elif session['login_method'] == 'google':
-            cursor.execute("UPDATE oauth SET explorer_points = explorer_points + %s WHERE googleid = %s", (total_explorer_points, user_id))
-
         return jsonify({
-            "redirect": url_for("show_results", module_id=module_id, wrong_questions=','.join(map(str, wrong_questions)))
+            "redirect": url_for("show_results", module_id=module_id,
+                                wrong_questions=','.join(map(str, wrong_questions)))
         }), 200
 
     except KeyError as e:
@@ -546,10 +557,6 @@ def submit_answers(module_id):
         return jsonify({"error": "Database error: " + str(err)}), 500
     except Exception as e:
         return jsonify({"error": "An unexpected error has occurred: " + str(e)}), 500
-
-
-
-
 
 
 @app.route('/student/module/<int:module_id>/results', methods=['GET'])
