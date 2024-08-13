@@ -310,6 +310,7 @@ def teacher_register():
 
 
 @app.route('/confirm_teacher_registration/<token>')
+@limiter.limit("100 per hour")
 def confirm_teacher_registration(token):
     with mydb.cursor() as mycursor:
         try:
@@ -352,6 +353,7 @@ def confirm_teacher_registration(token):
 
 
 @app.route('/payment/<username>', methods=["GET", "POST"])
+@limiter.limit("100 per hour")
 def teacher_payment(username):
     with mydb.cursor() as mycursor:
         if request.method == "POST":
