@@ -8,6 +8,7 @@ import time, os
 
 
 @app.route('/adminProfile')
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminProfile():
     if 'user' in session and 'username' in session['user']:
@@ -40,6 +41,7 @@ def adminProfile():
 
 
 @app.route('/adminUpdateProfile', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminUpdateProfile():
     with mydb.cursor() as mycursor:
@@ -156,6 +158,7 @@ def adminUpdateProfile():
 
 
 @app.route('/adminUpdatePassword', methods=['POST', 'GET'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminUpdatePassword():
     if 'user' in session:
@@ -238,6 +241,7 @@ def adminUpdatePassword():
 
 
 @app.route('/adminCreateTeacher', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminCreateTeacher():
     with mydb.cursor() as mycursor:
@@ -319,6 +323,7 @@ def adminCreateTeacher():
 
 
 @app.route('/adminDeleteTeacher/<int:id>', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminDeleteTeacher(id):
     with mydb.cursor() as mycursor:
@@ -351,6 +356,7 @@ def adminDeleteTeacher(id):
 
 
 @app.route('/adminTeacherTable', methods=['GET'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminTeachersRetrieve():
     if 'user' in session and 'id' in session['user']:
@@ -365,6 +371,7 @@ def adminTeachersRetrieve():
 
 
 @app.route('/adminTeacherUpdate/<int:id>', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminTeacherUpdate(id):
     if 'user' in session and 'id' in session['user']:
@@ -461,6 +468,7 @@ def adminTeacherUpdate(id):
 
 
 @app.route('/adminCreateStudent', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminCreateStudent():
     with mydb.cursor() as mycursor:
@@ -550,6 +558,7 @@ def adminCreateStudent():
 #     return render_template('Admin/adminStudentTable.html', students=rows, count=count)
 
 @app.route('/adminStudentTable', methods=['GET'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminUsersRetrieve():
     with mydb.cursor() as mycursor:
@@ -584,6 +593,7 @@ def adminUsersRetrieve():
 
 
 @app.route('/adminStudentUpdate/<int:id>', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminStudentUpdate(id):
     with mydb.cursor() as mycursor:
@@ -713,6 +723,7 @@ def adminStudentUpdate(id):
 
 
 @app.route('/adminDeleteStudent/<int:id>', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 def adminDeleteStudent(id):
     with mydb.cursor() as mycursor:
         try:
@@ -763,6 +774,7 @@ def adminDeleteStudent(id):
 
 
 @app.route('/adminstore')
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminstore():
     mycursor = mydb.cursor()
@@ -773,12 +785,14 @@ def adminstore():
 
 
 @app.route('/adminstoreaddpage', methods=['GET'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminstoreaddpage():
     return render_template("Store/addProduct.html")
 
 
 @app.route('/adminstoreadd', methods=['POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminstoreadd():
     mycursor = mydb.cursor()
@@ -807,6 +821,7 @@ def adminstoreadd():
 
 
 @app.route('/adminstoreupdatepage/<int:product_id>', methods=['GET'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminstoreupdatepage(product_id):
     mycursor = mydb.cursor()
@@ -817,6 +832,7 @@ def adminstoreupdatepage(product_id):
 
 
 @app.route('/adminstoreupdate', methods=['POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminstoreupdate():
     mycursor = mydb.cursor()
@@ -852,6 +868,7 @@ def adminstoreupdate():
 
 
 @app.route('/adminstoredelete', methods=['POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def adminstoredelete():
     mycursor = mydb.cursor()
@@ -865,6 +882,7 @@ def adminstoredelete():
 
 
 @app.route('/adminOrders', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def admin_orders():
     try:
@@ -915,6 +933,7 @@ def admin_orders():
 
 
 @app.route('/update_item_status/<int:order_id>/<int:product_id>', methods=['POST'])
+@limiter.limit("100 per hour")
 @roles_required('admin')
 def update_item_status(order_id, product_id):
     try:

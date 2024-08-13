@@ -9,6 +9,7 @@ import os
 from flask import jsonify
 
 @app.route('/')
+@limiter.limit("100 per hour")
 def home():
     if 'user' in session:
         session.pop('user', None)
@@ -16,7 +17,7 @@ def home():
 
 
 @app.route('/learnerHome')
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def learnerHome():
     try:
@@ -32,7 +33,7 @@ def learnerHome():
 
 
 @app.route('/profile')
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def profile():
     try:
@@ -101,7 +102,7 @@ def profile():
 
 
 @app.route('/login', methods=["GET", "POST"])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 def login():
     try:
         with mydb.cursor() as mycursor:
@@ -258,6 +259,7 @@ def login():
         mycursor.close()
 
 @app.route('/otpAuthentication', methods=['POST', 'GET'])
+@limiter.limit("100 per hour")
 def otpAuthentication():
     if 'user' in session and 'username' in session['user']:
         username = session['user']['username']
@@ -295,12 +297,13 @@ def otpAuthentication():
 
 
 @app.route('/login/google')
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 def login_with_google():
     redirect_uri = url_for('authorize', _external= True)
     return google.authorize_redirect(redirect_uri,prompt='consent')
 
 @app.route('/auth/callback')
+@limiter.limit("100 per hour")
 def authorize():
     try:
         with mydb.cursor() as mycursor:
@@ -328,6 +331,7 @@ def authorize():
 
 
 @app.route('/unlock_account/<token>')
+@limiter.limit("100 per hour")
 def unlock_account(token):
     try:
         with mydb.cursor() as mycursor:
@@ -363,7 +367,7 @@ def send_unlock_email(email, token):
 
 
 @app.route('/teacher/create_module', methods=['GET', 'POST'])
-@limiter.limit("40 per minute")
+@limiter.limit("100 per hour")
 @roles_required("teacher")
 def create_module():
     try:
@@ -430,6 +434,7 @@ def create_module():
 
 #Update module
 @app.route('/update_module/<int:module_id>', methods=['GET', 'POST'])
+@limiter.limit("100 per hour")
 @roles_required('teacher')
 def update_module(module_id):
     try:
@@ -484,6 +489,7 @@ def update_module(module_id):
         mycursor.close()
 
 @app.route('/student/module/<int:module_id>', methods=['GET'])
+@limiter.limit("100 per hour")
 @roles_required('student')
 def get_module_questions(module_id):
     cursor = mydb.cursor(dictionary=True)
@@ -493,6 +499,7 @@ def get_module_questions(module_id):
 
 
 @app.route('/student/module/<int:module_id>/submit', methods=['POST'])
+@limiter.limit("100 per hour")
 @roles_required('student')
 def submit_answers(module_id):
     try:
@@ -574,6 +581,7 @@ def submit_answers(module_id):
 
 
 @app.route('/student/module/<int:module_id>/results', methods=['GET'])
+@limiter.limit("100 per hour")
 @roles_required('student')
 def show_results(module_id):
     wrong_questions = request.args.get('wrong_questions', '')
@@ -596,7 +604,7 @@ def show_results(module_id):
 
 
 @app.route('/teacherProfile')
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('teacher')
 def teacherProfile():
     try:
@@ -620,7 +628,7 @@ def teacherProfile():
         mycursor.close()
 
 @app.route('/updateTeacherProfile', methods=['GET', 'POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('teacher')
 def updateTeacherProfile():
     try:
@@ -711,7 +719,7 @@ def updateTeacherProfile():
 
 
 @app.route('/updateTeacherPassword', methods=['POST', 'GET'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('teacher')
 def updateTeacherPassword():
     try:
@@ -801,6 +809,7 @@ def updateTeacherPassword():
         mycursor.close()
 
 @app.route('/userOrders')
+@limiter.limit("100 per hour")
 @roles_required('student', 'teacher')
 def user_orders():
     try:
@@ -835,6 +844,7 @@ def user_orders():
 
 
 @app.route('/logout')
+@limiter.limit("100 per hour")
 def logout():
     # session.pop('user',None)
     # print("Logged out successfully")

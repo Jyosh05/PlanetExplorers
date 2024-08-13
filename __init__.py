@@ -29,7 +29,7 @@ def before_request():
 
 
 @app.route('/forget_password', methods=['GET', 'POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 def forget_password():
     with mydb.cursor() as mycursor:
         if request.method == "POST":
@@ -67,7 +67,7 @@ def forget_password():
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 def reset_password(token):
     with mydb.cursor() as mycursor:
         # Verify the reset token
@@ -136,7 +136,7 @@ def reset_password(token):
 
 
 @app.route('/register', methods=["GET", "POST"])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 def register():
     with mydb.cursor() as mycursor:
         if request.method == "POST":
@@ -265,7 +265,7 @@ def email_verified_success():
 
 
 @app.route('/teacher_register', methods=["GET", "POST"])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 def teacher_register():
     with mydb.cursor() as mycursor:
         if request.method == "POST":
@@ -408,7 +408,7 @@ def teacher_payment(username):
 
 # need to test virus total with malicious file
 @app.route('/updateProfile', methods=['GET', 'POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def updateProfile():
     with mydb.cursor() as mycursor:
@@ -503,7 +503,7 @@ def updateProfile():
 
 
 @app.route('/updatePassword', methods=['POST', 'GET'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def updatePassword():
     if 'user' in session:
@@ -637,7 +637,7 @@ def deleteAccount():
 
 
 @app.route('/teacherHome')
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('teacher')
 def teacherHome():
     try:
@@ -664,7 +664,7 @@ def teacherHome():
         mycursor.close()
 
 @app.route('/store')
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 def store():
     mycursor = mydb.cursor()
     mycursor.execute("SELECT * FROM storeproducts")
@@ -674,7 +674,7 @@ def store():
 
 
 @app.route('/view_cart')
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def view_cart():
     try:
@@ -704,7 +704,7 @@ def view_cart():
 
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def add_to_cart(product_id):
     try:
@@ -764,7 +764,7 @@ def add_to_cart(product_id):
 
 
 @app.route('/update_cart/<int:product_id>', methods=['POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def update_cart(product_id):
     try:
@@ -839,7 +839,7 @@ def remove_from_cart(product_id):
 
 
 @app.route('/payment_points', methods=['GET', 'POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("100 per hour")
 @roles_required('student')
 def payment_tokens():
     try:
@@ -949,6 +949,7 @@ def payment_tokens():
 
 
 @app.route('/order_complete')
+@limiter.limit("100 per hour")
 @roles_required('student')
 def order_complete():
     flash("Payment successful! Your order has been placed.", 'success')
