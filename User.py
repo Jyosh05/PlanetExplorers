@@ -430,6 +430,7 @@ def create_module():
 
 #Update module
 @app.route('/update_module/<int:module_id>', methods=['GET', 'POST'])
+@roles_required('teacher')
 def update_module(module_id):
     try:
         with mydb.cursor() as mycursor:
