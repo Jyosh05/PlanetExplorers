@@ -563,9 +563,14 @@ def submit_answers(module_id):
             print(user_id)
             user_id = str(user_id)
             print(total_explorer_points)
-            query = "UPDATE oauth SET explorer_points = explorer_points + %s WHERE googleid = %s"
+            retrieve = "SELECT explorer_points FROM oauth where googleid = %s"
+            cursor.execute(retrieve, (user_id,))
+            points = cursor.fetchone()
+            points_value = points['explorer_points'] if points and 'explorer_points' in points else 0
+            total_explorer_points += points_value
+            query = "UPDATE oauth SET explorer_points = %s WHERE googleid = %s"
             cursor.execute(query,
-                           (total_explorer_points, user_id))
+                           (total_explorer_points, user_id,))
             print(f"Executing query: {query}")
             print(f"Parameters: {total_explorer_points}, {user_id}")
 
