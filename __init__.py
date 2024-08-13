@@ -93,7 +93,6 @@ def reset_password(token):
                     else:
                         try:
                             # Retrieve all hashed passwords from the database
-                            print("Retrieving all hashed passwords from the database.")  # Debug statement
                             mycursor.execute("SELECT password FROM users")
                             all_passwords = mycursor.fetchall()
 
@@ -106,7 +105,6 @@ def reset_password(token):
 
                             if password_exists:
                                 flash('Password already exists. Please create another password.')
-                                print("Password already exists. Please create another password.")
 
                             else:
                                 # Hash the new password and update the user's password in the database
@@ -118,7 +116,6 @@ def reset_password(token):
                                 mycursor.execute(expire_token,(used,token))
                                 mydb.commit()
 
-                                print("Password updated successfully")
                                 flash('Your password has been reset successfully.', 'success')
                                 subject = 'Password Changed'
                                 template = f'''<p>Dear user, <br><br>
@@ -147,7 +144,7 @@ def register():
                 username = request.form.get('username')
                 password = request.form.get('password')
                 if not password_checker(password):
-                    print("password does not meet requirement")
+                    flash("password does not meet requirement", 'danger')
                     return redirect(url_for('register'))
                 email = request.form.get('email')
                 if check_existing_credentials(username, email):
@@ -158,14 +155,7 @@ def register():
                 age = request.form.get('age')
                 address = request.form.get('address')
                 phone = request.form.get('phone')
-                print("Received form data:")
-                print(f"Username: {username}")
-                print(f"Password: {password}")
-                print(f"Email: {email}")
-                print(f"Name: {name}")
-                print(f"Age: {age}")
-                print(f"Address: {address}")
-                print(f"Phone: {phone}")
+
                 input_validation(username,password,email,name,address)
                 age_validation(age)
                 validate_phone_number(phone)
@@ -519,8 +509,6 @@ def updatePassword():
     if 'user' in session:
         if 'username' in session['user']:
             username = session['user']['username']
-            print("Session data:", session['user'])  # Debug statement
-            print("Username from session:", username)  # Debug statement
 
             with mydb.cursor() as mycursor:
 
@@ -538,7 +526,6 @@ def updatePassword():
                                     hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
                                     try:
                                         # Check if the new hashed password already exists in the database
-                                        print("Checking if the new hashed password already exists in the database.")  # Debug statement
                                         mycursor.execute("SELECT password FROM users")
                                         all_passwords = mycursor.fetchall()
 
@@ -556,14 +543,11 @@ def updatePassword():
                                             return redirect(url_for('updatePassword'))
                                         else:
                                             try:
-                                                print(f"Updating password for username: {username}")  # Debug statement
-                                                print(f"Hashed password: {hashed_password}")  # Debug statement
                                                 mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username,))
                                                 mydb.commit()
                                                 flash('Password updated successfully', 'success')
                                                 if 'user' in session and 'id' in session['user']:
                                                     log_this("Password updated successfully")
-                                                print('Password updated successfully')  # Debug statement
 
                                                 # # Refresh session user data
                                                 # user = userSession(username)
@@ -576,7 +560,6 @@ def updatePassword():
 
                                                 email_result = mycursor.fetchone()
                                                 email = email_result[0]
-                                                print(email)
 
                                                 subject = 'Password Changed'
                                                 template = f'''<p>Dear user, <br><br>
@@ -663,7 +646,6 @@ def teacherHome():
                 username = session['user']['username']
                 user = userSession(username)
                 if user:
-                    print(f'user {username} is logged in')
                     log_this("login successful")
 
                     # Fetch all modules associated with the teacher
@@ -975,6 +957,4 @@ def order_complete():
 
 if __name__ == '__main__':
     create_admin_user()
-    with app.app_context():
-        print(app.url_map)
-    app.run(debug=True)
+    app.run()

@@ -16,7 +16,6 @@ def adminProfile():
         # Fetch the user data
         user = userSession(username)
         if user:
-            print(f'user {username} is logged in')
 
             with mydb.cursor() as mycursor:
                 mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
@@ -162,8 +161,6 @@ def adminUpdatePassword():
     if 'user' in session:
         if 'username' in session['user']:
             username = session['user']['username']
-            print("Session data:", session['user'])  # Debug statement
-            print("Username from session:", username)  # Debug statement
 
             if request.method == 'POST':
                 new_password = request.form.get('new_password')
@@ -178,7 +175,6 @@ def adminUpdatePassword():
                             hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
 
                             # Check if the new hashed password already exists in the database
-                            print("Checking if the new hashed password already exists in the database.")  # Debug statement
                             mycursor.execute("SELECT password FROM users")
                             all_passwords = mycursor.fetchall()
 
@@ -196,21 +192,17 @@ def adminUpdatePassword():
                                 return redirect(url_for('adminUpdatePassword'))
                             else:
                                 try:
-                                    print(f"Updating password for username: {username}")  # Debug statement
-                                    print(f"Hashed password: {hashed_password}")  # Debug statement
                                     mycursor.execute("UPDATE users SET password = %s WHERE username = %s",
                                                      (hashed_password, username))
                                     mydb.commit()
                                     flash('Password updated successfully', 'success')
                                     if 'user' in session and 'id' in session['user']:
                                         log_this("Password updated successfully")
-                                    print('Password updated successfully')  # Debug statement
 
                                     # Get the user's email to send the notification
                                     mycursor.execute("SELECT email FROM users WHERE username = %s", (username,))
                                     email_result = mycursor.fetchone()
                                     email = email_result[0]
-                                    print(email)
 
                                     subject = 'Password Changed'
                                     template = f'''<p>Dear user, <br><br>
@@ -285,7 +277,6 @@ def adminCreateTeacher():
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
             # Check if the new hashed password already exists in the database
-            print("Checking if the new hashed password already exists in the database.")  # Debug statement
             mycursor.execute("SELECT password FROM users")
             all_passwords = mycursor.fetchall()
 
@@ -305,14 +296,7 @@ def adminCreateTeacher():
                 if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
 
                     role = 'teacher'
-                    print("Received form data:")
-                    print(f"Username: {username}")
-                    print(f"Password: {password}")
-                    print(f"Email: {email}")
-                    print(f"Name: {name}")
-                    print(f"Age: {age}")
-                    print(f"Address: {address}")
-                    print(f"Phone: {phone}")
+
                     query = """
                                 INSERT INTO users (username, password, email, name ,age, address, phone, role)
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
@@ -413,8 +397,6 @@ def adminTeacherUpdate(id):
                                         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) if password else \
                                         teacher_details[2]
                                         # Check if the new hashed password already exists in the database
-                                        print(
-                                            "Checking if the new hashed password already exists in the database.")  # Debug statement
                                         mycursor.execute("SELECT password FROM users")
                                         all_passwords = mycursor.fetchall()
 
@@ -517,7 +499,6 @@ def adminCreateStudent():
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
             # Check if the new hashed password already exists in the database
-            print("Checking if the new hashed password already exists in the database.")  # Debug statement
             mycursor.execute("SELECT password FROM users")
             all_passwords = mycursor.fetchall()
 
@@ -536,14 +517,7 @@ def adminCreateStudent():
                 if input_validation(username, name, email, address) and age_validation(age) and validate_phone_number(phone):
 
                     role = 'student'
-                    print("Received form data:")
-                    print(f"Username: {username}")
-                    print(f"Password: {password}")
-                    print(f"Email: {email}")
-                    print(f"Name: {name}")
-                    print(f"Age: {age}")
-                    print(f"Address: {address}")
-                    print(f"Phone: {phone}")
+
                     query = """
                                 INSERT INTO users (username, password, email, name ,age, address, phone, role)
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)  # Include 'name' in the query
@@ -589,7 +563,6 @@ def adminUsersRetrieve():
         mycursor.execute(select_oauth_query, ('student',))
         oauth_users = mycursor.fetchall()
 
-        print("OAuth Users:", oauth_users)
 
 
         # Combine results and indicate the login type
@@ -637,7 +610,6 @@ def adminStudentUpdate(id):
                                 flash("An Unexpected Error Has Occurred", 'danger')
                                 return redirect(url_for('adminStudentUpdate', id=student_details[0]))
                         # Check if the new hashed password already exists in the database
-                        print("Checking if the new hashed password already exists in the database.")  # Debug statement
                         mycursor.execute("SELECT password FROM users")
                         all_passwords = mycursor.fetchall()
 
@@ -995,7 +967,6 @@ def blogs():
     with mydb.cursor() as mycursor:
         mycursor.execute("SELECT * FROM audit_logs")
         data = mycursor.fetchall()
-        print(data)
 
     mycursor.close()
     return render_template("audit_logs.html", data=data, nameOfPage='Log')

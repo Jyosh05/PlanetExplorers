@@ -24,7 +24,6 @@ def learnerHome():
             cursor = mydb.cursor(dictionary=True)
             cursor.execute("SELECT module_id, module_name FROM modules")
             modules = cursor.fetchall()
-            print("Modules:", modules)
             return render_template("User/studentHome.html", modules=modules)
 
     finally:
@@ -53,7 +52,6 @@ def profile():
                     username = session['user']['username']
                     user = userSession(username)
                     if user:
-                        print(f'user {username} is logged in')
                         mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
                         profile_pic_url = mycursor.fetchone()
 
@@ -144,31 +142,30 @@ def login():
                             session['role'] = role
                             session['login_method'] = 'login'
 
-                            return redirect(url_for(role_redirects.get(role, 'home')))
+                            # return redirect(url_for(role_redirects.get(role, 'home')))
 
 
-                            # usersEmail = user[3]
-                            # otp_expiry = 0
-                            #
-                            # if usersEmail:
-                            #     try:
-                            #         otp = randint(100000, 999999)
-                            #         otp_expiry = datetime.now() + timedelta(minutes=5)
-                            #         # session['otp'] = otp
-                            #         # session['otp_expiry'] = time.time() + 60  # 300 seconds = 5 minutes
-                            #         mycursor.execute(
-                            #             'UPDATE users SET otp = %s, otpExpiry = %s WHERE username = %s',
-                            #             (otp, otp_expiry, username))
-                            #         mydb.commit()
-                            #
-                            #         subject = 'OTP for Authentication'
-                            #         template = f'Dear User\n\n<p>Here is the OTP to authenticate for your account: {otp}.' \
-                            #                    f' The OTP is only valid for 5 minutes. \n\n\n Yours Truly, \nPlanetExplorers Team</p>'
-                            #         send_reset_link_email(usersEmail, subject, template)
-                            #         flash('OTP sent to your email.', 'success')
-                            #         return redirect(url_for('otpAuthentication'))
-                            #     except Exception as e:
-                            #         flash(f"Failed to send verification email. Please try again. Reason: {e}")
+                            usersEmail = user[3]
+
+                            if usersEmail:
+                                try:
+                                    otp = randint(100000, 999999)
+                                    otp_expiry = datetime.now() + timedelta(minutes=5)
+                                    # session['otp'] = otp
+                                    # session['otp_expiry'] = time.time() + 60  # 300 seconds = 5 minutes
+                                    mycursor.execute(
+                                        'UPDATE users SET otp = %s, otpExpiry = %s WHERE username = %s',
+                                        (otp, otp_expiry, username))
+                                    mydb.commit()
+
+                                    subject = 'OTP for Authentication'
+                                    template = f'Dear User\n\n<p>Here is the OTP to authenticate for your account: {otp}.' \
+                                               f' The OTP is only valid for 5 minutes. \n\n\n Yours Truly, \nPlanetExplorers Team</p>'
+                                    send_reset_link_email(usersEmail, subject, template)
+                                    flash('OTP sent to your email.', 'success')
+                                    return redirect(url_for('otpAuthentication'))
+                                except Exception as e:
+                                    flash(f"Failed to send verification email. Please try again. Reason: {e}")
 
 
                         else:
@@ -260,42 +257,42 @@ def login():
     finally:
         mycursor.close()
 
-# @app.route('/otpAuthentication', methods=['POST', 'GET'])
-# def otpAuthentication():
-#     if 'user' in session and 'username' in session['user']:
-#         username = session['user']['username']
-#         if request.method == 'POST':
-#             query = "SELECT * FROM users WHERE username = %s"
-#             mycursor.execute(query, (username,))
-#             user = mycursor.fetchone()
-#
-#             user_otp = request.form.get('user_otp')
-#
-#             # Check if the OTP is valid and has not expired
-#             stored_otp = user[16]
-#             expiry_time = user[17]
-#
-#             if stored_otp and datetime.now() < expiry_time:
-#                 if user_otp == stored_otp:
-#                     mycursor.execute(
-#                         'UPDATE users SET otp = NULL, otpExpiry = NULL WHERE username = %s',
-#                         (user[1],))
-#                     mydb.commit()
-#
-#                     role = user[9]
-#                     session['role'] = role
-#                     session['login_method'] = 'login'
-#
-#                     return redirect(url_for(role_redirects.get(role, 'home')))
-#                 else:
-#                     flash("Incorrect OTP, please try again.",'danger')
-#                     return render_template('otpAuthentication.html')
-#             else:
-#                 flash("OTP has expired. Please request a new one.", 'danger')
-#                 return redirect(url_for('login'))
-#
-#     return render_template('otpAuthentication.html')
-#
+@app.route('/otpAuthentication', methods=['POST', 'GET'])
+def otpAuthentication():
+    if 'user' in session and 'username' in session['user']:
+        username = session['user']['username']
+        if request.method == 'POST':
+            query = "SELECT * FROM users WHERE username = %s"
+            mycursor.execute(query, (username,))
+            user = mycursor.fetchone()
+
+            user_otp = request.form.get('user_otp')
+
+            # Check if the OTP is valid and has not expired
+            stored_otp = user[16]
+            expiry_time = user[17]
+
+            if stored_otp and datetime.now() < expiry_time:
+                if user_otp == stored_otp:
+                    mycursor.execute(
+                        'UPDATE users SET otp = NULL, otpExpiry = NULL WHERE username = %s',
+                        (user[1],))
+                    mydb.commit()
+
+                    role = user[9]
+                    session['role'] = role
+                    session['login_method'] = 'login'
+
+                    return redirect(url_for(role_redirects.get(role, 'home')))
+                else:
+                    flash("Incorrect OTP, please try again.",'danger')
+                    return render_template('otpAuthentication.html')
+            else:
+                flash("OTP has expired. Please request a new one.", 'danger')
+                return redirect(url_for('login'))
+
+    return render_template('otpAuthentication.html')
+
 
 @app.route('/login/google')
 @limiter.limit("20 per minute")
@@ -309,11 +306,9 @@ def authorize():
         with mydb.cursor() as mycursor:
             token = google.authorize_access_token()
             resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
-            print(resp)
             user_info = resp.json()
             mycursor.execute("SELECT * FROM oauth WHERE googleid = %s",(user_info['id'],))
             user = mycursor.fetchone()
-            print(user_info['id'])
             role = 'student'
             if not user:
                 mycursor.execute("""
@@ -324,7 +319,6 @@ def authorize():
             session['user'] = user_info
             session['login_method'] = 'google'
             session['user']['role'] = role
-            print(f"Session Data:{session}")
 
             return redirect(url_for('learnerHome'))
 
@@ -503,11 +497,9 @@ def submit_answers(module_id):
     try:
         # Retrieve the submitted answers
         answers = request.get_json()
-        print(f"Received answers: {answers}")
 
         # Get the user ID from the session
         user_id = session['user'].get('id')
-        print(f"User ID: {user_id}")
 
         if not user_id:
             return jsonify({"error": "User not authenticated."}), 401
@@ -517,7 +509,6 @@ def submit_answers(module_id):
         # Fetch the correct answers and points for the module
         cursor.execute("SELECT question_id, answer, explorer_points FROM questions WHERE module_id = %s", (module_id,))
         questions = cursor.fetchall()
-        print(f"Fetched questions: {questions}")
 
         correct_answers = 0
         total_explorer_points = 0
@@ -526,8 +517,6 @@ def submit_answers(module_id):
         # Create dictionaries for quick lookup
         correct_answers_dict = {str(q['question_id']): q['answer'] for q in questions}
         points_dict = {str(q['question_id']): q['explorer_points'] for q in questions}
-        print(f"Correct answers dictionary: {correct_answers_dict}")
-        print(f"Points dictionary: {points_dict}")
 
         # Process user answers
         for question_id, user_answer in answers.items():
@@ -539,10 +528,7 @@ def submit_answers(module_id):
             correct_answer = correct_answers_dict.get(question_id_num)
             explorer_points = points_dict.get(question_id_num, 0)
 
-            print(f"Processing question_id: {question_id_num}")
-            print(f"User answer: {user_answer}")
-            print(f"Correct answer: {correct_answer}")
-            print(f"Explorer points: {explorer_points}")
+
 
             if user_answer == correct_answer:
                 correct_answers += 1
@@ -550,20 +536,14 @@ def submit_answers(module_id):
             else:
                 wrong_questions.append(question_id_num)  # Collect question_id for wrong answers
 
-        print(f"Correct answers count: {correct_answers}")
-        print(f"Total explorer points: {total_explorer_points}")
-        print(f"Wrong questions: {wrong_questions}")
 
         # Update explorer points based on login method
         if session['login_method'] == 'login':
-            print("Updating explorer points for login")
             cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s",
                            (total_explorer_points, user_id))
+
         elif session['login_method'] == 'google':
-            print("Updating explorer points for Google")
-            print(user_id)
             user_id = str(user_id)
-            print(total_explorer_points)
             retrieve = "SELECT explorer_points FROM oauth where googleid = %s"
             cursor.execute(retrieve, (user_id,))
             points = cursor.fetchone()
@@ -572,11 +552,8 @@ def submit_answers(module_id):
             query = "UPDATE oauth SET explorer_points = %s WHERE googleid = %s"
             cursor.execute(query,
                            (total_explorer_points, user_id,))
-            print(f"Executing query: {query}")
-            print(f"Parameters: {total_explorer_points}, {user_id}")
 
         mydb.commit()  # Commit the transaction
-        print("Database commit successful")
 
         return jsonify({
             "redirect": url_for("show_results", module_id=module_id,
@@ -627,7 +604,6 @@ def teacherProfile():
                 username = session['user']['username']
                 user = userSession(username)
                 if user:
-                    print(f'user {username} is logged in')
                     mycursor.execute("SELECT profilePic FROM users WHERE username = %s", (username,))
                     profile_pic = mycursor.fetchone()
 
@@ -742,8 +718,6 @@ def updateTeacherPassword():
             if 'user' in session:
                 if 'username' in session['user']:
                     username = session['user']['username']
-                    print("Session data:", session['user'])  # Debug statement
-                    print("Username from session:", username)  # Debug statement
 
                     if request.method == 'POST':
                         new_password = request.form.get('password')
@@ -757,7 +731,6 @@ def updateTeacherPassword():
                                 hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
                                 try:
                                     # Check if the new hashed password already exists in the database
-                                    print("Checking if the new hashed password already exists in the database.")  # Debug statement
                                     mycursor.execute("SELECT password FROM users")
                                     all_passwords = mycursor.fetchall()
 
@@ -775,12 +748,9 @@ def updateTeacherPassword():
                                         return redirect(url_for('updateTeacherPassword'))
                                     else:
                                         try:
-                                            print(f"Updating password for username: {username}")  # Debug statement
-                                            print(f"Hashed password: {hashed_password}")  # Debug statement
                                             mycursor.execute("UPDATE users SET password = %s WHERE username = %s", (hashed_password, username))
                                             mydb.commit()
                                             flash('Password updated successfully', 'success')
-                                            print('Password updated successfully')  # Debug statement
 
                                             # # Refresh session user data
                                             # user = userSession(username)
@@ -793,7 +763,6 @@ def updateTeacherPassword():
 
                                             email_result = mycursor.fetchone()
                                             email = email_result[0]
-                                            print(email)
 
                                             subject = 'Password Changed'
                                             template = f'''<p>Dear user, <br><br>
@@ -856,7 +825,6 @@ def user_orders():
                     items = mycursor.fetchall()
                     order_list.append({'order': order, 'items': items})
 
-                print("Order List:", order_list)  # Debugging output
                 return render_template('Store/user_orders.html', orders=order_list)
             else:
                 flash("You need to log in to view your orders.", 'warning')

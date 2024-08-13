@@ -313,14 +313,11 @@ if not tableExist:
             FOREIGN KEY (module_id) REFERENCES modules(module_id)
         )
     """)
-    print("Table 'questions' created")
-else:
-    print("Table 'questions' already exists")
+# else:
+#     print("Table 'questions' already exists")
 # Verify if the 'questions' table has been created
 mycursor.execute('SELECT * FROM questions LIMIT 1')
-print("Using table 'questions'")
 questions = mycursor.fetchall()
-print(questions)
 
 
 def input_validation(*input_strings):
@@ -396,9 +393,6 @@ def add_info(username, password, email, name, age, address, phone):
         input_validation(username, password, email, name, address)
         age_validation(int(age))
         validate_phone_number(phone)
-        # Checking if the user is in the db or not
-        if check_existing_credentials(username, email):
-            print("Username or email already in use")
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         # Standardized role of "student" for new user
@@ -413,7 +407,6 @@ def add_info(username, password, email, name, age, address, phone):
         # Executing the parameterized query and the tuple as the inputs
         mycursor.execute(query, values)
         mydb.commit()
-        print("User added successfully")
     # Exception if the SQL connector has an error
     except mysql.connector.Error as err:
         print(f"error: {str(err)}")
@@ -441,10 +434,9 @@ def process_payment(card_name, card_number, exp_month, exp_year, cvv):
         expiry_date_valid = validate_expiry_date(exp_month, exp_year)
 
         if card_number_valid and cvv_valid and expiry_date_valid:
-            print("Payment process succeeded")
             return True
-        else:
-            print("Payment validation failed")
+        # else:
+        #     print("Payment validation failed")
     except ValueError as e:
         print(f"Payment validation error: {e}")
     return False
@@ -490,7 +482,6 @@ def add_info_teacher(username, password, email, name, age, address, phone):
         validate_phone_number(phone)
 
         if check_existing_credentials(username, email):
-            print("Username or email already in use")
             return False
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -502,7 +493,6 @@ def add_info_teacher(username, password, email, name, age, address, phone):
         values = (username, hashed_password, email, name, age, address, phone, role)
         mycursor.execute(query, values)
         mydb.commit()
-        print("Teacher added successfully")
         return True
     except mysql.connector.Error as err:
         print(f"Database error: {str(err)}")
@@ -518,8 +508,8 @@ def delete_info(username, password):
         query = "SELECT password FROM users WHERE username = %s"
         mycursor.execute(query, (username,))
         user = mycursor.fetchone()
-        if not user:
-            print("User not found")
+        # if not user:
+        #     print("User not found")
 
         stored_password = user[0]
 
@@ -527,7 +517,6 @@ def delete_info(username, password):
             delete_query = "DELETE FROM users WHERE username = %s"
             mycursor.execute(delete_query, (username,))
             mydb.commit()
-            print("User deleted successfully")
         else:
             print("Error, incorrect password")
     except mysql.connector.Error as err:
@@ -561,8 +550,6 @@ def is_ip_blacklisted(ip_address, api_key):
         # Log or handle the error appropriately
         return False
 
-def get_info():
-    pass
 
 
 # token generation and validation functions
@@ -623,7 +610,6 @@ def verify_response(response):
     }
     response = requests.post(GOOGLE_VERIFY_URL, data=payload)
     data = response.json()
-    print(data)
     return data['success']
 
 
@@ -647,7 +633,7 @@ def log_this(event, user_id="unknown"):
         user_id = session['user']['id']
     mycursor.execute("SELECT MAX(log_id) FROM audit_logs")
     actual_id = mycursor.fetchone()
-    print(actual_id[0])
+
     if actual_id[0] is None:
         actual_id = (0,)  # Ensure actual_id is a tuple with the first element as 0
     next_id = actual_id[0] + 1
@@ -679,7 +665,7 @@ def create_admin_user():
 
             mycursor.execute(insert_admin_query, admin_user)
             mydb.commit()
-            print("Admin user created successfully")
+
     except mysql.connector.Error as err:
         print(f"Error while inserting admin user: {err}")
 
@@ -737,14 +723,13 @@ serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 def send_verification_email(email, token):
     verification_link = url_for('verify_email', token=token, _external=True)
 
-    print(f'Generated verification link: {verification_link}')  # Debugging statement
     msg = Message('Email Verification', sender='your_email@example.com', recipients=[email])
     msg.body = f'Click the link to verify your email: {verification_link}'
 
 
     try:
         mail.send(msg)
-        print(f'Email sent to: {email}')  # Debugging statement
+
     except Exception as e:
         print(f'Error sending email: {str(e)}')  # Debugging statement
 
