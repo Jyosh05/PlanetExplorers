@@ -499,17 +499,23 @@ def get_module_questions(module_id):
 @roles_required('student')
 def submit_answers(module_id):
     try:
+        # Retrieve the submitted answers
         answers = request.get_json()
+        print(f"Received answers: {answers}")
+
+        # Get the user ID from the session
         user_id = session['user'].get('id')
+        print(f"User ID: {user_id}")
 
         if not user_id:
             return jsonify({"error": "User not authenticated."}), 401
 
         cursor = mydb.cursor(dictionary=True)
 
-        # Fetch the correct answers and points
+        # Fetch the correct answers and points for the module
         cursor.execute("SELECT question_id, answer, explorer_points FROM questions WHERE module_id = %s", (module_id,))
         questions = cursor.fetchall()
+        print(f"Fetched questions: {questions}")
 
         correct_answers = 0
         total_explorer_points = 0
@@ -518,6 +524,8 @@ def submit_answers(module_id):
         # Create dictionaries for quick lookup
         correct_answers_dict = {str(q['question_id']): q['answer'] for q in questions}
         points_dict = {str(q['question_id']): q['explorer_points'] for q in questions}
+        print(f"Correct answers dictionary: {correct_answers_dict}")
+        print(f"Points dictionary: {points_dict}")
 
         # Process user answers
         for question_id, user_answer in answers.items():
@@ -529,21 +537,39 @@ def submit_answers(module_id):
             correct_answer = correct_answers_dict.get(question_id_num)
             explorer_points = points_dict.get(question_id_num, 0)
 
+            print(f"Processing question_id: {question_id_num}")
+            print(f"User answer: {user_answer}")
+            print(f"Correct answer: {correct_answer}")
+            print(f"Explorer points: {explorer_points}")
+
             if user_answer == correct_answer:
                 correct_answers += 1
                 total_explorer_points += explorer_points
             else:
                 wrong_questions.append(question_id_num)  # Collect question_id for wrong answers
 
+        print(f"Correct answers count: {correct_answers}")
+        print(f"Total explorer points: {total_explorer_points}")
+        print(f"Wrong questions: {wrong_questions}")
+
         # Update explorer points based on login method
         if session['login_method'] == 'login':
+            print("Updating explorer points for login")
             cursor.execute("UPDATE users SET explorer_points = explorer_points + %s WHERE id = %s",
                            (total_explorer_points, user_id))
-            mydb.commit()
         elif session['login_method'] == 'google':
-            cursor.execute("UPDATE oauth SET explorer_points = explorer_points + %s WHERE googleid = %s",
+            print("Updating explorer points for Google")
+            print(user_id)
+            user_id = str(user_id)
+            print(total_explorer_points)
+            query = "UPDATE oauth SET explorer_points = explorer_points + %s WHERE googleid = %s"
+            cursor.execute(query,
                            (total_explorer_points, user_id))
-            mydb.commit()
+            print(f"Executing query: {query}")
+            print(f"Parameters: {total_explorer_points}, {user_id}")
+
+        mydb.commit()  # Commit the transaction
+        print("Database commit successful")
 
         return jsonify({
             "redirect": url_for("show_results", module_id=module_id,
@@ -551,11 +577,14 @@ def submit_answers(module_id):
         }), 200
 
     except KeyError as e:
+        print(f"KeyError: {str(e)}")
         return jsonify({"error": f"Missing data: {str(e)}"}), 400
     except mysql.connector.Error as err:
         mydb.rollback()
+        print(f"Database error: {err}")
         return jsonify({"error": "Database error: " + str(err)}), 500
     except Exception as e:
+        print(f"Unexpected error: {str(e)}")
         return jsonify({"error": "An unexpected error has occurred: " + str(e)}), 500
 
 
