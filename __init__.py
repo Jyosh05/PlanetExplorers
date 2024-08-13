@@ -138,7 +138,7 @@ def reset_password(token):
 @app.route('/register', methods=["GET", "POST"])
 @limiter.limit("100 per hour")
 def register():
-    with mydb.cursor() as mycursor:
+    # with mydb.cursor() as mycursor:
         if request.method == "POST":
             try:
                 username = request.form.get('username')
@@ -170,8 +170,8 @@ def register():
                 print(e)
                 return redirect(url_for('register'))
 
-    mycursor.close()
-    return render_template('User/register.html')
+    # mycursor.close()
+        return render_template('User/register.html')
 
 @app.route('/verify_register', methods=['GET', 'POST'])
 @limiter.limit("100 per hour")

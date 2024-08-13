@@ -104,8 +104,8 @@ def profile():
 @app.route('/login', methods=["GET", "POST"])
 @limiter.limit("100 per hour")
 def login():
-    try:
-        with mydb.cursor() as mycursor:
+    # try:
+        # with mydb.cursor() as mycursor:
             if request.method == "POST":
                 try:
                     username = request.form.get("username")
@@ -255,8 +255,8 @@ def login():
 
             return render_template("User/login.html")
 
-    finally:
-        mycursor.close()
+    # finally:
+    #     mycursor.close()
 
 @app.route('/otpAuthentication', methods=['POST', 'GET'])
 @limiter.limit("100 per hour")
