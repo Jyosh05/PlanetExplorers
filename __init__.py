@@ -615,18 +615,28 @@ def updatePassword():
 
 
 
-@app.route('/deleteAccount', methods=['POST'])
+@app.route('/deleteAccount', methods=['POST','GET'])
 @roles_required('student', 'teacher')
 def deleteAccount():
     try:
         with mydb.cursor() as mycursor:
-            if 'user' in session:
+            if 'user' in session and session['login_method'] == 'login':
                 username = session['user']['username']
                 delete_account = 'DELETE from users WHERE username = %s'
                 mycursor.execute(delete_account, (username,))
                 mydb.commit()
                 session.pop('user', None)
                 flash('Your account has been deleted', 'success')
+                if 'user' in session and 'id' in session['user']:
+                    log_this("User account has been deleted")
+                return redirect(url_for('login'))
+            if 'user' in session and session['login_method'] == 'google':
+                id = session['user']['id']
+                deleteaccount = 'DELETE from oauth WHERE googleid = %s'
+                mycursor.execute(deleteaccount,(id,))
+                mydb.commit()
+                session.pop('user',None)
+                flash('Your account has been deleted','success')
                 if 'user' in session and 'id' in session['user']:
                     log_this("User account has been deleted")
                 return redirect(url_for('login'))

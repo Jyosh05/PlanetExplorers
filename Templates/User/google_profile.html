@@ -31,6 +31,32 @@
             color: #33764E;
             margin-top: 10px;
         }
+
+        /* Style for the button */
+        button {
+            background-color: #33764E; /* Button background color */
+            color: white; /* Button text color */
+            border: none; /* Remove border */
+            border-radius: 5px; /* Rounded corners */
+            padding: 10px 20px; /* Padding around text */
+            font-size: 16px; /* Font size */
+            cursor: pointer; /* Pointer cursor on hover */
+            text-decoration: none; /* Remove underline from text */
+            margin-top: 20px; /* Space above the button */
+        }
+
+        button a {
+            color: white; /* Text color for link inside button */
+            text-decoration: none; /* Remove underline from link */
+        }
+
+        button:hover {
+            background-color: #2a5d3a; /* Darker background on hover */
+        }
+
+        button:active {
+            background-color: #1d4b2d; /* Even darker background on click */
+        }
     </style>
 </head>
 <body>
@@ -38,9 +64,10 @@
     <div class="profile_page-container">
         <img src="{{ profilePic }}" alt="Profile Picture" class="profile_page-pic">
         <div class="profile_page-name">{{ name }}</div>
-        <div class="profile_page-email">{{email}}</div>
+        <div class="profile_page-email">{{ email }}</div>
         <div class="profile_page-role">{{ role }}</div>
         <div class="profile_page-points">{{ explorer_points }} Explorer Points</div>
+        <button><a href="{{ url_for('deleteAccount') }}">Delete Account</a></button>
     </div>
 </body>
 </html>

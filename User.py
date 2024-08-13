@@ -332,6 +332,7 @@ def authorize():
         mycursor.close()
 
 
+
 @app.route('/unlock_account/<token>')
 def unlock_account(token):
     try:
